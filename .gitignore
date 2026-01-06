@@ -1,0 +1,10 @@
+node_modules
+.DS_Store
+.env
+venv/
+__pycache__/
+*.pyc
+.next/
+dist/
+coverage/
+.expo/
