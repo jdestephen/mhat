@@ -4,7 +4,7 @@ from sqlalchemy.sql import func
 from typing import Optional, List
 from datetime import datetime
 
-from app.db.base import Base
+from app.db.base_class import Base
 
 class Category(Base):
     __tablename__ = "categories"

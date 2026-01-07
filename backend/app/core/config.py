@@ -1,7 +1,9 @@
 from pydantic_settings import BaseSettings
 from typing import Optional
+import os
 
 class Settings(BaseSettings):
+    BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     PROJECT_NAME: str = "Medical History App"
     API_V1_STR: str = "/api/v1"
     

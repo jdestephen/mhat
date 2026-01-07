@@ -14,6 +14,61 @@ from app.schemas import doctor as doctor_schema
 
 router = APIRouter()
 
+@router.get("/patient", response_model=patient_schema.PatientProfile)
+async def get_patient_profile(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """
+    Get current user's patient profile.
+    """
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Not a patient")
+        
+    result = await db.execute(
+        select(PatientProfile)
+        .filter(PatientProfile.user_id == current_user.id)
+        .options(
+            selectinload(PatientProfile.medications),
+            selectinload(PatientProfile.allergies),
+            selectinload(PatientProfile.conditions)
+        )
+    )
+    profile = result.scalars().first()
+    
+    if not profile:
+        profile = PatientProfile(user_id=current_user.id)
+        db.add(profile)
+        await db.commit()
+        await db.refresh(profile)
+        
+    return profile
+
+@router.get("/doctor", response_model=doctor_schema.DoctorProfile)
+async def get_doctor_profile(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """
+    Get current user's doctor profile.
+    """
+    if current_user.role != UserRole.DOCTOR:
+        raise HTTPException(status_code=403, detail="Not a doctor")
+        
+    result = await db.execute(
+        select(DoctorProfile)
+        .filter(DoctorProfile.user_id == current_user.id)
+    )
+    profile = result.scalars().first()
+    
+    if not profile:
+         profile = DoctorProfile(user_id=current_user.id)
+         db.add(profile)
+         await db.commit()
+         await db.refresh(profile)
+         
+    return profile
+
 @router.put("/patient", response_model=patient_schema.PatientProfile)
 async def update_patient_profile(
     *,

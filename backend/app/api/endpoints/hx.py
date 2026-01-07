@@ -50,8 +50,13 @@ async def create_medical_record(
     )
     db.add(medical_record)
     await db.commit()
-    await db.refresh(medical_record)
-    return medical_record
+    # Re-fetch with eager loading to strictly satisfy Pydantic and Async restrictions
+    result = await db.execute(
+        select(MedicalRecord)
+        .filter(MedicalRecord.id == medical_record.id)
+        .options(selectinload(MedicalRecord.documents))
+    )
+    return result.scalars().first()
 
 @router.post("/{record_id}/documents", response_model=hx_schema.Document)
 async def upload_document_to_record(

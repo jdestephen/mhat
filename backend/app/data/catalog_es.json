@@ -1,0 +1,1735 @@
+{
+  "meta": {
+    "id": "catalog_prototipo_es",
+    "locale": "es",
+    "version": "0.1.0",
+    "generated_at": "2026-01-06T23:13:54Z",
+    "purpose": "prototipo_autocomplete",
+    "disclaimer": "Lista curada para autocompletado inicial. No es oficial ni exhaustiva. Se recomienda marcar como 'No verificado' hasta respaldo por documento o verificación médica.",
+    "defaults": {
+      "verification_status": "unverified_patient"
+    }
+  },
+  "ui_options": {
+    "verification_statuses": [
+      {
+        "key": "unverified_patient",
+        "label": "No verificado (Paciente)"
+      },
+      {
+        "key": "supported_by_document",
+        "label": "Respaldado por documento"
+      },
+      {
+        "key": "verified_by_clinician",
+        "label": "Verificado por médico"
+      },
+      {
+        "key": "inactive_historical",
+        "label": "Histórico / Inactivo"
+      }
+    ],
+    "allergy_reaction_options": [
+      "Ronchas/urticaria",
+      "Picazón",
+      "Hinchazón",
+      "Dificultad para respirar",
+      "Tos/sibilancias",
+      "Náuseas/vómitos",
+      "Diarrea",
+      "Mareo/desmayo",
+      "Dolor abdominal",
+      "No sé"
+    ],
+    "allergy_severity_options": [
+      "Leve",
+      "Moderada",
+      "Grave",
+      "No sé"
+    ],
+    "condition_status_options": [
+      "Activa",
+      "Controlada",
+      "Resuelta",
+      "No sé"
+    ],
+    "source_options": [
+      "Diagnosticado por médico",
+      "Me lo dijo un médico",
+      "Lo sospecho",
+      "No estoy seguro"
+    ],
+    "dose_units_common": [
+      {
+        "display": "mg",
+        "ucum": "mg"
+      },
+      {
+        "display": "mcg",
+        "ucum": "ug"
+      },
+      {
+        "display": "g",
+        "ucum": "g"
+      },
+      {
+        "display": "mL",
+        "ucum": "mL"
+      },
+      {
+        "display": "UI",
+        "ucum": "[iU]"
+      },
+      {
+        "display": "%",
+        "ucum": "%"
+      }
+    ],
+    "dose_forms_common": [
+      "Tableta",
+      "Cápsula",
+      "Jarabe",
+      "Suspensión",
+      "Gotas",
+      "Inhalador",
+      "Crema",
+      "Pomada",
+      "Parche",
+      "Inyección"
+    ],
+    "frequency_presets": [
+      {
+        "key": "once_daily",
+        "label": "1 vez al día"
+      },
+      {
+        "key": "twice_daily",
+        "label": "2 veces al día"
+      },
+      {
+        "key": "three_times_daily",
+        "label": "3 veces al día"
+      },
+      {
+        "key": "q8h",
+        "label": "Cada 8 horas"
+      },
+      {
+        "key": "q12h",
+        "label": "Cada 12 horas"
+      },
+      {
+        "key": "q6h",
+        "label": "Cada 6 horas"
+      },
+      {
+        "key": "prn",
+        "label": "Según necesidad"
+      }
+    ]
+  },
+  "terminology": {
+    "allergies": [
+      {
+        "id": "alg_mani_cacahuate",
+        "key": "mani_cacahuate",
+        "display": "Maní (cacahuate)",
+        "category": "Alimento",
+        "synonyms": [
+          "cacahuate",
+          "peanut",
+          "maní"
+        ],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_nueces_arbol",
+        "key": "nueces_arbol",
+        "display": "Nueces de árbol (nuez, almendra, etc.)",
+        "category": "Alimento",
+        "synonyms": [
+          "tree nuts",
+          "nueces",
+          "frutos secos"
+        ],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_avellana",
+        "key": "avellana",
+        "display": "Avellana",
+        "category": "Alimento",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_almendra",
+        "key": "almendra",
+        "display": "Almendra",
+        "category": "Alimento",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_nuez",
+        "key": "nuez",
+        "display": "Nuez",
+        "category": "Alimento",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_pistacho",
+        "key": "pistacho",
+        "display": "Pistacho",
+        "category": "Alimento",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_nuez_de_la_india",
+        "key": "nuez_de_la_india",
+        "display": "Nuez de la India (cashew)",
+        "category": "Alimento",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_nuez_pecana",
+        "key": "nuez_pecana",
+        "display": "Nuez pecana",
+        "category": "Alimento",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_nuez_de_brasil",
+        "key": "nuez_de_brasil",
+        "display": "Nuez de Brasil",
+        "category": "Alimento",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_sesamo",
+        "key": "sesamo",
+        "display": "Sésamo",
+        "category": "Alimento",
+        "synonyms": [
+          "ajonjolí",
+          "sesame"
+        ],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_leche_vaca",
+        "key": "leche_vaca",
+        "display": "Leche de vaca",
+        "category": "Alimento",
+        "synonyms": [
+          "lácteos",
+          "milk",
+          "leche"
+        ],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_huevo",
+        "key": "huevo",
+        "display": "Huevo",
+        "category": "Alimento",
+        "synonyms": [
+          "egg",
+          "huevos"
+        ],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_trigo",
+        "key": "trigo",
+        "display": "Trigo",
+        "category": "Alimento",
+        "synonyms": [
+          "wheat",
+          "harina"
+        ],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_soya",
+        "key": "soya",
+        "display": "Soya",
+        "category": "Alimento",
+        "synonyms": [
+          "soja",
+          "soy"
+        ],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_pescado",
+        "key": "pescado",
+        "display": "Pescado",
+        "category": "Alimento",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_mariscos_crustaceos",
+        "key": "mariscos_crustaceos",
+        "display": "Mariscos (crustáceos)",
+        "category": "Alimento",
+        "synonyms": [
+          "shellfish",
+          "crustáceos"
+        ],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_mariscos_moluscos",
+        "key": "mariscos_moluscos",
+        "display": "Mariscos (moluscos)",
+        "category": "Alimento",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_camarones",
+        "key": "camarones",
+        "display": "Camarón",
+        "category": "Alimento",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_cangrejo",
+        "key": "cangrejo",
+        "display": "Cangrejo",
+        "category": "Alimento",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_langosta",
+        "key": "langosta",
+        "display": "Langosta",
+        "category": "Alimento",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_gluten",
+        "key": "gluten",
+        "display": "Gluten (sensibilidad/intolerancia reportada)",
+        "category": "Alimento",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_fresa",
+        "key": "fresa",
+        "display": "Fresa",
+        "category": "Alimento",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_kiwi",
+        "key": "kiwi",
+        "display": "Kiwi",
+        "category": "Alimento",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_tomate",
+        "key": "tomate",
+        "display": "Tomate",
+        "category": "Alimento",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_mostaza",
+        "key": "mostaza",
+        "display": "Mostaza",
+        "category": "Alimento",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_sulfitos",
+        "key": "sulfitos",
+        "display": "Sulfitos",
+        "category": "Alimento/Aditivo",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_penicilina",
+        "key": "penicilina",
+        "display": "Penicilina",
+        "category": "Medicamento",
+        "synonyms": [
+          "penicillin",
+          "beta-lactámicos (reportado)"
+        ],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_amoxicilina",
+        "key": "amoxicilina",
+        "display": "Amoxicilina",
+        "category": "Medicamento",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_cefalosporinas",
+        "key": "cefalosporinas",
+        "display": "Cefalosporinas",
+        "category": "Medicamento",
+        "synonyms": [
+          "cephalosporins"
+        ],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_sulfas",
+        "key": "sulfas",
+        "display": "Sulfonamidas (p. ej., TMP-SMX)",
+        "category": "Medicamento",
+        "synonyms": [
+          "sulfonamidas",
+          "TMP-SMX",
+          "Bactrim"
+        ],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_aspirina",
+        "key": "aspirina",
+        "display": "Aspirina (ácido acetilsalicílico)",
+        "category": "Medicamento",
+        "synonyms": [
+          "ASA",
+          "ácido acetilsalicílico"
+        ],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_ibuprofeno",
+        "key": "ibuprofeno",
+        "display": "Ibuprofeno",
+        "category": "Medicamento",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_aine_nsaid",
+        "key": "aine_nsaid",
+        "display": "AINEs (antiinflamatorios no esteroideos)",
+        "category": "Medicamento",
+        "synonyms": [
+          "NSAIDs",
+          "antiinflamatorios"
+        ],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_morfina",
+        "key": "morfina",
+        "display": "Morfina",
+        "category": "Medicamento",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_codeina",
+        "key": "codeina",
+        "display": "Codeína",
+        "category": "Medicamento",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_opiaceos",
+        "key": "opiaceos",
+        "display": "Opioides (otros)",
+        "category": "Medicamento",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_lidocaina",
+        "key": "lidocaina",
+        "display": "Lidocaína (anestésico local)",
+        "category": "Medicamento",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_anestesia_general",
+        "key": "anestesia_general",
+        "display": "Anestesia general (agentes anestésicos)",
+        "category": "Medicamento",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_contraste_yodado",
+        "key": "contraste_yodado",
+        "display": "Medio de contraste yodado",
+        "category": "Medicamento/Procedimiento",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_yodo",
+        "key": "yodo",
+        "display": "Yodo (reacción reportada)",
+        "category": "Otro",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_latex",
+        "key": "latex",
+        "display": "Látex",
+        "category": "Otro",
+        "synonyms": [
+          "guantes de látex"
+        ],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_polem_grasses",
+        "key": "polem_grasses",
+        "display": "Polen de pastos",
+        "category": "Ambiental",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_polen_arboles",
+        "key": "polen_arboles",
+        "display": "Polen de árboles",
+        "category": "Ambiental",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_polen_malezas",
+        "key": "polen_malezas",
+        "display": "Polen de malezas",
+        "category": "Ambiental",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_acaros_polvo",
+        "key": "acaros_polvo",
+        "display": "Ácaros del polvo",
+        "category": "Ambiental",
+        "synonyms": [
+          "dust mites",
+          "ácaros"
+        ],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_moho",
+        "key": "moho",
+        "display": "Moho/hongos",
+        "category": "Ambiental",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_caspa_gato",
+        "key": "caspa_gato",
+        "display": "Caspa de gato",
+        "category": "Ambiental",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_caspa_perro",
+        "key": "caspa_perro",
+        "display": "Caspa de perro",
+        "category": "Ambiental",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_picadura_abeja",
+        "key": "picadura_abeja",
+        "display": "Picadura de abeja",
+        "category": "Insecto",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "alg_picadura_avispa",
+        "key": "picadura_avispa",
+        "display": "Picadura de avispa",
+        "category": "Insecto",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      }
+    ],
+    "conditions": [
+      {
+        "id": "cond_hipertension",
+        "key": "hipertension",
+        "display": "Hipertensión arterial",
+        "group": "Cardiometabólico",
+        "synonyms": [
+          "HTA",
+          "presión alta",
+          "high blood pressure"
+        ],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_diabetes_tipo_2",
+        "key": "diabetes_tipo_2",
+        "display": "Diabetes tipo 2",
+        "group": "Cardiometabólico",
+        "synonyms": [
+          "DM2",
+          "diabetes mellitus tipo 2"
+        ],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_prediabetes",
+        "key": "prediabetes",
+        "display": "Prediabetes",
+        "group": "Cardiometabólico",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_dislipidemia",
+        "key": "dislipidemia",
+        "display": "Dislipidemia (colesterol/triglicéridos altos)",
+        "group": "Cardiometabólico",
+        "synonyms": [
+          "colesterol alto",
+          "triglicéridos altos"
+        ],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_obesidad",
+        "key": "obesidad",
+        "display": "Obesidad",
+        "group": "Cardiometabólico",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_enfermedad_coronaria",
+        "key": "enfermedad_coronaria",
+        "display": "Enfermedad coronaria",
+        "group": "Cardiovascular",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_insuficiencia_cardiaca",
+        "key": "insuficiencia_cardiaca",
+        "display": "Insuficiencia cardiaca",
+        "group": "Cardiovascular",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_fibrilacion_auricular",
+        "key": "fibrilacion_auricular",
+        "display": "Fibrilación auricular",
+        "group": "Cardiovascular",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_ictus",
+        "key": "ictus",
+        "display": "Accidente cerebrovascular (ACV/ictus)",
+        "group": "Neurológico",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_enfermedad_arterial_periferica",
+        "key": "enfermedad_arterial_periferica",
+        "display": "Enfermedad arterial periférica",
+        "group": "Cardiovascular",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_asma",
+        "key": "asma",
+        "display": "Asma",
+        "group": "Respiratorio",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_epoc",
+        "key": "epoc",
+        "display": "EPOC",
+        "group": "Respiratorio",
+        "synonyms": [
+          "COPD"
+        ],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_rinitis_alergica",
+        "key": "rinitis_alergica",
+        "display": "Rinitis alérgica",
+        "group": "ORL",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_sinusitis",
+        "key": "sinusitis",
+        "display": "Sinusitis",
+        "group": "ORL",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_otitis",
+        "key": "otitis",
+        "display": "Otitis (infección de oído)",
+        "group": "ORL",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_faringitis",
+        "key": "faringitis",
+        "display": "Faringitis",
+        "group": "ORL",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_amigdalitis",
+        "key": "amigdalitis",
+        "display": "Amigdalitis",
+        "group": "ORL",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_apnea_sueno",
+        "key": "apnea_sueno",
+        "display": "Apnea obstructiva del sueño",
+        "group": "Sueño/Respiratorio",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_bronquitis",
+        "key": "bronquitis",
+        "display": "Bronquitis",
+        "group": "Respiratorio",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_neumonia",
+        "key": "neumonia",
+        "display": "Neumonía",
+        "group": "Infeccioso/Respiratorio",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_reflujo",
+        "key": "reflujo",
+        "display": "Reflujo gastroesofágico (ERGE)",
+        "group": "Gastrointestinal",
+        "synonyms": [
+          "ERGE",
+          "GERD",
+          "acidez"
+        ],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_gastritis",
+        "key": "gastritis",
+        "display": "Gastritis",
+        "group": "Gastrointestinal",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_ulcera_peptica",
+        "key": "ulcera_peptica",
+        "display": "Úlcera péptica",
+        "group": "Gastrointestinal",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_sindrome_intestino_irritable",
+        "key": "sindrome_intestino_irritable",
+        "display": "Síndrome de intestino irritable (SII)",
+        "group": "Gastrointestinal",
+        "synonyms": [
+          "SII",
+          "IBS"
+        ],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_estrenimiento",
+        "key": "estrenimiento",
+        "display": "Estreñimiento",
+        "group": "Gastrointestinal",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_diarrea",
+        "key": "diarrea",
+        "display": "Diarrea recurrente",
+        "group": "Gastrointestinal",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_hemorroides",
+        "key": "hemorroides",
+        "display": "Hemorroides",
+        "group": "Gastrointestinal",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_enfermedad_celiaca",
+        "key": "enfermedad_celiaca",
+        "display": "Enfermedad celíaca",
+        "group": "Gastrointestinal",
+        "synonyms": [
+          "celiaquía",
+          "celiac disease"
+        ],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_intolerancia_lactosa",
+        "key": "intolerancia_lactosa",
+        "display": "Intolerancia a la lactosa",
+        "group": "Gastrointestinal",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_higado_graso",
+        "key": "higado_graso",
+        "display": "Hígado graso (esteatosis)",
+        "group": "Gastrointestinal",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_calculos_biliares",
+        "key": "calculos_biliares",
+        "display": "Cálculos biliares (colelitiasis)",
+        "group": "Gastrointestinal",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_gastroenteritis",
+        "key": "gastroenteritis",
+        "display": "Gastroenteritis",
+        "group": "Infeccioso/Gastrointestinal",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_hipotiroidismo",
+        "key": "hipotiroidismo",
+        "display": "Hipotiroidismo",
+        "group": "Endocrino",
+        "synonyms": [
+          "tiroides baja"
+        ],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_hipertiroidismo",
+        "key": "hipertiroidismo",
+        "display": "Hipertiroidismo",
+        "group": "Endocrino",
+        "synonyms": [
+          "tiroides alta"
+        ],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_nodulos_tiroides",
+        "key": "nodulos_tiroides",
+        "display": "Nódulos tiroideos",
+        "group": "Endocrino",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_deficiencia_vitamina_d",
+        "key": "deficiencia_vitamina_d",
+        "display": "Deficiencia de vitamina D",
+        "group": "Nutrición",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_anemia_ferropenica",
+        "key": "anemia_ferropenica",
+        "display": "Anemia por deficiencia de hierro",
+        "group": "Hematológico",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_deficiencia_b12",
+        "key": "deficiencia_b12",
+        "display": "Deficiencia de vitamina B12",
+        "group": "Hematológico/Nutrición",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_migraña",
+        "key": "migraña",
+        "display": "Migraña",
+        "group": "Neurológico",
+        "synonyms": [
+          "migraine",
+          "migraña crónica"
+        ],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_cefalea_tensional",
+        "key": "cefalea_tensional",
+        "display": "Cefalea tensional",
+        "group": "Neurológico",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_vertigo",
+        "key": "vertigo",
+        "display": "Vértigo",
+        "group": "Neurológico/ORL",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_epilepsia",
+        "key": "epilepsia",
+        "display": "Epilepsia",
+        "group": "Neurológico",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_neuropatia_periferica",
+        "key": "neuropatia_periferica",
+        "display": "Neuropatía periférica",
+        "group": "Neurológico",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_tunel_carpiano",
+        "key": "tunel_carpiano",
+        "display": "Síndrome del túnel carpiano",
+        "group": "Músculo-esquelético",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_demencia",
+        "key": "demencia",
+        "display": "Demencia (Alzheimer u otras)",
+        "group": "Neurológico",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_depresion",
+        "key": "depresion",
+        "display": "Depresión",
+        "group": "Salud mental",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_ansiedad",
+        "key": "ansiedad",
+        "display": "Trastorno de ansiedad",
+        "group": "Salud mental",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_trastorno_panico",
+        "key": "trastorno_panico",
+        "display": "Trastorno de pánico",
+        "group": "Salud mental",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_tdah",
+        "key": "tdah",
+        "display": "TDAH",
+        "group": "Neurodesarrollo",
+        "synonyms": [
+          "ADHD"
+        ],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_insomnio",
+        "key": "insomnio",
+        "display": "Insomnio",
+        "group": "Sueño/Salud mental",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_estres",
+        "key": "estres",
+        "display": "Estrés",
+        "group": "Salud mental",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_dolor_lumbar",
+        "key": "dolor_lumbar",
+        "display": "Dolor lumbar",
+        "group": "Músculo-esquelético",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_ciatica",
+        "key": "ciatica",
+        "display": "Ciática",
+        "group": "Músculo-esquelético",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_cervicalgia",
+        "key": "cervicalgia",
+        "display": "Dolor cervical (cervicalgia)",
+        "group": "Músculo-esquelético",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_osteoartritis",
+        "key": "osteoartritis",
+        "display": "Osteoartritis (artrosis)",
+        "group": "Músculo-esquelético",
+        "synonyms": [
+          "artrosis"
+        ],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_artritis_reumatoide",
+        "key": "artritis_reumatoide",
+        "display": "Artritis reumatoide",
+        "group": "Músculo-esquelético",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_osteoporosis",
+        "key": "osteoporosis",
+        "display": "Osteoporosis",
+        "group": "Músculo-esquelético",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_gota",
+        "key": "gota",
+        "display": "Gota",
+        "group": "Músculo-esquelético",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_fibromialgia",
+        "key": "fibromialgia",
+        "display": "Fibromialgia",
+        "group": "Músculo-esquelético",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_tendinitis",
+        "key": "tendinitis",
+        "display": "Tendinitis",
+        "group": "Músculo-esquelético",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_bursitis",
+        "key": "bursitis",
+        "display": "Bursitis",
+        "group": "Músculo-esquelético",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_fascitis_plantar",
+        "key": "fascitis_plantar",
+        "display": "Fascitis plantar",
+        "group": "Músculo-esquelético",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_lesion_hombro",
+        "key": "lesion_hombro",
+        "display": "Lesión de hombro (manguito rotador)",
+        "group": "Músculo-esquelético",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_eczema_dermatitis_atopica",
+        "key": "eczema_dermatitis_atopica",
+        "display": "Dermatitis atópica (eczema)",
+        "group": "Dermatológico",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_dermatitis_contacto",
+        "key": "dermatitis_contacto",
+        "display": "Dermatitis de contacto",
+        "group": "Dermatológico",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_psoriasis",
+        "key": "psoriasis",
+        "display": "Psoriasis",
+        "group": "Dermatológico",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_acne",
+        "key": "acne",
+        "display": "Acné",
+        "group": "Dermatológico",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_rosacea",
+        "key": "rosacea",
+        "display": "Rosácea",
+        "group": "Dermatológico",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_urticaria",
+        "key": "urticaria",
+        "display": "Urticaria",
+        "group": "Dermatológico",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_hongos_piel",
+        "key": "hongos_piel",
+        "display": "Infección por hongos en piel (tiña)",
+        "group": "Dermatológico",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_pie_atleta",
+        "key": "pie_atleta",
+        "display": "Pie de atleta",
+        "group": "Dermatológico",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_herpes_simple",
+        "key": "herpes_simple",
+        "display": "Herpes simple",
+        "group": "Infeccioso/Dermatológico",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_herpes_zoster",
+        "key": "herpes_zoster",
+        "display": "Herpes zóster",
+        "group": "Infeccioso/Dermatológico",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_verrugas",
+        "key": "verrugas",
+        "display": "Verrugas",
+        "group": "Dermatológico",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_infeccion_urinaria",
+        "key": "infeccion_urinaria",
+        "display": "Infección urinaria (ITU)",
+        "group": "Genitourinario",
+        "synonyms": [
+          "ITU",
+          "UTI"
+        ],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_cistitis",
+        "key": "cistitis",
+        "display": "Cistitis",
+        "group": "Genitourinario",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_piedras_riñon",
+        "key": "piedras_riñon",
+        "display": "Cálculos renales",
+        "group": "Genitourinario",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_enfermedad_renal_cronica",
+        "key": "enfermedad_renal_cronica",
+        "display": "Enfermedad renal crónica",
+        "group": "Genitourinario",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_hiperplasia_prostatica_benigna",
+        "key": "hiperplasia_prostatica_benigna",
+        "display": "Hiperplasia prostática benigna (HPB)",
+        "group": "Genitourinario",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_disfuncion_erectil",
+        "key": "disfuncion_erectil",
+        "display": "Disfunción eréctil",
+        "group": "Genitourinario",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_incontinencia_urinaria",
+        "key": "incontinencia_urinaria",
+        "display": "Incontinencia urinaria",
+        "group": "Genitourinario",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_endometriosis",
+        "key": "endometriosis",
+        "display": "Endometriosis",
+        "group": "Reproductivo",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_sop_pcos",
+        "key": "sop_pcos",
+        "display": "Síndrome de ovario poliquístico (SOP)",
+        "group": "Reproductivo/Endocrino",
+        "synonyms": [
+          "PCOS",
+          "SOP"
+        ],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_miomas",
+        "key": "miomas",
+        "display": "Miomas uterinos",
+        "group": "Reproductivo",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_dismenorrea",
+        "key": "dismenorrea",
+        "display": "Dismenorrea (dolor menstrual)",
+        "group": "Reproductivo",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_menopausia_sintomas",
+        "key": "menopausia_sintomas",
+        "display": "Síntomas de menopausia",
+        "group": "Reproductivo",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_vaginosis",
+        "key": "vaginosis",
+        "display": "Vaginosis bacteriana",
+        "group": "Reproductivo/Infeccioso",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_candidiasis_vaginal",
+        "key": "candidiasis_vaginal",
+        "display": "Candidiasis vaginal",
+        "group": "Reproductivo/Infeccioso",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_vph",
+        "key": "vph",
+        "display": "Infección por VPH",
+        "group": "Reproductivo/Infeccioso",
+        "synonyms": [
+          "HPV"
+        ],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_conjuntivitis",
+        "key": "conjuntivitis",
+        "display": "Conjuntivitis",
+        "group": "Oftalmológico",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_ojo_seco",
+        "key": "ojo_seco",
+        "display": "Síndrome de ojo seco",
+        "group": "Oftalmológico",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_miopia",
+        "key": "miopia",
+        "display": "Miopía",
+        "group": "Oftalmológico",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_astigmatismo",
+        "key": "astigmatismo",
+        "display": "Astigmatismo",
+        "group": "Oftalmológico",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_cataratas",
+        "key": "cataratas",
+        "display": "Cataratas",
+        "group": "Oftalmológico",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_glaucoma",
+        "key": "glaucoma",
+        "display": "Glaucoma",
+        "group": "Oftalmológico",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_caries",
+        "key": "caries",
+        "display": "Caries dental",
+        "group": "Dental",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_periodontitis",
+        "key": "periodontitis",
+        "display": "Gingivitis/periodontitis",
+        "group": "Dental",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_resfriado_comun",
+        "key": "resfriado_comun",
+        "display": "Resfriado común (infección respiratoria alta)",
+        "group": "Infeccioso",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_influenza",
+        "key": "influenza",
+        "display": "Influenza (gripe)",
+        "group": "Infeccioso",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_covid19",
+        "key": "covid19",
+        "display": "COVID-19",
+        "group": "Infeccioso",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      },
+      {
+        "id": "cond_hipoacusia",
+        "key": "hipoacusia",
+        "display": "Hipoacusia (pérdida auditiva)",
+        "group": "ORL",
+        "synonyms": [],
+        "code_system": null,
+        "code": null,
+        "default_verification_status": "unverified_patient"
+      }
+    ]
+  }
+}
