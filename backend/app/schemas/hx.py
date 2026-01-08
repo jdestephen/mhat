@@ -24,10 +24,18 @@ class Document(DocumentBase):
 
 # Medical Records
 class MedicalRecordBase(BaseModel):
-    title: str
+    motive: str
     diagnosis: Optional[str] = None
     notes: Optional[str] = None
     category_id: Optional[int] = None
+    tags: Optional[List[str]] = []
+
+class Category(BaseModel):
+    id: int
+    name: str
+
+    class Config:
+        orm_mode = True
 
 class MedicalRecordCreate(MedicalRecordBase):
     pass

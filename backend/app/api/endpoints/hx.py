@@ -43,10 +43,11 @@ async def create_medical_record(
 
     medical_record = MedicalRecord(
         patient_id=patient_profile.id,
-        title=record_in.title,
+        motive=record_in.motive,
         diagnosis=record_in.diagnosis,
         notes=record_in.notes,
-        category_id=record_in.category_id
+        category_id=record_in.category_id,
+        tags=record_in.tags
     )
     db.add(medical_record)
     await db.commit()
@@ -57,6 +58,18 @@ async def create_medical_record(
         .options(selectinload(MedicalRecord.documents))
     )
     return result.scalars().first()
+
+@router.get("/categories", response_model=List[hx_schema.Category])
+async def read_categories(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """
+    Retrieve all categories.
+    """
+    from app.models.hx import Category
+    result = await db.execute(select(Category).order_by(Category.name))
+    return result.scalars().all()
 
 @router.post("/{record_id}/documents", response_model=hx_schema.Document)
 async def upload_document_to_record(

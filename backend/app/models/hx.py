@@ -21,9 +21,10 @@ class MedicalRecord(Base):
     patient_id: Mapped[int] = mapped_column(ForeignKey("patient_profiles.id"), nullable=False)
     category_id: Mapped[int] = mapped_column(ForeignKey("categories.id"), nullable=True)
     
-    title: Mapped[str] = mapped_column(String, nullable=False)
+    motive: Mapped[str] = mapped_column(String, nullable=False)
     diagnosis: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    tags: Mapped[Optional[List[str]]] = mapped_column(ARRAY(String), nullable=True)
     
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
