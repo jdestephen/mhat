@@ -80,7 +80,7 @@ export function Autocomplete({ endpoint, placeholder, onSelect, className, value
     setQuery(option.display);
     setOpen(false);
     onSelect(option);
-    if (onChange) onChange(option.display);
+    // Don't call onChange here - it would overwrite the full object set by onSelect
   };
 
   return (

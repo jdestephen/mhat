@@ -95,11 +95,16 @@ export interface Allergy {
   id: number;
   patient_profile_id: number;
   allergen: string;
+  code: string;
+  code_system: string;
   type: AllergyType;
   reaction?: string;
   severity: AllergySeverity;
   source: AllergySource;
   status: AllergyStatus;
+  created_at: string;
+  deleted: boolean;
+  deleted_at?: string;
 }
 
 export enum ConditionStatus {
@@ -118,8 +123,13 @@ export interface Condition {
   id: number;
   patient_profile_id: number;
   name: string;
+  code: string;
+  code_system: string;
   since_year?: string;
   status: ConditionStatus;
   source: ConditionSource;
   notes?: string;
+  created_at: string;
+  deleted: boolean;
+  deleted_at?: string;
 }

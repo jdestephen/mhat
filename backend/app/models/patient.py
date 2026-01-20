@@ -1,4 +1,4 @@
-from sqlalchemy import String, Integer, ForeignKey, DateTime, Date, ARRAY, Enum, Text
+from sqlalchemy import String, Integer, ForeignKey, DateTime, Date, ARRAY, Enum, Text, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import Optional, List
 from datetime import datetime, date
@@ -74,11 +74,18 @@ class Allergy(Base):
     patient_profile_id: Mapped[int] = mapped_column(ForeignKey("patient_profiles.id"), nullable=False)
     
     allergen: Mapped[str] = mapped_column(String, nullable=False) # "To what?"
+    code: Mapped[str] = mapped_column(String, nullable=False) # SNOMED CT code
+    code_system: Mapped[str] = mapped_column(String, nullable=False) # e.g., "http://snomed.info/sct"
     type: Mapped[AllergyType] = mapped_column(Enum(AllergyType), default=AllergyType.OTHER, nullable=False)
     reaction: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     severity: Mapped[AllergySeverity] = mapped_column(Enum(AllergySeverity), default=AllergySeverity.UNKNOWN, nullable=False)
     source: Mapped[AllergySource] = mapped_column(Enum(AllergySource), default=AllergySource.NOT_SURE, nullable=False)
     status: Mapped[AllergyStatus] = mapped_column(Enum(AllergyStatus), default=AllergyStatus.UNVERIFIED, nullable=False)
+    
+    # Timestamps and soft delete
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    deleted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     patient_profile: Mapped["PatientProfile"] = relationship("PatientProfile", back_populates="allergies")
 
@@ -89,9 +96,16 @@ class Condition(Base):
     patient_profile_id: Mapped[int] = mapped_column(ForeignKey("patient_profiles.id"), nullable=False)
     
     name: Mapped[str] = mapped_column(String, nullable=False) # "condition"
+    code: Mapped[str] = mapped_column(String, nullable=False) # SNOMED CT code
+    code_system: Mapped[str] = mapped_column(String, nullable=False) # e.g., "http://snomed.info/sct"
     since_year: Mapped[Optional[str]] = mapped_column(String, nullable=True) # "since" (Year or "No sé")
     status: Mapped[ConditionStatus] = mapped_column(Enum(ConditionStatus), default=ConditionStatus.UNKNOWN, nullable=False)
     source: Mapped[ConditionSource] = mapped_column(Enum(ConditionSource), default=ConditionSource.SUSPECTED, nullable=False)
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    
+    # Timestamps and soft delete
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    deleted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     patient_profile: Mapped["PatientProfile"] = relationship("PatientProfile", back_populates="conditions")

@@ -24,6 +24,12 @@ interface PatientHealthHistoryProps {
 }
 
 export function PatientHealthHistory({ profile, onRefresh }: PatientHealthHistoryProps) {
+  // Helper function to capitalize first letter
+  const capitalize = (str: string) => {
+    if (!str) return '';
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  };
+
   const [options, setOptions] = useState<any>(null);
   
   // Allergy Form State
@@ -58,6 +64,13 @@ export function PatientHealthHistory({ profile, onRefresh }: PatientHealthHistor
 
   const handleAddAllergy = async () => {
     if (!newAllergy.allergen) return;
+    
+    // Validate that code and code_system are present (required for FHIR compliance)
+    if (!newAllergy.code || !newAllergy.code_system) {
+      alert('Please select an allergy from the autocomplete dropdown to ensure proper coding.');
+      return;
+    }
+    
     try {
       await api.post('/profiles/patient/allergies', newAllergy);
       setShowAddAllergy(false);
@@ -77,6 +90,13 @@ export function PatientHealthHistory({ profile, onRefresh }: PatientHealthHistor
 
   const handleAddCondition = async () => {
     if (!newCondition.name) return;
+    
+    // Validate that code and code_system are present (required for FHIR compliance)
+    if (!newCondition.code || !newCondition.code_system) {
+      alert('Please select a condition from the autocomplete dropdown to ensure proper coding.');
+      return;
+    }
+    
     try {
       await api.post('/profiles/patient/conditions', newCondition);
       setShowAddCondition(false);
@@ -95,6 +115,78 @@ export function PatientHealthHistory({ profile, onRefresh }: PatientHealthHistor
 
   return (
     <div className="space-y-8">
+      {/* Conditions Section */}
+      <div className="border border-[var(--border-light)] rounded-lg p-4">
+        <div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-2">
+          <h2 className="text-lg font-semibold text-emerald-900">Conditions</h2>
+          <Button variant="outline" size="sm" onClick={() => setShowAddCondition(!showAddCondition)}>
+            {showAddCondition ? <X className="w-4 h-4 mr-1" /> : <Plus className="w-4 h-4 mr-1" />}
+            {showAddCondition ? 'Cancel' : 'Add Condition'}
+          </Button>
+        </div>
+
+        {showAddCondition && (
+          <div className="mb-6 p-4 bg-slate-50 rounded-md border border-[var(--border-light)]">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="col-span-2">
+                <label className="block text-sm font-medium mb-1">Condition</label>
+                <Autocomplete
+                  endpoint="/catalog/conditions"
+                  placeholder="Search condition (e.g. Asma)"
+                  onSelect={(opt) => setNewCondition({ 
+                    ...newCondition, 
+                    name: opt.display,
+                    code: opt.code,
+                    code_system: opt.code_system
+                  })}
+                  onChange={(val) => setNewCondition({ ...newCondition, name: val, code: undefined, code_system: undefined })}
+                  value={newCondition.name}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Status</label>
+                <select
+                  className="w-full rounded-md border border-slate-200 bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-600 focus-visible:ring-offset-0"
+                  value={newCondition.status}
+                  onChange={(e) => setNewCondition({ ...newCondition, status: e.target.value as ConditionStatus })}
+                >
+                  <option value={ConditionStatus.ACTIVE}>Activa</option>
+                  <option value={ConditionStatus.CONTROLLED}>Controlada</option>
+                  <option value={ConditionStatus.RESOLVED}>Resuelta</option>
+                  <option value={ConditionStatus.UNKNOWN}>No sé</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Since (Year)</label>
+                <Input
+                  placeholder="e.g. 2015"
+                  value={newCondition.since_year || ''}
+                  onChange={(e) => setNewCondition({ ...newCondition, since_year: e.target.value })}
+                />
+              </div>
+            </div>
+            <Button onClick={handleAddCondition}>Save Condition</Button>
+          </div>
+        )}
+
+        <div className="space-y-2">
+          {profile.conditions?.length === 0 && <p className="text-slate-500 italic">No conditions recorded.</p>}
+          {profile.conditions?.map((cond) => (
+            <div key={cond.id} className="flex justify-between items-center p-3 bg-slate-50 rounded border border-slate-100">
+              <div>
+                <p className="font-medium text-slate-800">{cond.name}</p>
+                <p className="text-xs text-slate-500">
+                  Since: {cond.since_year || 'Unknown'}
+                </p>
+              </div>
+              <div className="px-2 py-1 text-xs rounded bg-slate-200 text-slate-700">
+                {capitalize(cond.status)}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      
       {/* Allergies Section */}
       <div className="border border-[var(--border-light)] rounded-lg p-4">
         <div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-2">
@@ -114,19 +206,16 @@ export function PatientHealthHistory({ profile, onRefresh }: PatientHealthHistor
                            endpoint="/catalog/allergies"
                            placeholder="Search allergy (e.g. Maní)"
                            onSelect={(opt) => {
-                               setNewAllergy({...newAllergy, allergen: opt.display});
+                               setNewAllergy({
+                                 ...newAllergy, 
+                                 allergen: opt.display,
+                                 code: opt.code,
+                                 code_system: opt.code_system
+                               });
                            }}
-                           onChange={(val) => setNewAllergy({...newAllergy, allergen: val})}
+                           onChange={(val) => setNewAllergy({...newAllergy, allergen: val, code: undefined, code_system: undefined})}
                            value={newAllergy.allergen}
                         />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Reaction</label>
-                         <Input 
-                           placeholder="e.g. Ronchas"
-                           value={newAllergy.reaction || ''}
-                           onChange={(e) => setNewAllergy({...newAllergy, reaction: e.target.value})}
-                         />
                     </div>
                      <div>
                         <label className="block text-sm font-medium mb-1">Severity</label>
@@ -141,16 +230,13 @@ export function PatientHealthHistory({ profile, onRefresh }: PatientHealthHistor
                             <option value={AllergySeverity.UNKNOWN}>No sé</option>
                         </select>
                     </div>
-                    <div>
-                         <label className="block text-sm font-medium mb-1">Status</label>
-                         <select 
-                          className="w-full rounded-md border border-slate-200 bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-600 focus-visible:ring-offset-0"
-                          value={newAllergy.status}
-                          onChange={(e) => setNewAllergy({...newAllergy, status: e.target.value as AllergyStatus})}
-                        >
-                            <option value={AllergyStatus.UNVERIFIED}>No verificado</option>
-                            <option value={AllergyStatus.VERIFIED}>Verificado</option>
-                        </select>
+                    <div className="col-span-2">
+                        <label className="block text-sm font-medium mb-1">Reaction</label>
+                         <Input 
+                           placeholder="e.g. Ronchas"
+                           value={newAllergy.reaction || ''}
+                           onChange={(e) => setNewAllergy({...newAllergy, reaction: e.target.value})}
+                         />
                     </div>
                 </div>
                 <Button onClick={handleAddAllergy}>Save Allergy</Button>
@@ -164,78 +250,11 @@ export function PatientHealthHistory({ profile, onRefresh }: PatientHealthHistor
                    <div>
                        <p className="font-medium text-slate-800">{allergy.allergen}</p>
                        <p className="text-xs text-slate-500">
-                          {allergy.severity} • {allergy.reaction || 'No reaction specified'}
+                          {capitalize(allergy.severity)} • {allergy.reaction || 'No reaction specified'}
                        </p>
                    </div>
                    <div className="px-2 py-1 text-xs rounded bg-slate-200 text-slate-700">
                        {allergy.status}
-                   </div>
-               </div>
-           ))}
-        </div>
-      </div>
-
-      {/* Conditions Section */}
-      <div className="border border-[var(--border-light)] rounded-lg p-4">
-        <div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-2">
-           <h2 className="text-lg font-semibold text-emerald-900">Conditions</h2>
-           <Button variant="outline" size="sm" onClick={() => setShowAddCondition(!showAddCondition)}>
-             {showAddCondition ? <X className="w-4 h-4 mr-1"/> : <Plus className="w-4 h-4 mr-1"/>}
-             {showAddCondition ? 'Cancel' : 'Add Condition'}
-           </Button>
-        </div>
-
-        {showAddCondition && (
-            <div className="mb-6 p-4 bg-slate-50 rounded-md border border-[var(--border-light)]">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div className="col-span-2">
-                        <label className="block text-sm font-medium mb-1">Condition</label>
-                        <Autocomplete 
-                           endpoint="/catalog/conditions"
-                           placeholder="Search condition (e.g. Asma)"
-                           onSelect={(opt) => setNewCondition({...newCondition, name: opt.display})}
-                           onChange={(val) => setNewCondition({...newCondition, name: val})}
-                           value={newCondition.name}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Status</label>
-                        <select 
-                           className="w-full rounded-md border border-slate-200 bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-600 focus-visible:ring-offset-0"
-                           value={newCondition.status}
-                           onChange={(e) => setNewCondition({...newCondition, status: e.target.value as ConditionStatus})}
-                         >
-                            <option value={ConditionStatus.ACTIVE}>Activa</option>
-                            <option value={ConditionStatus.CONTROLLED}>Controlada</option>
-                            <option value={ConditionStatus.RESOLVED}>Resuelta</option>
-                            <option value={ConditionStatus.UNKNOWN}>No sé</option>
-                         </select>
-                    </div>
-                     <div>
-                        <label className="block text-sm font-medium mb-1">Since (Year)</label>
-                         <Input 
-                           placeholder="e.g. 2015"
-                           value={newCondition.since_year || ''}
-                           onChange={(e) => setNewCondition({...newCondition, since_year: e.target.value})}
-                         />
-                    </div>
-                </div>
-                <Button onClick={handleAddCondition}>Save Condition</Button>
-            </div>
-        )}
-
-         <div className="space-y-2">
-           {profile.conditions?.length === 0 && <p className="text-slate-500 italic">No conditions recorded.</p>}
-           {profile.conditions?.map((cond) => (
-               <div key={cond.id} className="flex justify-between items-center p-3 bg-slate-50 rounded border border-slate-100">
-                   <div>
-                       <p className="font-medium text-slate-800">{cond.name}</p>
-                       <p className="text-xs text-slate-500">
-                          Since: {cond.since_year || 'Unknown'}
-                       </p>
-                   </div>
-                   <div className="px-2 py-1 text-xs rounded bg-slate-200 text-slate-700">
-                       {cond.status}
                    </div>
                </div>
            ))}

@@ -1,5 +1,5 @@
 from typing import List, Optional
-from datetime import date
+from datetime import date, datetime
 from pydantic import BaseModel
 from enum import Enum
 
@@ -55,6 +55,8 @@ class Medication(MedicationBase):
 # Allergy
 class AllergyBase(BaseModel):
     allergen: str
+    code: str
+    code_system: str
     type: AllergyType
     reaction: Optional[str] = None
     severity: AllergySeverity
@@ -67,6 +69,9 @@ class AllergyCreate(AllergyBase):
 class Allergy(AllergyBase):
     id: int
     patient_profile_id: int
+    created_at: datetime
+    deleted: bool
+    deleted_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -74,6 +79,8 @@ class Allergy(AllergyBase):
 # Condition
 class ConditionBase(BaseModel):
     name: str
+    code: str
+    code_system: str
     since_year: Optional[str] = None
     status: ConditionStatus
     source: ConditionSource
@@ -85,6 +92,9 @@ class ConditionCreate(ConditionBase):
 class Condition(ConditionBase):
     id: int
     patient_profile_id: int
+    created_at: datetime
+    deleted: bool
+    deleted_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
