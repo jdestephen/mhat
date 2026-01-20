@@ -55,7 +55,7 @@ async def create_medical_record(
     result = await db.execute(
         select(MedicalRecord)
         .filter(MedicalRecord.id == medical_record.id)
-        .options(selectinload(MedicalRecord.documents))
+        .options(selectinload(MedicalRecord.documents), selectinload(MedicalRecord.category))
     )
     return result.scalars().first()
 
@@ -142,7 +142,7 @@ async def read_medical_records(
     result = await db.execute(
         select(MedicalRecord)
         .filter(MedicalRecord.patient_id == patient_profile.id)
-        .options(selectinload(MedicalRecord.documents))
+        .options(selectinload(MedicalRecord.documents), selectinload(MedicalRecord.category))
         .offset(skip)
         .limit(limit)
         .order_by(MedicalRecord.created_at.desc())

@@ -140,8 +140,8 @@
           "peanut",
           "maní"
         ],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "91935009",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -154,8 +154,8 @@
           "nueces",
           "frutos secos"
         ],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "91934008",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -164,8 +164,8 @@
         "display": "Avellana",
         "category": "Alimento",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "417965003",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -174,8 +174,8 @@
         "display": "Almendra",
         "category": "Alimento",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "418503004",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -184,8 +184,8 @@
         "display": "Nuez",
         "category": "Alimento",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "762952008",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -194,8 +194,8 @@
         "display": "Pistacho",
         "category": "Alimento",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "419343007",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -204,8 +204,8 @@
         "display": "Nuez de la India (cashew)",
         "category": "Alimento",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "417889008",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -214,8 +214,8 @@
         "display": "Nuez pecana",
         "category": "Alimento",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "762950000",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -224,8 +224,8 @@
         "display": "Nuez de Brasil",
         "category": "Alimento",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "762949009",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -237,8 +237,8 @@
           "ajonjolí",
           "sesame"
         ],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "714035009",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -251,8 +251,8 @@
           "milk",
           "leche"
         ],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "425525006",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -264,8 +264,8 @@
           "egg",
           "huevos"
         ],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "91930004",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -277,8 +277,8 @@
           "wheat",
           "harina"
         ],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "420174000",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -290,8 +290,8 @@
           "soja",
           "soy"
         ],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "714035009",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -300,8 +300,8 @@
         "display": "Pescado",
         "category": "Alimento",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "417532002",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -313,8 +313,8 @@
           "shellfish",
           "crustáceos"
         ],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "300913006",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -323,8 +323,8 @@
         "display": "Mariscos (moluscos)",
         "category": "Alimento",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "765146007",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -333,8 +333,8 @@
         "display": "Camarón",
         "category": "Alimento",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "300912001",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -343,8 +343,8 @@
         "display": "Cangrejo",
         "category": "Alimento",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "300910009",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -353,8 +353,8 @@
         "display": "Langosta",
         "category": "Alimento",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "300909004",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -363,8 +363,8 @@
         "display": "Gluten (sensibilidad/intolerancia reportada)",
         "category": "Alimento",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "782555009",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -373,8 +373,8 @@
         "display": "Fresa",
         "category": "Alimento",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "716186003",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -383,8 +383,8 @@
         "display": "Kiwi",
         "category": "Alimento",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "782556005",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -393,8 +393,8 @@
         "display": "Tomate",
         "category": "Alimento",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "425525006",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -403,8 +403,8 @@
         "display": "Mostaza",
         "category": "Alimento",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "719174002",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -413,8 +413,8 @@
         "display": "Sulfitos",
         "category": "Alimento/Aditivo",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "294874005",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -426,8 +426,8 @@
           "penicillin",
           "beta-lactámicos (reportado)"
         ],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "91936005",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -436,8 +436,8 @@
         "display": "Amoxicilina",
         "category": "Medicamento",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "294505008",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -448,8 +448,8 @@
         "synonyms": [
           "cephalosporins"
         ],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "91307002",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -462,8 +462,8 @@
           "TMP-SMX",
           "Bactrim"
         ],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "293586001",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -475,8 +475,8 @@
           "ASA",
           "ácido acetilsalicílico"
         ],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "293586001",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -485,8 +485,8 @@
         "display": "Ibuprofeno",
         "category": "Medicamento",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "293582007",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -498,8 +498,8 @@
           "NSAIDs",
           "antiinflamatorios"
         ],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "293586001",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -508,8 +508,8 @@
         "display": "Morfina",
         "category": "Medicamento",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "416098002",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -518,8 +518,8 @@
         "display": "Codeína",
         "category": "Medicamento",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "473147003",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -528,8 +528,8 @@
         "display": "Opioides (otros)",
         "category": "Medicamento",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "419511003",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -538,8 +538,8 @@
         "display": "Lidocaína (anestésico local)",
         "category": "Medicamento",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "294713006",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -548,8 +548,8 @@
         "display": "Anestesia general (agentes anestésicos)",
         "category": "Medicamento",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "294659004",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -558,8 +558,8 @@
         "display": "Medio de contraste yodado",
         "category": "Medicamento/Procedimiento",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "293637006",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -568,8 +568,8 @@
         "display": "Yodo (reacción reportada)",
         "category": "Otro",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "417532002",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -580,8 +580,8 @@
         "synonyms": [
           "guantes de látex"
         ],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "300916003",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -590,8 +590,8 @@
         "display": "Polen de pastos",
         "category": "Ambiental",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "418689008",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -600,8 +600,8 @@
         "display": "Polen de árboles",
         "category": "Ambiental",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "419263009",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -610,8 +610,8 @@
         "display": "Polen de malezas",
         "category": "Ambiental",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "232347008",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -623,8 +623,8 @@
           "dust mites",
           "ácaros"
         ],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "232350006",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -633,8 +633,8 @@
         "display": "Moho/hongos",
         "category": "Ambiental",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "419474003",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -643,8 +643,8 @@
         "display": "Caspa de gato",
         "category": "Ambiental",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "232346004",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -653,8 +653,8 @@
         "display": "Caspa de perro",
         "category": "Ambiental",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "232347008",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -663,8 +663,8 @@
         "display": "Picadura de abeja",
         "category": "Insecto",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "424213003",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -673,8 +673,8 @@
         "display": "Picadura de avispa",
         "category": "Insecto",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "417532002",
         "default_verification_status": "unverified_patient"
       }
     ],
@@ -689,8 +689,8 @@
           "presión alta",
           "high blood pressure"
         ],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "38341003",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -702,8 +702,8 @@
           "DM2",
           "diabetes mellitus tipo 2"
         ],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "44054006",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -712,8 +712,8 @@
         "display": "Prediabetes",
         "group": "Cardiometabólico",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "714628002",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -725,8 +725,8 @@
           "colesterol alto",
           "triglicéridos altos"
         ],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "370992007",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -735,8 +735,8 @@
         "display": "Obesidad",
         "group": "Cardiometabólico",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "414545008",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -745,8 +745,8 @@
         "display": "Enfermedad coronaria",
         "group": "Cardiovascular",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "53741008",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -755,8 +755,8 @@
         "display": "Insuficiencia cardiaca",
         "group": "Cardiovascular",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "49436004",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -765,8 +765,8 @@
         "display": "Fibrilación auricular",
         "group": "Cardiovascular",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "230690007",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -775,8 +775,8 @@
         "display": "Accidente cerebrovascular (ACV/ictus)",
         "group": "Neurológico",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "399957001",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -785,8 +785,8 @@
         "display": "Enfermedad arterial periférica",
         "group": "Cardiovascular",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "195967001",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -795,8 +795,8 @@
         "display": "Asma",
         "group": "Respiratorio",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "13645005",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -807,8 +807,8 @@
         "synonyms": [
           "COPD"
         ],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "13645005",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -817,8 +817,8 @@
         "display": "Rinitis alérgica",
         "group": "ORL",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "61582004",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -827,8 +827,8 @@
         "display": "Sinusitis",
         "group": "ORL",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "36971009",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -837,8 +837,8 @@
         "display": "Otitis (infección de oído)",
         "group": "ORL",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "65363002",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -847,8 +847,8 @@
         "display": "Faringitis",
         "group": "ORL",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "405737000",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -857,8 +857,8 @@
         "display": "Amigdalitis",
         "group": "ORL",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "90176007",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -867,8 +867,8 @@
         "display": "Apnea obstructiva del sueño",
         "group": "Sueño/Respiratorio",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "78275009",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -877,8 +877,8 @@
         "display": "Bronquitis",
         "group": "Respiratorio",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "32398004",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -887,8 +887,8 @@
         "display": "Neumonía",
         "group": "Infeccioso/Respiratorio",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "233604007",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -901,8 +901,8 @@
           "GERD",
           "acidez"
         ],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "235595009",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -911,8 +911,8 @@
         "display": "Gastritis",
         "group": "Gastrointestinal",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "4556007",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -921,8 +921,8 @@
         "display": "Úlcera péptica",
         "group": "Gastrointestinal",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "13200003",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -934,8 +934,8 @@
           "SII",
           "IBS"
         ],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "10743008",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -944,8 +944,8 @@
         "display": "Estreñimiento",
         "group": "Gastrointestinal",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "14760008",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -954,8 +954,8 @@
         "display": "Diarrea recurrente",
         "group": "Gastrointestinal",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "62315008",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -964,8 +964,8 @@
         "display": "Hemorroides",
         "group": "Gastrointestinal",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "70153002",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -977,8 +977,8 @@
           "celiaquía",
           "celiac disease"
         ],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "396331005",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -987,8 +987,8 @@
         "display": "Intolerancia a la lactosa",
         "group": "Gastrointestinal",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "267425008",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -997,8 +997,8 @@
         "display": "Hígado graso (esteatosis)",
         "group": "Gastrointestinal",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "197321007",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1007,8 +1007,8 @@
         "display": "Cálculos biliares (colelitiasis)",
         "group": "Gastrointestinal",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "235919008",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1017,8 +1017,8 @@
         "display": "Gastroenteritis",
         "group": "Infeccioso/Gastrointestinal",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "25374005",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1029,8 +1029,8 @@
         "synonyms": [
           "tiroides baja"
         ],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "40930008",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1041,8 +1041,8 @@
         "synonyms": [
           "tiroides alta"
         ],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "34486009",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1051,8 +1051,8 @@
         "display": "Nódulos tiroideos",
         "group": "Endocrino",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "237529008",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1061,8 +1061,8 @@
         "display": "Deficiencia de vitamina D",
         "group": "Nutrición",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "34713006",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1071,8 +1071,8 @@
         "display": "Anemia por deficiencia de hierro",
         "group": "Hematológico",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "87522002",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1081,8 +1081,8 @@
         "display": "Deficiencia de vitamina B12",
         "group": "Hematológico/Nutrición",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "419574009",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1094,8 +1094,8 @@
           "migraine",
           "migraña crónica"
         ],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "37796009",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1104,8 +1104,8 @@
         "display": "Cefalea tensional",
         "group": "Neurológico",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "398057008",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1114,8 +1114,8 @@
         "display": "Vértigo",
         "group": "Neurológico/ORL",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "399153001",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1124,8 +1124,8 @@
         "display": "Epilepsia",
         "group": "Neurológico",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "84757009",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1134,8 +1134,8 @@
         "display": "Neuropatía periférica",
         "group": "Neurológico",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "42658009",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1144,8 +1144,8 @@
         "display": "Síndrome del túnel carpiano",
         "group": "Músculo-esquelético",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "57406009",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1154,8 +1154,8 @@
         "display": "Demencia (Alzheimer u otras)",
         "group": "Neurológico",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "52448006",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1164,8 +1164,8 @@
         "display": "Depresión",
         "group": "Salud mental",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "35489007",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1174,8 +1174,8 @@
         "display": "Trastorno de ansiedad",
         "group": "Salud mental",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "197480006",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1184,8 +1184,8 @@
         "display": "Trastorno de pánico",
         "group": "Salud mental",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "371631005",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1196,8 +1196,8 @@
         "synonyms": [
           "ADHD"
         ],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "406506008",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1206,8 +1206,8 @@
         "display": "Insomnio",
         "group": "Sueño/Salud mental",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "193462001",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1216,8 +1216,8 @@
         "display": "Estrés",
         "group": "Salud mental",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "73595000",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1226,8 +1226,8 @@
         "display": "Dolor lumbar",
         "group": "Músculo-esquelético",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "279039007",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1236,8 +1236,8 @@
         "display": "Ciática",
         "group": "Músculo-esquelético",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "23056005",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1246,8 +1246,8 @@
         "display": "Dolor cervical (cervicalgia)",
         "group": "Músculo-esquelético",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "81680005",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1258,8 +1258,8 @@
         "synonyms": [
           "artrosis"
         ],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "396275006",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1268,8 +1268,8 @@
         "display": "Artritis reumatoide",
         "group": "Músculo-esquelético",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "69896004",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1278,8 +1278,8 @@
         "display": "Osteoporosis",
         "group": "Músculo-esquelético",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "64859006",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1288,8 +1288,8 @@
         "display": "Gota",
         "group": "Músculo-esquelético",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "90560007",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1298,8 +1298,8 @@
         "display": "Fibromialgia",
         "group": "Músculo-esquelético",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "24693007",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1308,8 +1308,8 @@
         "display": "Tendinitis",
         "group": "Músculo-esquelético",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "34840004",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1318,8 +1318,8 @@
         "display": "Bursitis",
         "group": "Músculo-esquelético",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "84017003",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1328,8 +1328,8 @@
         "display": "Fascitis plantar",
         "group": "Músculo-esquelético",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "202882003",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1338,8 +1338,8 @@
         "display": "Lesión de hombro (manguito rotador)",
         "group": "Músculo-esquelético",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "74323005",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1348,8 +1348,8 @@
         "display": "Dermatitis atópica (eczema)",
         "group": "Dermatológico",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "24079001",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1358,8 +1358,8 @@
         "display": "Dermatitis de contacto",
         "group": "Dermatológico",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "40275004",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1368,8 +1368,8 @@
         "display": "Psoriasis",
         "group": "Dermatológico",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "9014002",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1378,8 +1378,8 @@
         "display": "Acné",
         "group": "Dermatológico",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "88616000",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1388,8 +1388,8 @@
         "display": "Rosácea",
         "group": "Dermatológico",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "398909004",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1398,8 +1398,8 @@
         "display": "Urticaria",
         "group": "Dermatológico",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "126485001",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1408,8 +1408,8 @@
         "display": "Infección por hongos en piel (tiña)",
         "group": "Dermatológico",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "3218000",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1418,8 +1418,8 @@
         "display": "Pie de atleta",
         "group": "Dermatológico",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "6020002",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1428,8 +1428,8 @@
         "display": "Herpes simple",
         "group": "Infeccioso/Dermatológico",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "88594005",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1438,8 +1438,8 @@
         "display": "Herpes zóster",
         "group": "Infeccioso/Dermatológico",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "4740000",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1448,8 +1448,8 @@
         "display": "Verrugas",
         "group": "Dermatológico",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "240542006",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1461,8 +1461,8 @@
           "ITU",
           "UTI"
         ],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "68566005",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1471,8 +1471,8 @@
         "display": "Cistitis",
         "group": "Genitourinario",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "38822007",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1481,8 +1481,8 @@
         "display": "Cálculos renales",
         "group": "Genitourinario",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "95570007",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1491,8 +1491,8 @@
         "display": "Enfermedad renal crónica",
         "group": "Genitourinario",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "709044004",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1501,8 +1501,8 @@
         "display": "Hiperplasia prostática benigna (HPB)",
         "group": "Genitourinario",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "266569009",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1511,8 +1511,8 @@
         "display": "Disfunción eréctil",
         "group": "Genitourinario",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "60634006",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1521,8 +1521,8 @@
         "display": "Incontinencia urinaria",
         "group": "Genitourinario",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "165232002",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1531,8 +1531,8 @@
         "display": "Endometriosis",
         "group": "Reproductivo",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "129103003",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1544,8 +1544,8 @@
           "PCOS",
           "SOP"
         ],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "237055003",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1554,8 +1554,8 @@
         "display": "Miomas uterinos",
         "group": "Reproductivo",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "95315005",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1564,8 +1564,8 @@
         "display": "Dismenorrea (dolor menstrual)",
         "group": "Reproductivo",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "266599000",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1574,8 +1574,8 @@
         "display": "Síntomas de menopausia",
         "group": "Reproductivo",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "289903006",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1584,8 +1584,8 @@
         "display": "Vaginosis bacteriana",
         "group": "Reproductivo/Infeccioso",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "63144007",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1594,8 +1594,8 @@
         "display": "Candidiasis vaginal",
         "group": "Reproductivo/Infeccioso",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "37826003",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1606,8 +1606,8 @@
         "synonyms": [
           "HPV"
         ],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "240532009",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1616,8 +1616,8 @@
         "display": "Conjuntivitis",
         "group": "Oftalmológico",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "9826008",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1626,8 +1626,8 @@
         "display": "Síndrome de ojo seco",
         "group": "Oftalmológico",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "46627006",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1636,8 +1636,8 @@
         "display": "Miopía",
         "group": "Oftalmológico",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "57190000",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1646,8 +1646,8 @@
         "display": "Astigmatismo",
         "group": "Oftalmológico",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "82649003",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1656,8 +1656,8 @@
         "display": "Cataratas",
         "group": "Oftalmológico",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "193570009",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1666,8 +1666,8 @@
         "display": "Glaucoma",
         "group": "Oftalmológico",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "23986001",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1676,8 +1676,8 @@
         "display": "Caries dental",
         "group": "Dental",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "80967001",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1686,8 +1686,8 @@
         "display": "Gingivitis/periodontitis",
         "group": "Dental",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "41565005",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1696,8 +1696,8 @@
         "display": "Resfriado común (infección respiratoria alta)",
         "group": "Infeccioso",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "82272006",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1706,8 +1706,8 @@
         "display": "Influenza (gripe)",
         "group": "Infeccioso",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "6142004",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1716,8 +1716,8 @@
         "display": "COVID-19",
         "group": "Infeccioso",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "840539006",
         "default_verification_status": "unverified_patient"
       },
       {
@@ -1726,8 +1726,8 @@
         "display": "Hipoacusia (pérdida auditiva)",
         "group": "ORL",
         "synonyms": [],
-        "code_system": null,
-        "code": null,
+        "code_system": "http://snomed.info/sct",
+        "code": "343087000",
         "default_verification_status": "unverified_patient"
       }
     ]

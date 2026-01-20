@@ -48,6 +48,7 @@ class MedicalRecord(MedicalRecordBase):
     patient_id: int
     created_at: datetime
     documents: List[Document] = []
+    category: Optional[Category] = None
 
     class Config:
         orm_mode = True
