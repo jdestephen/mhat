@@ -1,0 +1,246 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Autocomplete } from '@/components/ui/autocomplete';
+import api from '@/lib/api';
+import { 
+  PatientProfile, 
+  Allergy, 
+  Condition,
+  AllergySeverity,
+  AllergySource,
+  AllergyStatus,
+  ConditionStatus,
+  ConditionSource,
+  AllergyType
+} from '@/types';
+import { X, Plus, AlertCircle } from 'lucide-react';
+
+interface PatientHealthHistoryProps {
+  profile: PatientProfile;
+  onRefresh: () => void;
+}
+
+export function PatientHealthHistory({ profile, onRefresh }: PatientHealthHistoryProps) {
+  const [options, setOptions] = useState<any>(null);
+  
+  // Allergy Form State
+  const [showAddAllergy, setShowAddAllergy] = useState(false);
+  const [newAllergy, setNewAllergy] = useState<Partial<Allergy>>({
+      type: AllergyType.OTHER,
+      severity: AllergySeverity.UNKNOWN,
+      source: AllergySource.NOT_SURE,
+      status: AllergyStatus.UNVERIFIED
+  });
+
+  // Condition Form State
+  const [showAddCondition, setShowAddCondition] = useState(false);
+  const [newCondition, setNewCondition] = useState<Partial<Condition>>({
+      status: ConditionStatus.ACTIVE,
+      source: ConditionSource.SUSPECTED,
+      since_year: ''
+  });
+
+  useEffect(() => {
+    fetchOptions();
+  }, []);
+
+  const fetchOptions = async () => {
+    try {
+      const res = await api.get('/catalog/options');
+      setOptions(res.data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleAddAllergy = async () => {
+    if (!newAllergy.allergen) return;
+    try {
+      await api.post('/profiles/patient/allergies', newAllergy);
+      setShowAddAllergy(false);
+      setNewAllergy({
+          type: AllergyType.OTHER,
+          severity: AllergySeverity.UNKNOWN,
+          source: AllergySource.NOT_SURE,
+          status: AllergyStatus.UNVERIFIED,
+          allergen: ''
+      });
+      onRefresh();
+    } catch (error) {
+       console.error(error);
+       alert("Failed to add allergy");
+    }
+  };
+
+  const handleAddCondition = async () => {
+    if (!newCondition.name) return;
+    try {
+      await api.post('/profiles/patient/conditions', newCondition);
+      setShowAddCondition(false);
+      setNewCondition({
+          status: ConditionStatus.ACTIVE,
+          source: ConditionSource.SUSPECTED,
+          since_year: '',
+          name: ''
+      });
+      onRefresh();
+    } catch (error) {
+       console.error(error);
+       alert("Failed to add condition");
+    }
+  };
+
+  return (
+    <div className="space-y-8">
+      {/* Allergies Section */}
+      <div className="border border-[var(--border-light)] rounded-lg p-4">
+        <div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-2">
+           <h2 className="text-lg font-semibold text-emerald-900">Allergies</h2>
+           <Button variant="outline" size="sm" onClick={() => setShowAddAllergy(!showAddAllergy)}>
+             {showAddAllergy ? <X className="w-4 h-4 mr-1"/> : <Plus className="w-4 h-4 mr-1"/>}
+             {showAddAllergy ? 'Cancel' : 'Add Allergy'}
+           </Button>
+        </div>
+
+        {showAddAllergy && (
+            <div className="mb-6 p-4 bg-slate-50 rounded-md border border-[var(--border-light)]">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Allergen</label>
+                        <Autocomplete 
+                           endpoint="/catalog/allergies"
+                           placeholder="Search allergy (e.g. Maní)"
+                           onSelect={(opt) => {
+                               setNewAllergy({...newAllergy, allergen: opt.display});
+                           }}
+                           onChange={(val) => setNewAllergy({...newAllergy, allergen: val})}
+                           value={newAllergy.allergen}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Reaction</label>
+                         <Input 
+                           placeholder="e.g. Ronchas"
+                           value={newAllergy.reaction || ''}
+                           onChange={(e) => setNewAllergy({...newAllergy, reaction: e.target.value})}
+                         />
+                    </div>
+                     <div>
+                        <label className="block text-sm font-medium mb-1">Severity</label>
+                        <select 
+                          className="w-full rounded-md border border-slate-200 bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-600 focus-visible:ring-offset-0"
+                          value={newAllergy.severity}
+                          onChange={(e) => setNewAllergy({...newAllergy, severity: e.target.value as AllergySeverity})}
+                        >
+                            <option value={AllergySeverity.MILD}>Leve</option>
+                            <option value={AllergySeverity.MODERATE}>Moderada</option>
+                            <option value={AllergySeverity.SEVERE}>Grave</option>
+                            <option value={AllergySeverity.UNKNOWN}>No sé</option>
+                        </select>
+                    </div>
+                    <div>
+                         <label className="block text-sm font-medium mb-1">Status</label>
+                         <select 
+                          className="w-full rounded-md border border-slate-200 bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-600 focus-visible:ring-offset-0"
+                          value={newAllergy.status}
+                          onChange={(e) => setNewAllergy({...newAllergy, status: e.target.value as AllergyStatus})}
+                        >
+                            <option value={AllergyStatus.UNVERIFIED}>No verificado</option>
+                            <option value={AllergyStatus.VERIFIED}>Verificado</option>
+                        </select>
+                    </div>
+                </div>
+                <Button onClick={handleAddAllergy}>Save Allergy</Button>
+            </div>
+        )}
+
+        <div className="space-y-2">
+           {profile.allergies?.length === 0 && <p className="text-slate-500 italic">No allergies recorded.</p>}
+           {profile.allergies?.map((allergy) => (
+               <div key={allergy.id} className="flex justify-between items-center p-3 bg-slate-50 rounded border border-slate-100">
+                   <div>
+                       <p className="font-medium text-slate-800">{allergy.allergen}</p>
+                       <p className="text-xs text-slate-500">
+                          {allergy.severity} • {allergy.reaction || 'No reaction specified'}
+                       </p>
+                   </div>
+                   <div className="px-2 py-1 text-xs rounded bg-slate-200 text-slate-700">
+                       {allergy.status}
+                   </div>
+               </div>
+           ))}
+        </div>
+      </div>
+
+      {/* Conditions Section */}
+      <div className="border border-[var(--border-light)] rounded-lg p-4">
+        <div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-2">
+           <h2 className="text-lg font-semibold text-emerald-900">Conditions</h2>
+           <Button variant="outline" size="sm" onClick={() => setShowAddCondition(!showAddCondition)}>
+             {showAddCondition ? <X className="w-4 h-4 mr-1"/> : <Plus className="w-4 h-4 mr-1"/>}
+             {showAddCondition ? 'Cancel' : 'Add Condition'}
+           </Button>
+        </div>
+
+        {showAddCondition && (
+            <div className="mb-6 p-4 bg-slate-50 rounded-md border border-[var(--border-light)]">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div className="col-span-2">
+                        <label className="block text-sm font-medium mb-1">Condition</label>
+                        <Autocomplete 
+                           endpoint="/catalog/conditions"
+                           placeholder="Search condition (e.g. Asma)"
+                           onSelect={(opt) => setNewCondition({...newCondition, name: opt.display})}
+                           onChange={(val) => setNewCondition({...newCondition, name: val})}
+                           value={newCondition.name}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Status</label>
+                        <select 
+                           className="w-full rounded-md border border-slate-200 bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-600 focus-visible:ring-offset-0"
+                           value={newCondition.status}
+                           onChange={(e) => setNewCondition({...newCondition, status: e.target.value as ConditionStatus})}
+                         >
+                            <option value={ConditionStatus.ACTIVE}>Activa</option>
+                            <option value={ConditionStatus.CONTROLLED}>Controlada</option>
+                            <option value={ConditionStatus.RESOLVED}>Resuelta</option>
+                            <option value={ConditionStatus.UNKNOWN}>No sé</option>
+                         </select>
+                    </div>
+                     <div>
+                        <label className="block text-sm font-medium mb-1">Since (Year)</label>
+                         <Input 
+                           placeholder="e.g. 2015"
+                           value={newCondition.since_year || ''}
+                           onChange={(e) => setNewCondition({...newCondition, since_year: e.target.value})}
+                         />
+                    </div>
+                </div>
+                <Button onClick={handleAddCondition}>Save Condition</Button>
+            </div>
+        )}
+
+         <div className="space-y-2">
+           {profile.conditions?.length === 0 && <p className="text-slate-500 italic">No conditions recorded.</p>}
+           {profile.conditions?.map((cond) => (
+               <div key={cond.id} className="flex justify-between items-center p-3 bg-slate-50 rounded border border-slate-100">
+                   <div>
+                       <p className="font-medium text-slate-800">{cond.name}</p>
+                       <p className="text-xs text-slate-500">
+                          Since: {cond.since_year || 'Unknown'}
+                       </p>
+                   </div>
+                   <div className="px-2 py-1 text-xs rounded bg-slate-200 text-slate-700">
+                       {cond.status}
+                   </div>
+               </div>
+           ))}
+        </div>
+      </div>
+    </div>
+  );
+}
