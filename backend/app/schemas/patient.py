@@ -72,6 +72,8 @@ class Allergy(AllergyBase):
     created_at: datetime
     deleted: bool
     deleted_at: Optional[datetime] = None
+    verified_by: Optional[int] = None
+    verified_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -95,6 +97,8 @@ class Condition(ConditionBase):
     created_at: datetime
     deleted: bool
     deleted_at: Optional[datetime] = None
+    verified_by: Optional[int] = None
+    verified_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

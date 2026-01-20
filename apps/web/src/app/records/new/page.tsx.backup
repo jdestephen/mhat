@@ -199,21 +199,13 @@ export default function NewRecordPage() {
 
                 <div className="col-span-2">
                    <label className="block text-sm font-medium mb-1">Diagnosis</label>
-                   <Autocomplete
-                     endpoint="/catalog/conditions"
-                     placeholder="Search diagnosis (e.g., Diabetes)"
-                     onSelect={(opt) => {
-                       setDiagnosis(opt.display);
-                       setDiagnosisCode(opt.code);
-                       setDiagnosisCodeSystem(opt.code_system);
-                     }}
-                     onChange={(val) => {
-                       setDiagnosis(val);
-                       setDiagnosisCode(undefined);
-                       setDiagnosisCodeSystem(undefined);
-                     }}
-                     value={diagnosis}
-                   />                </div>
+                   <Input 
+                     value={diagnosis} 
+                     onChange={(e) => setDiagnosis(e.target.value)} 
+                     placeholder="e.g. Hypertension, Sprained Ankle"
+                     onKeyDown={handleKeyDown}
+                   />
+                </div>
 
                 <div className="col-span-2">
                    <label className="block text-sm font-medium mb-1">Notes</label>

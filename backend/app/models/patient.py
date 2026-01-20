@@ -86,7 +86,10 @@ class Allergy(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     deleted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
-
+    verified_by: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), nullable=True)  # Doctor who verified
+    verified_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    
+    verifier: Mapped[Optional["User"]] = relationship("User", foreign_keys=[verified_by])
     patient_profile: Mapped["PatientProfile"] = relationship("PatientProfile", back_populates="allergies")
 
 class Condition(Base):
@@ -107,5 +110,8 @@ class Condition(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     deleted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
-
+    verified_by: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), nullable=True)  # Doctor who verified
+    verified_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    
+    verifier: Mapped[Optional["User"]] = relationship("User", foreign_keys=[verified_by])
     patient_profile: Mapped["PatientProfile"] = relationship("PatientProfile", back_populates="conditions")

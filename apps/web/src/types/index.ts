@@ -53,15 +53,27 @@ export interface Document {
   created_at: string;
 }
 
+export enum RecordStatus {
+  UNVERIFIED = 'unverified',
+  BACKED_BY_DOCUMENT = 'backed_by_document',
+  VERIFIED = 'verified',
+}
+
 export interface MedicalRecord {
   id: number;
   patient_id: number;
   motive: string;
   diagnosis?: string;
+  diagnosis_code?: string;
+  diagnosis_code_system?: string;
   notes?: string;
   category_id?: number;
   category?: { id: number; name: string };
   tags?: string[];
+  status: RecordStatus;
+  created_by: number;
+  verified_by?: number;
+  verified_at?: string;
   created_at: string;
   documents?: Document[];
 }
@@ -94,7 +106,8 @@ export enum AllergyStatus {
 export interface Allergy {
   id: number;
   patient_profile_id: number;
-  allergen: string;
+  verified_by?: number;
+  verified_at?: string;  allergen: string;
   code: string;
   code_system: string;
   type: AllergyType;
@@ -121,7 +134,8 @@ export enum ConditionSource {
 
 export interface Condition {
   id: number;
-  patient_profile_id: number;
+  verified_by?: number;
+  verified_at?: string;  patient_profile_id: number;
   name: string;
   code: string;
   code_system: string;
