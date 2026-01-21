@@ -164,13 +164,9 @@ async def read_medical_records(
     # Build query with base filter
     stmt = select(MedicalRecord).filter(MedicalRecord.patient_id == patient_profile.id)
     
-    # Text search filter
+    # Text search filter (includes motive, diagnosis, notes, tags, category, status)
     if q:
         stmt = stmt.filter(MedicalRecord.search_text.contains(q.lower()))
-    
-    # Category filter
-    if category_id:
-        stmt = stmt.filter(MedicalRecord.category_id == category_id)
     
     # Date range filters
     if date_from:

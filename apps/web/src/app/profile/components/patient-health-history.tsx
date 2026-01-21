@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Autocomplete } from '@/components/ui/autocomplete';
+import { Select } from '@/components/ui/select';
 import api from '@/lib/api';
 import { 
   PatientProfile, 
@@ -145,16 +146,17 @@ export function PatientHealthHistory({ profile, onRefresh }: PatientHealthHistor
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Status</label>
-                <select
-                  className="w-full rounded-md border border-slate-200 bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-600 focus-visible:ring-offset-0"
+                <Select
+                  options={[
+                    { value: ConditionStatus.ACTIVE, label: 'Activa' },
+                    { value: ConditionStatus.CONTROLLED, label: 'Controlada' },
+                    { value: ConditionStatus.RESOLVED, label: 'Resuelta' },
+                    { value: ConditionStatus.UNKNOWN, label: 'No sé' }
+                  ]}
                   value={newCondition.status}
-                  onChange={(e) => setNewCondition({ ...newCondition, status: e.target.value as ConditionStatus })}
-                >
-                  <option value={ConditionStatus.ACTIVE}>Activa</option>
-                  <option value={ConditionStatus.CONTROLLED}>Controlada</option>
-                  <option value={ConditionStatus.RESOLVED}>Resuelta</option>
-                  <option value={ConditionStatus.UNKNOWN}>No sé</option>
-                </select>
+                  onChange={(val) => setNewCondition({ ...newCondition, status: val as ConditionStatus })}
+                  placeholder="Select status..."
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Since (Year)</label>
@@ -219,16 +221,17 @@ export function PatientHealthHistory({ profile, onRefresh }: PatientHealthHistor
                     </div>
                      <div>
                         <label className="block text-sm font-medium mb-1">Severity</label>
-                        <select 
-                          className="w-full rounded-md border border-slate-200 bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-600 focus-visible:ring-offset-0"
+                        <Select
+                          options={[
+                            { value: AllergySeverity.MILD, label: 'Leve' },
+                            { value: AllergySeverity.MODERATE, label: 'Moderada' },
+                            { value: AllergySeverity.SEVERE, label: 'Grave' },
+                            { value: AllergySeverity.UNKNOWN, label: 'No sé' }
+                          ]}
                           value={newAllergy.severity}
-                          onChange={(e) => setNewAllergy({...newAllergy, severity: e.target.value as AllergySeverity})}
-                        >
-                            <option value={AllergySeverity.MILD}>Leve</option>
-                            <option value={AllergySeverity.MODERATE}>Moderada</option>
-                            <option value={AllergySeverity.SEVERE}>Grave</option>
-                            <option value={AllergySeverity.UNKNOWN}>No sé</option>
-                        </select>
+                          onChange={(val) => setNewAllergy({...newAllergy, severity: val as AllergySeverity})}
+                          placeholder="Select severity..."
+                        />
                     </div>
                     <div className="col-span-2">
                         <label className="block text-sm font-medium mb-1">Reaction</label>

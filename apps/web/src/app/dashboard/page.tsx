@@ -14,7 +14,6 @@ export default function DashboardPage() {
   
   const [searchFilters, setSearchFilters] = useState({
     query: '',
-    categoryId: undefined as number | undefined,
     dateFrom: undefined as string | undefined,
     dateTo: undefined as string | undefined,
   });
@@ -30,12 +29,10 @@ export default function DashboardPage() {
   }, [searchFilters.query]);
 
   const { data: records, isLoading } = useQuery<MedicalRecord[]>({
-    queryKey: ['medical-records', debouncedQuery, searchFilters.categoryId, 
-               searchFilters.dateFrom, searchFilters.dateTo],
+    queryKey: ['medical-records', debouncedQuery, searchFilters.dateFrom, searchFilters.dateTo],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (debouncedQuery) params.append('q', debouncedQuery);
-      if (searchFilters.categoryId) params.append('category_id', searchFilters.categoryId.toString());
       if (searchFilters.dateFrom) params.append('date_from', searchFilters.dateFrom);
       if (searchFilters.dateTo) params.append('date_to', searchFilters.dateTo);
       
@@ -44,13 +41,7 @@ export default function DashboardPage() {
     },
   });
 
-  const { data: categories } = useQuery({
-    queryKey: ['categories'],
-    queryFn: async () => {
-      const res = await api.get('/hx/categories');
-      return res.data;
-    },
-  });
+
 
   const getStatusBadge = (status: RecordStatus) => {
     const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
@@ -83,11 +74,9 @@ export default function DashboardPage() {
       <RecordSearchBar
         onSearch={(filters) => setSearchFilters({
           query: filters.query,
-          categoryId: filters.categoryId,
           dateFrom: filters.dateFrom,
           dateTo: filters.dateTo,
         })}
-        categories={categories || []}
       />
       
       <div className="mb-6">

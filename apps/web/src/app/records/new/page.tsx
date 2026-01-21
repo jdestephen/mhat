@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Autocomplete } from '@/components/ui/autocomplete';
+import { Select, SelectOption } from '@/components/ui/select';
 import api from '@/lib/api';
 import { MedicalRecord, Document } from '@/types';
 import { UploadCloud, CheckCircle2, FileText, X } from 'lucide-react';
@@ -141,9 +142,8 @@ export default function NewRecordPage() {
 
   return (
     <div className="max-w-3xl mx-auto pb-12">
-      <div className="mb-8">
+      <div className="mb-4">
          <h1 className="text-3xl font-bold text-emerald-950">New Medical Record</h1>
-         <p className="text-slate-500">Add a new entry to your medical history.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">
@@ -164,16 +164,12 @@ export default function NewRecordPage() {
                 
                 <div>
                    <label className="block text-sm font-medium mb-1">Category</label>
-                   <select 
-                      className="flex h-10 w-full rounded-md border border-slate-200 bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-600 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
-                      value={categoryId}
-                      onChange={(e) => setCategoryId(e.target.value)}
-                   >
-                       <option value="">Select a category...</option>
-                       {categories.map(c => (
-                           <option key={c.id} value={c.id}>{c.name}</option>
-                       ))}
-                   </select>
+                   <Select
+                     options={categories.map(c => ({ value: c.id, label: c.name }))}
+                     value={categoryId}
+                     onChange={(val) => setCategoryId(val.toString())}
+                     placeholder="Select a category..."
+                   />
                 </div>
 
                 <div>
