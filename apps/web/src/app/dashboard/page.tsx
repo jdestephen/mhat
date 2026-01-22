@@ -8,9 +8,12 @@ import { RecordSearchBar } from '@/components/search/RecordSearchBar';
 import { Plus, FileText, Calendar, Stethoscope, Paperclip, MoreVertical, Eye, Share2 } from 'lucide-react';
 import Link from 'next/link';
 import { MedicalRecord, RecordStatus } from '@/types';
+import { ShareRecordDialog } from '@/components/share/ShareRecordDialog';
 
 export default function DashboardPage() {
-  const [openDropdown, setOpenDropdown] = useState<number | null>(null);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [selectedRecords, setSelectedRecords] = useState<{ ids: string[], titles: string[] }>({ ids: [], titles: [] });
   
   const [searchFilters, setSearchFilters] = useState({
     query: '',
@@ -40,8 +43,6 @@ export default function DashboardPage() {
       return res.data;
     },
   });
-
-
 
   const getStatusBadge = (status: RecordStatus) => {
     const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
@@ -112,7 +113,7 @@ export default function DashboardPage() {
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {records.map((record) => (
-                      <tr key={record.id} className="hover:bg-slate-50 transition-colors">
+                      <tr key={record.id} id={`row-${record.id}`} className="hover:bg-slate-50 transition-colors">
                         {/* Date */}
                         <td className="px-4 py-4 whitespace-nowrap">
                           <div className="flex items-center text-sm text-slate-600">
@@ -178,48 +179,61 @@ export default function DashboardPage() {
                           {getStatusBadge(record.status)}
                         </td>
 
-                        {/* Actions */}
-                        <td className="px-4 py-4 relative">
-                          <button
-                            onClick={() => setOpenDropdown(openDropdown === record.id ? null : record.id)}
-                            className="p-1 hover:bg-slate-100 rounded transition-colors"
-                          >
-                            <MoreVertical size={16} className="text-slate-600" />
-                          </button>
-                          
-                          {openDropdown === record.id && (
-                            <>
-                              {/* Backdrop to close dropdown */}
-                              <div 
-                                className="fixed inset-0 z-10" 
-                                onClick={() => setOpenDropdown(null)}
-                              />
-                              
-                              {/* Dropdown Menu */}
-                              <div className="absolute right-0 mt-1 w-40 bg-white rounded-md shadow-lg border border-slate-200 py-1 z-20">
-                                <button
-                                  className="w-full flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
-                                  onClick={() => {
-                                    setOpenDropdown(null);
-                                    window.location.href = `/records/${record.id}`;
-                                  }}
-                                >
-                                  <Eye size={14} className="mr-2" />
-                                  View
-                                </button>
-                                <button
-                                  className="w-full flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
-                                  onClick={() => {
-                                    setOpenDropdown(null);
-                                    // Share functionality will be implemented later
-                                  }}
-                                >
-                                  <Share2 size={14} className="mr-2" />
-                                  Share
-                                </button>
-                              </div>
-                            </>
-                          )}
+                        {/* Actions Menu */}
+                        <td className="px-6 py-4 text-right">
+                          <div className="relative">
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenDropdown(openDropdown === record.id ? null : record.id);
+                              }}
+                              className="text-slate-400 hover:text-slate-600"
+                            >
+                              <MoreVertical className="h-5 w-5" />
+                            </button>
+                            
+                            {openDropdown === record.id && (
+                              <>
+                                {/* Backdrop */}
+                                <div 
+                                  className="fixed inset-0 z-10" 
+                                  onClick={() => setOpenDropdown(null)}
+                                />
+                                
+                                {/* Dropdown Menu */}
+                                <div className="fixed z-20 mt-0 w-48 rounded-md shadow-lg bg-white ring-1 ring-slate-200 ring-opacity-5"
+                                     style={{
+                                       top: `${(document.getElementById(`row-${record.id}`) as HTMLElement)?.getBoundingClientRect().bottom - 20}px`,
+                                       right: `${window.innerWidth - (document.getElementById(`row-${record.id}`) as HTMLElement)?.getBoundingClientRect().right + 20}px`
+                                     }}>
+                                  <div className="py-1">
+                                    <button
+                                      className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                                      onClick={() => {
+                                        setOpenDropdown(null);
+                                        window.location.href = `/records/${record.id}`;
+                                      }}
+                                    >
+                                      View Details
+                                    </button>
+                                    <button
+                                      className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                                      onClick={() => {
+                                        setOpenDropdown(null);
+                                        setSelectedRecords({ 
+                                          ids: [String(record.id)], 
+                                          titles: [record.motive] 
+                                        });
+                                        setShareDialogOpen(true);
+                                      }}
+                                    >
+                                      Share
+                                    </button>
+                                  </div>
+                                </div>
+                              </>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -277,16 +291,16 @@ export default function DashboardPage() {
                           <p className="text-slate-700">{record.diagnosis}</p>
                         </div>
                       )}
-                      
+
                       {record.documents && record.documents.length > 0 && (
                         <div className="mt-4 pt-3 border-t border-slate-50">
                           <span className="font-semibold text-xs uppercase tracking-wide text-slate-400 mb-2 block">Attachments</span>
                           <div className="flex flex-wrap gap-2">
                             {record.documents.map(doc => (
-                              <a 
-                                key={doc.id} 
-                                href={doc.url} 
-                                target="_blank" 
+                              <a
+                                key={doc.id}
+                                href={doc.url}
+                                target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-full transition-colors"
                               >
@@ -305,6 +319,14 @@ export default function DashboardPage() {
           </>
         )}
       </div>
+
+      {/* Share Dialog */}
+      <ShareRecordDialog
+        open={shareDialogOpen}
+        onOpenChange={setShareDialogOpen}
+        recordIds={selectedRecords.ids}
+        recordTitles={selectedRecords.titles}
+      />
     </div>
   );
 }

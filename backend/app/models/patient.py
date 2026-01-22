@@ -1,6 +1,9 @@
 from sqlalchemy import String, Integer, ForeignKey, DateTime, Date, ARRAY, Enum, Text, Boolean
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import Optional, List
+from uuid import UUID
+import uuid
 from datetime import datetime, date
 import enum
 
@@ -43,8 +46,8 @@ class ConditionSource(str, enum.Enum):
 class PatientProfile(Base):
     __tablename__ = "patient_profiles"
 
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True, nullable=False)
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), unique=True, nullable=False)
     
     date_of_birth: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     blood_type: Mapped[Optional[str]] = mapped_column(String, nullable=True)
@@ -54,12 +57,13 @@ class PatientProfile(Base):
     medical_records: Mapped[List["MedicalRecord"]] = relationship("MedicalRecord", back_populates="patient")
     allergies: Mapped[List["Allergy"]] = relationship("Allergy", back_populates="patient_profile")
     conditions: Mapped[List["Condition"]] = relationship("Condition", back_populates="patient_profile")
+    share_tokens: Mapped[List["ShareToken"]] = relationship("ShareToken", back_populates="patient")
 
 class Medication(Base):
     __tablename__ = "medications"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    patient_profile_id: Mapped[int] = mapped_column(ForeignKey("patient_profiles.id"), nullable=False)
+    patient_profile_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("patient_profiles.id"), nullable=False)
     
     name: Mapped[str] = mapped_column(String, nullable=False)
     dosage: Mapped[str] = mapped_column(String, nullable=False)
@@ -71,7 +75,7 @@ class Allergy(Base):
     __tablename__ = "allergies"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    patient_profile_id: Mapped[int] = mapped_column(ForeignKey("patient_profiles.id"), nullable=False)
+    patient_profile_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("patient_profiles.id"), nullable=False)
     
     allergen: Mapped[str] = mapped_column(String, nullable=False) # "To what?"
     code: Mapped[str] = mapped_column(String, nullable=False) # SNOMED CT code
@@ -86,7 +90,7 @@ class Allergy(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     deleted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
-    verified_by: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), nullable=True)  # Doctor who verified
+    verified_by: Mapped[Optional[UUID]] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True)  # Doctor who verified
     verified_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     
     verifier: Mapped[Optional["User"]] = relationship("User", foreign_keys=[verified_by])
@@ -96,7 +100,7 @@ class Condition(Base):
     __tablename__ = "conditions"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    patient_profile_id: Mapped[int] = mapped_column(ForeignKey("patient_profiles.id"), nullable=False)
+    patient_profile_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("patient_profiles.id"), nullable=False)
     
     name: Mapped[str] = mapped_column(String, nullable=False) # "condition"
     code: Mapped[str] = mapped_column(String, nullable=False) # SNOMED CT code
@@ -110,7 +114,7 @@ class Condition(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     deleted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
-    verified_by: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), nullable=True)  # Doctor who verified
+    verified_by: Mapped[Optional[UUID]] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True)  # Doctor who verified
     verified_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     
     verifier: Mapped[Optional["User"]] = relationship("User", foreign_keys=[verified_by])

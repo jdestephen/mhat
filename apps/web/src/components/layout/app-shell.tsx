@@ -8,7 +8,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const isAuthPage = pathname?.startsWith('/auth');
-  const isPublicPage = pathname === '/'; 
+  const isPublicPage = pathname === '/' || pathname?.startsWith('/shared'); 
 
   useEffect(() => {
     // Basic Client-side Protection

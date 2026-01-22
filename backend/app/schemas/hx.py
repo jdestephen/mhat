@@ -1,5 +1,6 @@
 from typing import Optional, List, Any
 from datetime import datetime
+from uuid import UUID
 from pydantic import BaseModel
 from enum import Enum
 
@@ -22,8 +23,8 @@ class DocumentCreate(DocumentBase):
     pass
 
 class Document(DocumentBase):
-    id: int
-    medical_record_id: int
+    id: UUID
+    medical_record_id: UUID
     created_at: datetime
 
     class Config:
@@ -53,11 +54,11 @@ class MedicalRecordUpdate(MedicalRecordBase):
     pass
 
 class MedicalRecord(MedicalRecordBase):
-    id: int
-    patient_id: int
+    id: UUID
+    patient_id: UUID
     status: RecordStatus
-    created_by: int
-    verified_by: Optional[int] = None
+    created_by: UUID
+    verified_by: Optional[UUID] = None
     verified_at: Optional[datetime] = None
     created_at: datetime
     documents: List[Document] = []

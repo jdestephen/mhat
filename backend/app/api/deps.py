@@ -1,4 +1,5 @@
 from typing import Generator, Optional
+from uuid import UUID
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
@@ -25,15 +26,28 @@ async def get_current_user(
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
+        print(f"DEBUG: JWT payload: {payload}")
         token_data = token_schema.TokenPayload(**payload)
-    except (JWTError, ValidationError):
+        print(f"DEBUG: Token sub: {token_data.sub}, type: {type(token_data.sub)}")
+    except (JWTError, ValidationError) as e:
+        print(f"DEBUG: JWT decode error: {e}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Could not validate credentials",
         )
     
-    result = await db.execute(select(User).filter(User.id == int(token_data.sub)))
-    user = result.scalars().first()
+    try:
+        user_id = UUID(token_data.sub)
+        print(f"DEBUG: Looking up user with UUID: {user_id}")
+        result = await db.execute(select(User).filter(User.id == user_id))
+        user = result.scalars().first()
+        print(f"DEBUG: User found: {user is not None}")
+    except Exception as e:
+        print(f"DEBUG: User lookup error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Error looking up user: {str(e)}",
+        )
         
     if not user:
         raise HTTPException(status_code=404, detail="User not found")

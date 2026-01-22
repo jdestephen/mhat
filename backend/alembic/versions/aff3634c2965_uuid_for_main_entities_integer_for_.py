@@ -1,8 +1,8 @@
-"""init_schema
+"""UUID for main entities, Integer for reference tables
 
-Revision ID: e32d94aefbf8
+Revision ID: aff3634c2965
 Revises: 
-Create Date: 2026-01-05 23:59:42.035957
+Create Date: 2026-01-22 00:28:22.764998
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'e32d94aefbf8'
+revision: str = 'aff3634c2965'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -29,7 +29,7 @@ def upgrade() -> None:
     op.create_index(op.f('ix_categories_id'), 'categories', ['id'], unique=False)
     op.create_index(op.f('ix_categories_name'), 'categories', ['name'], unique=True)
     op.create_table('users',
-    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('email', sa.String(), nullable=False),
     sa.Column('password', sa.String(), nullable=False),
     sa.Column('role', sa.Enum('DOCTOR', 'PATIENT', name='userrole'), nullable=False),
@@ -42,21 +42,19 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)
-    op.create_index(op.f('ix_users_id'), 'users', ['id'], unique=False)
     op.create_table('doctor_patient_access',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('doctor_id', sa.Integer(), nullable=False),
-    sa.Column('patient_id', sa.Integer(), nullable=False),
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('doctor_id', sa.UUID(), nullable=False),
+    sa.Column('patient_id', sa.UUID(), nullable=False),
     sa.Column('access_type', sa.Enum('PERMANENT', 'TEMPORARY', name='accesstype'), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['doctor_id'], ['users.id'], ),
     sa.ForeignKeyConstraint(['patient_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index(op.f('ix_doctor_patient_access_id'), 'doctor_patient_access', ['id'], unique=False)
     op.create_table('doctor_profiles',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('user_id', sa.UUID(), nullable=False),
     sa.Column('date_of_birth', sa.Date(), nullable=True),
     sa.Column('degree', sa.String(), nullable=True),
     sa.Column('short_bio', sa.Text(), nullable=True),
@@ -65,34 +63,81 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('user_id')
     )
-    op.create_index(op.f('ix_doctor_profiles_id'), 'doctor_profiles', ['id'], unique=False)
     op.create_table('patient_profiles',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('user_id', sa.UUID(), nullable=False),
     sa.Column('date_of_birth', sa.Date(), nullable=True),
     sa.Column('blood_type', sa.String(), nullable=True),
-    sa.Column('previous_diagnoses', sa.ARRAY(sa.String()), nullable=True),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('user_id')
     )
-    op.create_index(op.f('ix_patient_profiles_id'), 'patient_profiles', ['id'], unique=False)
-    op.create_table('medical_records',
+    op.create_table('allergies',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('patient_id', sa.Integer(), nullable=False),
-    sa.Column('category_id', sa.Integer(), nullable=True),
-    sa.Column('title', sa.String(), nullable=False),
-    sa.Column('diagnosis', sa.String(), nullable=True),
-    sa.Column('notes', sa.Text(), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['category_id'], ['categories.id'], ),
-    sa.ForeignKeyConstraint(['patient_id'], ['patient_profiles.id'], ),
+    sa.Column('patient_profile_id', sa.UUID(), nullable=False),
+    sa.Column('allergen', sa.String(), nullable=False),
+    sa.Column('code', sa.String(), nullable=False),
+    sa.Column('code_system', sa.String(), nullable=False),
+    sa.Column('type', sa.Enum('MEDICATION', 'FOOD', 'SUBSTANCE', 'OTHER', name='allergytype'), nullable=False),
+    sa.Column('reaction', sa.String(), nullable=True),
+    sa.Column('severity', sa.Enum('MILD', 'MODERATE', 'SEVERE', 'UNKNOWN', name='allergyseverity'), nullable=False),
+    sa.Column('source', sa.Enum('DOCTOR', 'SUSPECTED', 'NOT_SURE', name='allergysource'), nullable=False),
+    sa.Column('status', sa.Enum('UNVERIFIED', 'VERIFIED', name='allergystatus'), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('deleted', sa.Boolean(), nullable=False),
+    sa.Column('deleted_at', sa.DateTime(), nullable=True),
+    sa.Column('verified_by', sa.UUID(), nullable=True),
+    sa.Column('verified_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['patient_profile_id'], ['patient_profiles.id'], ),
+    sa.ForeignKeyConstraint(['verified_by'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index(op.f('ix_medical_records_id'), 'medical_records', ['id'], unique=False)
+    op.create_index(op.f('ix_allergies_id'), 'allergies', ['id'], unique=False)
+    op.create_table('conditions',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('patient_profile_id', sa.UUID(), nullable=False),
+    sa.Column('name', sa.String(), nullable=False),
+    sa.Column('code', sa.String(), nullable=False),
+    sa.Column('code_system', sa.String(), nullable=False),
+    sa.Column('since_year', sa.String(), nullable=True),
+    sa.Column('status', sa.Enum('ACTIVE', 'CONTROLLED', 'RESOLVED', 'UNKNOWN', name='conditionstatus'), nullable=False),
+    sa.Column('source', sa.Enum('DOCTOR', 'SUSPECTED', name='conditionsource'), nullable=False),
+    sa.Column('notes', sa.Text(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('deleted', sa.Boolean(), nullable=False),
+    sa.Column('deleted_at', sa.DateTime(), nullable=True),
+    sa.Column('verified_by', sa.UUID(), nullable=True),
+    sa.Column('verified_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['patient_profile_id'], ['patient_profiles.id'], ),
+    sa.ForeignKeyConstraint(['verified_by'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_conditions_id'), 'conditions', ['id'], unique=False)
+    op.create_table('medical_records',
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('patient_id', sa.UUID(), nullable=False),
+    sa.Column('category_id', sa.Integer(), nullable=True),
+    sa.Column('motive', sa.String(), nullable=False),
+    sa.Column('diagnosis', sa.String(), nullable=True),
+    sa.Column('diagnosis_code', sa.String(), nullable=True),
+    sa.Column('diagnosis_code_system', sa.String(), nullable=True),
+    sa.Column('notes', sa.Text(), nullable=True),
+    sa.Column('tags', sa.ARRAY(sa.String()), nullable=True),
+    sa.Column('search_text', sa.Text(), nullable=True),
+    sa.Column('status', sa.Enum('UNVERIFIED', 'BACKED_BY_DOCUMENT', 'VERIFIED', name='recordstatus'), nullable=False),
+    sa.Column('created_by', sa.UUID(), nullable=False),
+    sa.Column('verified_by', sa.UUID(), nullable=True),
+    sa.Column('verified_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['category_id'], ['categories.id'], ),
+    sa.ForeignKeyConstraint(['created_by'], ['users.id'], ),
+    sa.ForeignKeyConstraint(['patient_id'], ['patient_profiles.id'], ),
+    sa.ForeignKeyConstraint(['verified_by'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('medications',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('patient_profile_id', sa.Integer(), nullable=False),
+    sa.Column('patient_profile_id', sa.UUID(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('dosage', sa.String(), nullable=False),
     sa.Column('frequency', sa.String(), nullable=False),
@@ -101,8 +146,8 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_medications_id'), 'medications', ['id'], unique=False)
     op.create_table('documents',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('medical_record_id', sa.Integer(), nullable=False),
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('medical_record_id', sa.UUID(), nullable=False),
     sa.Column('s3_key', sa.String(), nullable=False),
     sa.Column('filename', sa.String(), nullable=False),
     sa.Column('url', sa.String(), nullable=False),
@@ -113,26 +158,23 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['medical_record_id'], ['medical_records.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index(op.f('ix_documents_id'), 'documents', ['id'], unique=False)
     # ### end Alembic commands ###
 
 
 def downgrade() -> None:
     """Downgrade schema."""
     # ### commands auto generated by Alembic - please adjust! ###
-    op.drop_index(op.f('ix_documents_id'), table_name='documents')
     op.drop_table('documents')
     op.drop_index(op.f('ix_medications_id'), table_name='medications')
     op.drop_table('medications')
-    op.drop_index(op.f('ix_medical_records_id'), table_name='medical_records')
     op.drop_table('medical_records')
-    op.drop_index(op.f('ix_patient_profiles_id'), table_name='patient_profiles')
+    op.drop_index(op.f('ix_conditions_id'), table_name='conditions')
+    op.drop_table('conditions')
+    op.drop_index(op.f('ix_allergies_id'), table_name='allergies')
+    op.drop_table('allergies')
     op.drop_table('patient_profiles')
-    op.drop_index(op.f('ix_doctor_profiles_id'), table_name='doctor_profiles')
     op.drop_table('doctor_profiles')
-    op.drop_index(op.f('ix_doctor_patient_access_id'), table_name='doctor_patient_access')
     op.drop_table('doctor_patient_access')
-    op.drop_index(op.f('ix_users_id'), table_name='users')
     op.drop_index(op.f('ix_users_email'), table_name='users')
     op.drop_table('users')
     op.drop_index(op.f('ix_categories_name'), table_name='categories')

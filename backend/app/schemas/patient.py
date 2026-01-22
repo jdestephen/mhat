@@ -1,5 +1,6 @@
 from typing import List, Optional
 from datetime import date, datetime
+from uuid import UUID
 from pydantic import BaseModel
 from enum import Enum
 
@@ -47,7 +48,7 @@ class MedicationCreate(MedicationBase):
 
 class Medication(MedicationBase):
     id: int
-    patient_profile_id: int
+    patient_profile_id: UUID
 
     class Config:
         from_attributes = True
@@ -68,11 +69,11 @@ class AllergyCreate(AllergyBase):
 
 class Allergy(AllergyBase):
     id: int
-    patient_profile_id: int
+    patient_profile_id: UUID
     created_at: datetime
     deleted: bool
     deleted_at: Optional[datetime] = None
-    verified_by: Optional[int] = None
+    verified_by: Optional[UUID] = None
     verified_at: Optional[datetime] = None
 
     class Config:
@@ -93,11 +94,11 @@ class ConditionCreate(ConditionBase):
 
 class Condition(ConditionBase):
     id: int
-    patient_profile_id: int
+    patient_profile_id: UUID
     created_at: datetime
     deleted: bool
     deleted_at: Optional[datetime] = None
-    verified_by: Optional[int] = None
+    verified_by: Optional[UUID] = None
     verified_at: Optional[datetime] = None
 
     class Config:
@@ -116,8 +117,8 @@ class PatientProfileUpdate(PatientProfileBase):
     pass
 
 class PatientProfile(PatientProfileBase):
-    id: int
-    user_id: int
+    id: UUID
+    user_id: UUID
     medications: List[Medication] = []
     allergies: List[Allergy] = []
     conditions: List[Condition] = []

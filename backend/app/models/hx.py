@@ -1,7 +1,10 @@
 from sqlalchemy import String, Integer, ForeignKey, DateTime, Text, ARRAY, Enum
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from typing import Optional, List
+from uuid import UUID
+import uuid
 from datetime import datetime
 import enum
 
@@ -24,9 +27,9 @@ class Category(Base):
 class MedicalRecord(Base):
     __tablename__ = "medical_records"
 
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    patient_id: Mapped[int] = mapped_column(ForeignKey("patient_profiles.id"), nullable=False)
-    category_id: Mapped[int] = mapped_column(ForeignKey("categories.id"), nullable=True)
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    patient_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("patient_profiles.id"), nullable=False)
+    category_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("categories.id"), nullable=True)
     
     motive: Mapped[str] = mapped_column(String, nullable=False)
     diagnosis: Mapped[Optional[str]] = mapped_column(String, nullable=True)
@@ -41,8 +44,8 @@ class MedicalRecord(Base):
     status: Mapped[RecordStatus] = mapped_column(Enum(RecordStatus), default=RecordStatus.UNVERIFIED, nullable=False)
     
     # Audit fields
-    created_by: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)  # Can be patient or doctor
-    verified_by: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), nullable=True)  # Must be doctor
+    created_by: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    verified_by: Mapped[Optional[UUID]] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     verified_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
@@ -56,8 +59,8 @@ class MedicalRecord(Base):
 class Document(Base):
     __tablename__ = "documents"
 
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    medical_record_id: Mapped[int] = mapped_column(ForeignKey("medical_records.id"), nullable=False)
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    medical_record_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("medical_records.id"), nullable=False)
     
     s3_key: Mapped[str] = mapped_column(String, nullable=False)
     filename: Mapped[str] = mapped_column(String, nullable=False)

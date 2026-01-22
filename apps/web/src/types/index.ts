@@ -4,7 +4,7 @@ export enum UserRole {
 }
 
 export interface User {
-  id: number;
+  id: string;
   email: string;
   first_name?: string;
   last_name?: string;
@@ -16,15 +16,15 @@ export interface User {
 
 export interface Medication {
   id: number;
-  patient_profile_id: number;
+  patient_profile_id: string;
   name: string;
   dosage: string;
   frequency: string;
 }
 
 export interface PatientProfile {
-  id: number;
-  user_id: number;
+  id: string;
+  user_id: string;
   date_of_birth?: string;
   blood_type?: string;
   medications?: Medication[];
@@ -33,8 +33,8 @@ export interface PatientProfile {
 }
 
 export interface DoctorProfile {
-  id: number;
-  user_id: number;
+  id: string;
+  user_id: string;
   date_of_birth?: string;
   degree?: string;
   short_bio?: string;
@@ -42,8 +42,8 @@ export interface DoctorProfile {
 }
 
 export interface Document {
-  id: number;
-  medical_record_id: number;
+  id: string;
+  medical_record_id: string;
   s3_key: string;
   filename: string;
   url: string;
@@ -60,19 +60,19 @@ export enum RecordStatus {
 }
 
 export interface MedicalRecord {
-  id: number;
-  patient_id: number;
+  id: string;
+  patient_id: string;
   motive: string;
   diagnosis?: string;
   diagnosis_code?: string;
   diagnosis_code_system?: string;
   notes?: string;
-  category_id?: number;
+  category_id?: string;
   category?: { id: number; name: string };
   tags?: string[];
   status: RecordStatus;
-  created_by: number;
-  verified_by?: number;
+  created_by: string;
+  verified_by?: string;
   verified_at?: string;
   created_at: string;
   documents?: Document[];
@@ -105,9 +105,10 @@ export enum AllergyStatus {
 
 export interface Allergy {
   id: number;
-  patient_profile_id: number;
-  verified_by?: number;
-  verified_at?: string;  allergen: string;
+  patient_profile_id: string;
+  verified_by?: string;
+  verified_at?: string;
+  allergen: string;
   code: string;
   code_system: string;
   type: AllergyType;
@@ -134,8 +135,9 @@ export enum ConditionSource {
 
 export interface Condition {
   id: number;
-  verified_by?: number;
-  verified_at?: string;  patient_profile_id: number;
+  verified_by?: string;
+  verified_at?: string;
+  patient_profile_id: string;
   name: string;
   code: string;
   code_system: string;

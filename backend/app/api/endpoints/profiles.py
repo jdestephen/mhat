@@ -83,7 +83,11 @@ async def update_patient_profile(
     result = await db.execute(
         select(PatientProfile)
         .filter(PatientProfile.user_id == current_user.id)
-        .options(selectinload(PatientProfile.medications))
+        .options(
+            selectinload(PatientProfile.medications),
+            selectinload(PatientProfile.allergies),
+            selectinload(PatientProfile.conditions)
+        )
     )
     profile = result.scalars().first()
     

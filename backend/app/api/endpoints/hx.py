@@ -87,7 +87,7 @@ async def read_categories(
 @router.post("/{record_id}/documents", response_model=hx_schema.Document)
 async def upload_document_to_record(
     *,
-    record_id: int,
+    record_id: uuid.UUID,
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(deps.get_current_user)
@@ -195,7 +195,7 @@ async def read_medical_records(
 
 @router.get("/{record_id}", response_model=hx_schema.MedicalRecord)
 async def get_medical_record(
-    record_id: int,
+    record_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(deps.get_current_user),
 ) -> Any:

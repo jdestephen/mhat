@@ -30,7 +30,8 @@ export default function RegisterPage() {
       // Auto login or redirect to login
       router.push('/auth/login');
     } catch (err: any) {
-      setError('Registration failed');
+      const errorMessage = err.response?.data?.detail || 'Registration failed. Please try again.';
+      setError(errorMessage);
     }
   };
 

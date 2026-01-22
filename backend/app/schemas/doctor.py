@@ -1,4 +1,5 @@
 from typing import Optional, List
+from uuid import UUID
 from pydantic import BaseModel
 from datetime import date
 
@@ -15,8 +16,8 @@ class DoctorProfileUpdate(DoctorProfileBase):
     pass
 
 class DoctorProfile(DoctorProfileBase):
-    id: int
-    user_id: int
+    id: UUID
+    user_id: UUID
 
     class Config:
         orm_mode = True
