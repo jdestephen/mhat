@@ -8,17 +8,17 @@ import { useRouter } from 'next/navigation';
 
 const sidebarItems = [
   {
-    title: 'Dashboard',
+    title: 'Panel',
     href: '/dashboard',
     icon: LayoutDashboard,
   },
   {
-    title: 'New Record',
+    title: 'Nuevo Registro',
     href: '/records/new',
     icon: FilePlus2,
   },
   {
-    title: 'Profile',
+    title: 'Perfil',
     href: '/profile',
     icon: UserCircle,
   },
@@ -73,7 +73,7 @@ export function Sidebar() {
           className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-500 transition-all hover:bg-red-50 hover:text-red-600"
         >
           <LogOut className="h-5 w-5" />
-          Sign Out
+          Cerrar Sesión
         </button>
       </div>
     </div>

@@ -26,18 +26,18 @@ export default function LoginPage() {
       localStorage.setItem('token', response.data.access_token);
       router.push('/dashboard');
     } catch (err: any) {
-      setError('Invalid credentials');
+      setError('Credenciales inválidas');
     }
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center">
       <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md border border-[var(--border-light)]">
-        <h1 className="text-2xl font-bold text-center text-slate-800">Login to MHAT</h1>
+        <h1 className="text-2xl font-bold text-center text-slate-800">Iniciar Sesión en MHAT</h1>
         {error && <p className="text-red-500 text-center">{error}</p>}
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Email</label>
+            <label className="block text-sm font-medium mb-1">Correo Electrónico</label>
             <Input 
               type="email" 
               value={email} 
@@ -46,7 +46,7 @@ export default function LoginPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Password</label>
+            <label className="block text-sm font-medium mb-1">Contraseña</label>
             <Input 
               type="password" 
               value={password} 
@@ -54,10 +54,10 @@ export default function LoginPage() {
               required 
             />
           </div>
-          <Button type="submit" className="w-full">Sign In</Button>
+          <Button type="submit" className="w-full">Iniciar Sesión</Button>
         </form>
         <p className="text-center text-sm">
-          Don't have an account? <a href="/auth/register" className="text-emerald-800 hover:underline font-medium">Register</a>
+          ¿No tienes una cuenta? <a href="/auth/register" className="text-emerald-800 hover:underline font-medium">Regístrate</a>
         </p>
       </div>
     </div>

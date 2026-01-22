@@ -32,13 +32,13 @@ export function ShareRecordDialog({
   const [copied, setCopied] = useState(false);
 
   const expirationOptions = [
-    { value: '10', label: '10 minutes' },
-    { value: '20', label: '20 minutes' },
-    { value: '30', label: '30 minutes' },
-    { value: '60', label: '1 hour' },
-    { value: '240', label: '4 hours' },
-    { value: '1440', label: '24 hours' },
-    { value: '10080', label: '7 days' },
+    { value: '10', label: '10 minutos' },
+    { value: '20', label: '20 minutos' },
+    { value: '30', label: '30 minutos' },
+    { value: '60', label: '1 hora' },
+    { value: '240', label: '4 horas' },
+    { value: '1440', label: '24 horas' },
+    { value: '10080', label: '7 días' },
   ];
 
   const handleGenerate = async () => {
@@ -57,7 +57,7 @@ export function ShareRecordDialog({
       setExpiresAt(response.data.expires_at);
     } catch (error) {
       console.error('Failed to generate share link:', error);
-      alert('Failed to generate share link. Please try again.');
+      alert('Error al generar enlace para compartir. Por favor, inténtalo de nuevo.');
     } finally {
       setIsGenerating(false);
     }
@@ -98,9 +98,9 @@ export function ShareRecordDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[550px]">
         <DialogHeader>
-          <DialogTitle>Share Medical Records</DialogTitle>
+          <DialogTitle>Compartir Registros Médicos</DialogTitle>
           <DialogDescription>
-            Generate a secure, time-limited link to share {recordIds.length} record{recordIds.length > 1 ? 's' : ''}
+            Genera un enlace seguro y de tiempo limitado para compartir {recordIds.length} registro{recordIds.length > 1 ? 's' : ''}
           </DialogDescription>
         </DialogHeader>
 
@@ -108,7 +108,7 @@ export function ShareRecordDialog({
           <div className="space-y-4 py-4">
             {/* Record List */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Records to Share</label>
+              <label className="text-sm font-medium">Registros para Compartir</label>
               <div className="border border-slate-200 rounded-md p-3 bg-slate-50 max-h-32 overflow-y-auto">
                 {recordTitles.length > 0 ? (
                   <ul className="space-y-1">
@@ -120,7 +120,7 @@ export function ShareRecordDialog({
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-sm text-slate-500">{recordIds.length} record{recordIds.length > 1 ? 's' : ''} selected</p>
+                  <p className="text-sm text-slate-500">{recordIds.length} registro{recordIds.length > 1 ? 's' : ''} seleccionado{recordIds.length > 1 ? 's' : ''}</p>
                 )}
               </div>
             </div>
@@ -129,7 +129,7 @@ export function ShareRecordDialog({
             <div className="space-y-2">
               <label className="text-sm font-medium flex items-center gap-2">
                 <Clock className="h-4 w-4" />
-                Expiration Time
+                Tiempo de Expiración
               </label>
               <Select
                 options={expirationOptions}
@@ -148,22 +148,22 @@ export function ShareRecordDialog({
                 className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600"
               />
               <label htmlFor="singleUse" className="text-sm cursor-pointer">
-                <span className="font-medium">Single-use link</span>
-                <span className="text-slate-500 block text-xs">Link can only be accessed once</span>
+                <span className="font-medium">Enlace de un solo uso</span>
+                <span className="text-slate-500 block text-xs">El enlace solo puede ser accedido una vez</span>
               </label>
             </div>
 
             {/* Recipient Info (Optional) */}
             <div className="space-y-3 p-3 border border-slate-200 rounded-md bg-slate-50">
-              <p className="text-sm font-medium text-slate-700">Recipient Info (Optional)</p>
+              <p className="text-sm font-medium text-slate-700">Información del Destinatario (Opcional)</p>
               
               <div className="space-y-2">
                 <label className="text-xs text-slate-600 flex items-center gap-1">
                   <User className="h-3 w-3" />
-                  Name
+                  Nombre
                 </label>
                 <Input
-                  placeholder="Dr. John Smith"
+                  placeholder="Dr. Juan Pérez"
                   value={recipientName}
                   onChange={(e) => setRecipientName(e.target.value)}
                   className="h-9 text-sm"
@@ -173,7 +173,7 @@ export function ShareRecordDialog({
               <div className="space-y-2">
                 <label className="text-xs text-slate-600 flex items-center gap-1">
                   <Mail className="h-3 w-3" />
-                  Email
+                  Correo Electrónico
                 </label>
                 <Input
                   type="email"
@@ -185,9 +185,9 @@ export function ShareRecordDialog({
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs text-slate-600">Purpose</label>
+                <label className="text-xs text-slate-600">Propósito</label>
                 <Input
-                  placeholder="e.g., Cardiology consultation"
+                  placeholder="ej., Consulta de cardiología"
                   value={purpose}
                   onChange={(e) => setPurpose(e.target.value)}
                   className="h-9 text-sm"
@@ -201,22 +201,22 @@ export function ShareRecordDialog({
               disabled={isGenerating}
               className="w-full"
             >
-              {isGenerating ? 'Generating...' : 'Generate Share Link'}
+              {isGenerating ? 'Generando...' : 'Generar Enlace para Compartir'}
             </Button>
           </div>
         ) : (
           <div className="space-y-4 py-4">
             {/* Success Message */}
             <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-md">
-              <p className="text-sm font-medium text-emerald-900">✓ Share link generated successfully!</p>
+              <p className="text-sm font-medium text-emerald-900">✓ ¡Enlace para compartir generado exitosamente!</p>
               <p className="text-xs text-emerald-700 mt-1">
-                Expires: {formatExpirationDate(expiresAt)}
+                Expira: {formatExpirationDate(expiresAt)}
               </p>
             </div>
 
             {/* Share URL */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Shareable Link</label>
+              <label className="text-sm font-medium">Enlace para Compartir</label>
               <div className="flex gap-2">
                 <Input
                   value={shareUrl}
@@ -237,24 +237,24 @@ export function ShareRecordDialog({
                 </Button>
               </div>
               {copied && (
-                <p className="text-xs text-emerald-600">✓ Copied to clipboard</p>
+                <p className="text-xs text-emerald-600">✓ Copiado al portapapeles</p>
               )}
             </div>
 
             {/* Instructions */}
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-md space-y-2">
-              <p className="text-sm font-medium text-slate-700">Next Steps:</p>
+              <p className="text-sm font-medium text-slate-700">Próximos Pasos:</p>
               <ul className="text-xs text-slate-600 space-y-1 list-disc list-inside">
-                <li>Copy the link and share it with the recipient</li>
-                <li>The link will expire in {expirationOptions.find(o => o.value === expiration)?.label}</li>
-                {isSingleUse && <li>This link can only be accessed once</li>}
-                <li>You can revoke access anytime from your shared links page</li>
+                <li>Copia el enlace y compártelo con el destinatario</li>
+                <li>El enlace expirará en {expirationOptions.find(o => o.value === expiration)?.label}</li>
+                {isSingleUse && <li>Este enlace solo puede ser accedido una vez</li>}
+                <li>Puedes revocar el acceso en cualquier momento desde tu página de enlaces compartidos</li>
               </ul>
             </div>
 
             {/* Close Button */}
             <Button onClick={handleClose} variant="outline" className="w-full">
-              Close
+              Cerrar
             </Button>
           </div>
         )}

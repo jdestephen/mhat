@@ -68,10 +68,10 @@ export default function ProfilePage() {
           short_bio: shortBio || null
         });
       }
-      alert('Profile updated!');
+      alert('¡Perfil actualizado!');
     } catch (error) {
       console.error(error);
-      alert('Failed to update profile');
+      alert('Error al actualizar el perfil');
     } finally {
       setSaving(false);
     }
@@ -82,17 +82,17 @@ export default function ProfilePage() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-700"></div>
       </div>
   );
-  if (!user) return <div className="p-8">Error loading user</div>;
+  if (!user) return <div className="p-8">Error al cargar usuario</div>;
 
   return (
     <div className="max-w-3xl mx-auto pb-20">
-      <h1 className="text-3xl font-bold mb-8 text-emerald-950">My Profile</h1>
+      <h1 className="text-3xl font-bold mb-8 text-emerald-950">Mi Perfil</h1>
       
       <Tabs defaultValue="info" className="w-full">
         <TabsList className="mb-0">
-          <TabsTrigger value="info">Personal Info</TabsTrigger>
+          <TabsTrigger value="info">Información Personal</TabsTrigger>
           {user.role === UserRole.PATIENT && (
-             <TabsTrigger value="history">Health History</TabsTrigger>
+             <TabsTrigger value="history">Historial de Salud</TabsTrigger>
           )}
         </TabsList>
 
@@ -102,13 +102,13 @@ export default function ProfilePage() {
               {/* Basic Info (Read Only) */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label className="block text-sm font-medium text-slate-500 mb-1">Full Name</label>
+                    <label className="block text-sm font-medium text-slate-500 mb-1">Nombre Completo</label>
                     <div className="p-2 bg-slate-50 rounded border border-slate-200 text-slate-800">
                         {user.first_name} {user.last_name}
                     </div>
                 </div>
                 <div>
-                     <label className="block text-sm font-medium text-slate-500 mb-1">Email</label>
+                     <label className="block text-sm font-medium text-slate-500 mb-1">Correo Electrónico</label>
                      <div className="p-2 bg-slate-50 rounded border border-slate-200 text-slate-800">
                         {user.email}
                     </div>
@@ -118,7 +118,7 @@ export default function ProfilePage() {
               {/* Editable Fields */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                   <label className="block text-sm font-medium mb-1">Date of Birth</label>
+                   <label className="block text-sm font-medium mb-1">Fecha de Nacimiento</label>
                    <Input 
                      type="date" 
                      value={dob} 
@@ -128,22 +128,22 @@ export default function ProfilePage() {
                 
                 {user.role === UserRole.PATIENT && (
                   <div>
-                    <label className="block text-sm font-medium mb-1">Blood Type</label>
+                    <label className="block text-sm font-medium mb-1">Tipo de Sangre</label>
                     <Input 
                       value={bloodType} 
                       onChange={(e) => setBloodType(e.target.value)} 
-                      placeholder="e.g. O+"
+                      placeholder="ej. O+"
                     />
                   </div>
                 )}
 
                 {user.role === UserRole.DOCTOR && (
                    <div>
-                    <label className="block text-sm font-medium mb-1">Degree</label>
+                    <label className="block text-sm font-medium mb-1">Grado</label>
                     <Input 
                       value={degree} 
                       onChange={(e) => setDegree(e.target.value)} 
-                      placeholder="e.g. MD, PhD"
+                      placeholder="ej. MD, PhD"
                     />
                   </div>
                 )}
@@ -151,7 +151,7 @@ export default function ProfilePage() {
 
               {user.role === UserRole.DOCTOR && (
                 <div>
-                  <label className="block text-sm font-medium mb-1">Short Bio</label>
+                  <label className="block text-sm font-medium mb-1">Biografía Corta</label>
                   <textarea 
                     className="w-full min-h-[100px] rounded-md border border-slate-200 bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-600 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
                     value={shortBio}
@@ -162,7 +162,7 @@ export default function ProfilePage() {
 
               <div className="pt-4 flex justify-end">
                 <Button type="submit" disabled={saving} className="bg-emerald-900 hover:bg-emerald-800 text-white min-w-[150px]">
-                  {saving ? 'Saving...' : 'Save Changes'}
+                  {saving ? 'Guardando...' : 'Guardar Cambios'}
                 </Button>
               </div>
             </form>

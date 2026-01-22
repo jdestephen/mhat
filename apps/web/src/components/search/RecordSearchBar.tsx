@@ -46,14 +46,14 @@ export function RecordSearchBar({ onSearch }: SearchBarProps) {
         <div className="md:col-span-8 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
-            placeholder="Search by motive, diagnosis, category, status, notes, or tags... (min 4 chars)"
+            placeholder="Buscar por motivo, diagnóstico, categoría, estado, notas o etiquetas... (mín 4 caract.)"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="pl-10"
           />
           {query.length > 0 && query.length < 4 && (
             <p className="text-xs text-slate-500 mt-1">
-              Type {4 - query.length} more character{4 - query.length !== 1 ? 's' : ''} to search
+              Escribe {4 - query.length} carácter{4 - query.length !== 1 ? 'es' : ''} más para buscar
             </p>
           )}
         </div>
@@ -80,7 +80,7 @@ export function RecordSearchBar({ onSearch }: SearchBarProps) {
         {hasFilters && (
           <div className="md:col-span-2 flex justify-end">
             <Button onClick={handleClear} variant="outline" size="sm">
-              <X className="h-4 w-4 mr-1" /> Clear
+              <X className="h-4 w-4 mr-1" /> Limpiar
             </Button>
           </div>
         )}

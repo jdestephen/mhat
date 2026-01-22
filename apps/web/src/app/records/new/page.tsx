@@ -84,7 +84,7 @@ export default function NewRecordPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setSubmissionStatus('Creating record...');
+    setSubmissionStatus('Creando registro...');
 
     try {
       // 1. Create Record
@@ -103,7 +103,7 @@ export default function NewRecordPage() {
 
       // 2. Upload Files
       if (files.length > 0) {
-          setSubmissionStatus('Uploading files...');
+          setSubmissionStatus('Subiendo archivos...');
           
           await Promise.all(files.map(async (file) => {
              const formData = new FormData();
@@ -123,12 +123,12 @@ export default function NewRecordPage() {
           }));
       }
 
-      setSubmissionStatus('Done! Redirecting...');
+      setSubmissionStatus('¡Listo! Redirigiendo...');
       setTimeout(() => router.push('/dashboard'), 500);
 
     } catch (error) {
       console.error(error);
-      alert('Failed to create record');
+      alert('Error al crear registro');
       setIsSubmitting(false);
       setSubmissionStatus('');
     }
@@ -143,37 +143,37 @@ export default function NewRecordPage() {
   return (
     <div className="max-w-3xl mx-auto pb-12">
       <div className="mb-4">
-         <h1 className="text-3xl font-bold text-emerald-950">New Medical Record</h1>
+         <h1 className="text-3xl font-bold text-emerald-950">Nuevo Registro Médico</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Main Details Card */}
         <div className="bg-white p-6 rounded-lg shadow-sm border border-[var(--border-light)]">
-            <h2 className="text-lg font-semibold text-emerald-900 mb-4 border-b pb-2">Details</h2>
+            <h2 className="text-lg font-semibold text-emerald-900 mb-4 border-b pb-2">Detalles</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="col-span-2">
-                   <label className="block text-sm font-medium mb-1">Motive / Title <span className="text-red-500">*</span></label>
+                   <label className="block text-sm font-medium mb-1">Motivo / Título <span className="text-red-500">*</span></label>
                    <Input 
                      value={motive} 
                      onChange={(e) => setMotive(e.target.value)} 
-                     placeholder="e.g. Annual Checkup, Knee Pain Consultation"
+                     placeholder="ej. Chequeo Anual, Consulta por Dolor de Rodilla"
                      required
                      onKeyDown={handleKeyDown}
                    />
                 </div>
                 
                 <div>
-                   <label className="block text-sm font-medium mb-1">Category</label>
+                   <label className="block text-sm font-medium mb-1">Categoría</label>
                    <Select
                      options={categories.map(c => ({ value: c.id, label: c.name }))}
                      value={categoryId}
                      onChange={(val) => setCategoryId(val.toString())}
-                     placeholder="Select a category..."
+                     placeholder="Selecciona una categoría..."
                    />
                 </div>
 
                 <div>
-                   <label className="block text-sm font-medium mb-1">Tags</label>
+                   <label className="block text-sm font-medium mb-1">Etiquetas</label>
                    <div className="flex flex-wrap gap-2 p-2 border border-slate-200 rounded-md min-h-[42px] bg-white focus-within:outline-none focus-within:ring-1 focus-within:ring-emerald-600 focus-within:ring-offset-0">
                       {tags.map((tag, idx) => (
                           <div key={idx} className="bg-emerald-100 text-emerald-800 text-sm px-2 py-1 rounded-full flex items-center gap-1">
@@ -188,16 +188,16 @@ export default function NewRecordPage() {
                         value={tagInput}
                         onChange={(e) => setTagInput(e.target.value)}
                         onKeyDown={handleTagKeyDown}
-                        placeholder={tags.length === 0 ? "Type & Enter..." : ""}
+                        placeholder={tags.length === 0 ? "Escribe y presiona Enter..." : ""}
                       />
                    </div>
                 </div>
 
                 <div className="col-span-2">
-                   <label className="block text-sm font-medium mb-1">Diagnosis</label>
+                   <label className="block text-sm font-medium mb-1">Diagnóstico</label>
                    <Autocomplete
                      endpoint="/catalog/conditions"
-                     placeholder="Search diagnosis (e.g., Diabetes)"
+                     placeholder="Buscar diagnóstico (ej., Diabetes)"
                      onSelect={(opt) => {
                        setDiagnosis(opt.display);
                        setDiagnosisCode(opt.code);
@@ -212,12 +212,12 @@ export default function NewRecordPage() {
                    />                </div>
 
                 <div className="col-span-2">
-                   <label className="block text-sm font-medium mb-1">Notes</label>
+                   <label className="block text-sm font-medium mb-1">Notas</label>
                    <textarea 
                       className="w-full min-h-[120px] rounded-md border border-slate-200 bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-600 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
-                      placeholder="Doctor's notes, observations, prescriptions..."
+                      placeholder="Notas del médico, observaciones, prescripciones..."
                    />
                 </div>
             </div>
@@ -225,14 +225,14 @@ export default function NewRecordPage() {
 
         {/* File Upload Section */}
         <div className="bg-white p-6 rounded-lg shadow-sm border border-[var(--border-light)]">
-            <h2 className="text-lg font-semibold text-emerald-900 mb-4 border-b pb-2">Documents</h2>
+            <h2 className="text-lg font-semibold text-emerald-900 mb-4 border-b pb-2">Documentos</h2>
             
             <div className="border-2 border-dashed border-slate-200 rounded-lg p-8 flex flex-col items-center justify-center text-slate-500 hover:bg-slate-50 transition-colors cursor-pointer"
                  onClick={() => document.getElementById('file-upload')?.click()}
             >
                  <UploadCloud className="h-10 w-10 mb-2 text-emerald-600" />
-                 <p className="text-sm font-medium text-slate-700">Click to upload files</p>
-                 <p className="text-xs text-slate-400 mt-1">PDF, JPG, PNG supported</p>
+                 <p className="text-sm font-medium text-slate-700">Haz clic para subir archivos</p>
+                 <p className="text-xs text-slate-400 mt-1">PDF, JPG, PNG soportados</p>
                  <Input 
                    type="file" 
                    multiple 
@@ -277,11 +277,11 @@ export default function NewRecordPage() {
         
         {/* Actions */}
         <div className="flex items-center justify-between pt-4">
-            <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => router.back()}>Cancelar</Button>
             <div className="flex items-center gap-4">
                 {submissionStatus && <span className="text-sm text-emerald-700 font-medium">{submissionStatus}</span>}
                 <Button type="submit" disabled={isSubmitting} className="min-w-[150px]">
-                    {isSubmitting ? 'Saving...' : 'Create Record'}
+                    {isSubmitting ? 'Guardando...' : 'Crear Registro'}
                 </Button>
             </div>
         </div>

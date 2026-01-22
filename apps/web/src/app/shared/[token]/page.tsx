@@ -64,9 +64,9 @@ export default function SharedRecordPage() {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; className: string }> = {
-      UNVERIFIED: { label: 'Unverified', className: 'bg-slate-200 text-slate-700' },
-      BACKED_BY_DOCUMENT: { label: 'Backed by Document', className: 'bg-blue-100 text-blue-800' },
-      VERIFIED: { label: 'Verified', className: 'bg-emerald-100 text-emerald-800' },
+      UNVERIFIED: { label: 'Sin Verificar', className: 'bg-slate-200 text-slate-700' },
+      BACKED_BY_DOCUMENT: { label: 'Respaldado por Documento', className: 'bg-blue-100 text-blue-800' },
+      VERIFIED: { label: 'Verificado', className: 'bg-emerald-100 text-emerald-800' },
     };
 
     const statusInfo = statusMap[status] || statusMap.UNVERIFIED;
@@ -83,7 +83,7 @@ export default function SharedRecordPage() {
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
-          <p className="text-slate-600">Loading shared records...</p>
+          <p className="text-slate-600">Cargando registros compartidos...</p>
         </div>
       </div>
     );
@@ -94,10 +94,10 @@ export default function SharedRecordPage() {
       <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6 text-center">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-slate-900 mb-2">Access Denied</h2>
+          <h2 className="text-xl font-bold text-slate-900 mb-2">Acceso Denegado</h2>
           <p className="text-slate-600 mb-4">{error}</p>
           <p className="text-sm text-slate-500">
-            This link may have expired, been revoked, or already used.
+            Este enlace puede haber expirado, sido revocado o ya utilizado.
           </p>
         </div>
       </div>
@@ -110,7 +110,7 @@ export default function SharedRecordPage() {
     <div className="min-h-screen bg-slate-50 py-8 px-4">
       {/* Watermark */}
       <div className="fixed top-4 right-4 bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-xs font-medium shadow-sm">
-        🔒 View Only
+        🔒 Solo Vista
       </div>
 
       <div className="max-w-4xl mx-auto">
@@ -118,14 +118,14 @@ export default function SharedRecordPage() {
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6 border border-slate-200">
           <div className="flex items-start justify-between mb-4">
             <div>
-              <h1 className="text-2xl font-bold text-slate-900">Shared Medical Records</h1>
+              <h1 className="text-2xl font-bold text-slate-900">Registros Médicos Compartidos</h1>
               <p className="text-slate-600 mt-1 flex items-center gap-2">
                 <User className="h-4 w-4" />
-                Shared by {data.shared_by}
+                Compartido por {data.shared_by}
               </p>
               {data.purpose && (
                 <p className="text-sm text-slate-500 mt-2">
-                  Purpose: {data.purpose}
+                  Propósito: {data.purpose}
                 </p>
               )}
             </div>
@@ -135,7 +135,7 @@ export default function SharedRecordPage() {
           <div className={`flex items-center gap-2 p-3 rounded-md ${data.is_expired ? 'bg-red-50 text-red-700' : 'bg-blue-50 text-blue-700'}`}>
             <Clock className="h-4 w-4" />
             <span className="text-sm">
-              {data.is_expired ? 'This link has expired' : `Expires: ${formatDate(data.expires_at)}`}
+              {data.is_expired ? 'Este enlace ha expirado' : `Expira: ${formatDate(data.expires_at)}`}
             </span>
           </div>
         </div>
@@ -168,7 +168,7 @@ export default function SharedRecordPage() {
               {/* Diagnosis */}
               {record.diagnosis && (
                 <div className="mb-4">
-                  <h3 className="text-sm font-medium text-slate-700 mb-1">Diagnosis</h3>
+                  <h3 className="text-sm font-medium text-slate-700 mb-1">Diagnóstico</h3>
                   <p className="text-slate-900">{record.diagnosis}</p>
                 </div>
               )}
@@ -176,7 +176,7 @@ export default function SharedRecordPage() {
               {/* Notes */}
               {record.notes && (
                 <div className="mb-4">
-                  <h3 className="text-sm font-medium text-slate-700 mb-1">Notes</h3>
+                  <h3 className="text-sm font-medium text-slate-700 mb-1">Notas</h3>
                   <p className="text-slate-600 whitespace-pre-wrap">{record.notes}</p>
                 </div>
               )}
@@ -184,7 +184,7 @@ export default function SharedRecordPage() {
               {/* Tags */}
               {record.tags && record.tags.length > 0 && (
                 <div className="mb-4">
-                  <h3 className="text-sm font-medium text-slate-700 mb-2">Tags</h3>
+                  <h3 className="text-sm font-medium text-slate-700 mb-2">Etiquetas</h3>
                   <div className="flex flex-wrap gap-2">
                     {record.tags.map((tag, idx) => (
                       <span
@@ -203,7 +203,7 @@ export default function SharedRecordPage() {
                 <div>
                   <h3 className="text-sm font-medium text-slate-700 mb-3 flex items-center gap-2">
                     <Paperclip className="h-4 w-4" />
-                    Attachments ({record.documents.length})
+                    Adjuntos ({record.documents.length})
                   </h3>
                   
                   <div className="space-y-4">
@@ -263,8 +263,8 @@ export default function SharedRecordPage() {
 
         {/* Footer */}
         <div className="mt-8 text-center text-sm text-slate-500">
-          <p>This is a secure, time-limited share. Do not forward this link.</p>
-          <p className="mt-1">Views: {data.access_count}</p>
+          <p>Esta es una compartición segura y de tiempo limitado. No reenvíes este enlace.</p>
+          <p className="mt-1">Vistas: {data.access_count}</p>
         </div>
       </div>
     </div>

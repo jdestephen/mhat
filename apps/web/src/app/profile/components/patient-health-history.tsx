@@ -68,7 +68,7 @@ export function PatientHealthHistory({ profile, onRefresh }: PatientHealthHistor
     
     // Validate that code and code_system are present (required for FHIR compliance)
     if (!newAllergy.code || !newAllergy.code_system) {
-      alert('Please select an allergy from the autocomplete dropdown to ensure proper coding.');
+      alert('Por favor selecciona una alergia del menú desplegable para asegurar la codificación apropiada.');
       return;
     }
     
@@ -85,7 +85,7 @@ export function PatientHealthHistory({ profile, onRefresh }: PatientHealthHistor
       onRefresh();
     } catch (error) {
        console.error(error);
-       alert("Failed to add allergy");
+       alert("Error al agregar alergia");
     }
   };
 
@@ -94,7 +94,7 @@ export function PatientHealthHistory({ profile, onRefresh }: PatientHealthHistor
     
     // Validate that code and code_system are present (required for FHIR compliance)
     if (!newCondition.code || !newCondition.code_system) {
-      alert('Please select a condition from the autocomplete dropdown to ensure proper coding.');
+      alert('Por favor selecciona una condición del menú desplegable para asegurar la codificación apropiada.');
       return;
     }
     
@@ -110,7 +110,7 @@ export function PatientHealthHistory({ profile, onRefresh }: PatientHealthHistor
       onRefresh();
     } catch (error) {
        console.error(error);
-       alert("Failed to add condition");
+       alert("Error al agregar condición");
     }
   };
 
@@ -119,10 +119,10 @@ export function PatientHealthHistory({ profile, onRefresh }: PatientHealthHistor
       {/* Conditions Section */}
       <div className="border border-[var(--border-light)] rounded-lg p-4">
         <div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-2">
-          <h2 className="text-lg font-semibold text-emerald-900">Conditions</h2>
+          <h2 className="text-lg font-semibold text-emerald-900">Condiciones</h2>
           <Button variant="outline" size="sm" onClick={() => setShowAddCondition(!showAddCondition)}>
             {showAddCondition ? <X className="w-4 h-4 mr-1" /> : <Plus className="w-4 h-4 mr-1" />}
-            {showAddCondition ? 'Cancel' : 'Add Condition'}
+            {showAddCondition ? 'Cancelar' : 'Agregar Condición'}
           </Button>
         </div>
 
@@ -130,7 +130,7 @@ export function PatientHealthHistory({ profile, onRefresh }: PatientHealthHistor
           <div className="mb-6 p-4 bg-slate-50 rounded-md border border-[var(--border-light)]">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div className="col-span-2">
-                <label className="block text-sm font-medium mb-1">Condition</label>
+                <label className="block text-sm font-medium mb-1">Condición</label>
                 <Autocomplete
                   endpoint="/catalog/conditions"
                   placeholder="Search condition (e.g. Asma)"
@@ -145,7 +145,7 @@ export function PatientHealthHistory({ profile, onRefresh }: PatientHealthHistor
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Status</label>
+                <label className="block text-sm font-medium mb-1">Estado</label>
                 <Select
                   options={[
                     { value: ConditionStatus.ACTIVE, label: 'Activa' },
@@ -155,11 +155,11 @@ export function PatientHealthHistory({ profile, onRefresh }: PatientHealthHistor
                   ]}
                   value={newCondition.status}
                   onChange={(val) => setNewCondition({ ...newCondition, status: val as ConditionStatus })}
-                  placeholder="Select status..."
+                  placeholder="Selecciona estado..."
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Since (Year)</label>
+                <label className="block text-sm font-medium mb-1">Desde (Año)</label>
                 <Input
                   placeholder="e.g. 2015"
                   value={newCondition.since_year || ''}
@@ -167,18 +167,18 @@ export function PatientHealthHistory({ profile, onRefresh }: PatientHealthHistor
                 />
               </div>
             </div>
-            <Button onClick={handleAddCondition}>Save Condition</Button>
+            <Button onClick={handleAddCondition}>Guardar Condición</Button>
           </div>
         )}
 
         <div className="space-y-2">
-          {profile.conditions?.length === 0 && <p className="text-slate-500 italic">No conditions recorded.</p>}
+          {profile.conditions?.length === 0 && <p className="text-slate-500 italic">No hay condiciones registradas.</p>}
           {profile.conditions?.map((cond) => (
             <div key={cond.id} className="flex justify-between items-center p-3 bg-slate-50 rounded border border-slate-100">
               <div>
                 <p className="font-medium text-slate-800">{cond.name}</p>
                 <p className="text-xs text-slate-500">
-                  Since: {cond.since_year || 'Unknown'}
+                  Desde: {cond.since_year || 'Desconocido'}
                 </p>
               </div>
               <div className="px-2 py-1 text-xs rounded bg-slate-200 text-slate-700">
@@ -192,10 +192,10 @@ export function PatientHealthHistory({ profile, onRefresh }: PatientHealthHistor
       {/* Allergies Section */}
       <div className="border border-[var(--border-light)] rounded-lg p-4">
         <div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-2">
-           <h2 className="text-lg font-semibold text-emerald-900">Allergies</h2>
+           <h2 className="text-lg font-semibold text-emerald-900">Alergias</h2>
            <Button variant="outline" size="sm" onClick={() => setShowAddAllergy(!showAddAllergy)}>
              {showAddAllergy ? <X className="w-4 h-4 mr-1"/> : <Plus className="w-4 h-4 mr-1"/>}
-             {showAddAllergy ? 'Cancel' : 'Add Allergy'}
+             {showAddAllergy ? 'Cancelar' : 'Agregar Alergia'}
            </Button>
         </div>
 
@@ -203,7 +203,7 @@ export function PatientHealthHistory({ profile, onRefresh }: PatientHealthHistor
             <div className="mb-6 p-4 bg-slate-50 rounded-md border border-[var(--border-light)]">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
-                        <label className="block text-sm font-medium mb-1">Allergen</label>
+                        <label className="block text-sm font-medium mb-1">Álergeno</label>
                         <Autocomplete 
                            endpoint="/catalog/allergies"
                            placeholder="Search allergy (e.g. Maní)"
@@ -220,7 +220,7 @@ export function PatientHealthHistory({ profile, onRefresh }: PatientHealthHistor
                         />
                     </div>
                      <div>
-                        <label className="block text-sm font-medium mb-1">Severity</label>
+                        <label className="block text-sm font-medium mb-1">Severidad</label>
                         <Select
                           options={[
                             { value: AllergySeverity.MILD, label: 'Leve' },
@@ -230,11 +230,11 @@ export function PatientHealthHistory({ profile, onRefresh }: PatientHealthHistor
                           ]}
                           value={newAllergy.severity}
                           onChange={(val) => setNewAllergy({...newAllergy, severity: val as AllergySeverity})}
-                          placeholder="Select severity..."
+                          placeholder="Selecciona severidad..."
                         />
                     </div>
                     <div className="col-span-2">
-                        <label className="block text-sm font-medium mb-1">Reaction</label>
+                        <label className="block text-sm font-medium mb-1">Reacción</label>
                          <Input 
                            placeholder="e.g. Ronchas"
                            value={newAllergy.reaction || ''}
@@ -242,18 +242,18 @@ export function PatientHealthHistory({ profile, onRefresh }: PatientHealthHistor
                          />
                     </div>
                 </div>
-                <Button onClick={handleAddAllergy}>Save Allergy</Button>
+                <Button onClick={handleAddAllergy}>Guardar Alergia</Button>
             </div>
         )}
 
         <div className="space-y-2">
-           {profile.allergies?.length === 0 && <p className="text-slate-500 italic">No allergies recorded.</p>}
+           {profile.allergies?.length === 0 && <p className="text-slate-500 italic">No hay alergias registradas.</p>}
            {profile.allergies?.map((allergy) => (
                <div key={allergy.id} className="flex justify-between items-center p-3 bg-slate-50 rounded border border-slate-100">
                    <div>
                        <p className="font-medium text-slate-800">{allergy.allergen}</p>
                        <p className="text-xs text-slate-500">
-                          {capitalize(allergy.severity)} • {allergy.reaction || 'No reaction specified'}
+                           {capitalize(allergy.severity)} • {allergy.reaction || 'Sin reacción especificada'}
                        </p>
                    </div>
                    <div className="px-2 py-1 text-xs rounded bg-slate-200 text-slate-700">

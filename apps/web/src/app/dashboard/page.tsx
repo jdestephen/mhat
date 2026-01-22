@@ -64,10 +64,10 @@ export default function DashboardPage() {
   return (
     <div className="max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
+        <h1 className="text-3xl font-bold text-slate-900">Panel</h1>
         <Link href="/records/new">
           <Button>
-            <Plus className="w-4 h-4 mr-2" /> New Record
+            <Plus className="w-4 h-4 mr-2" /> Nuevo Registro
           </Button>
         </Link>
       </div>
@@ -81,18 +81,18 @@ export default function DashboardPage() {
       />
       
       <div className="mb-6">
-        <h2 className="text-xl font-semibold text-slate-700 mb-4">Medical Timeline</h2>
+        <h2 className="text-xl font-semibold text-slate-700 mb-4">Historial Clínico</h2>
         
         {isLoading ? (
-          <div className="text-center py-10">Loading records...</div>
+          <div className="text-center py-10">Cargando registros...</div>
         ) : (
           <>
             {records?.length === 0 && (
               <div className="text-center py-16 bg-white rounded-lg border border-dashed border-slate-300">
                 <Stethoscope className="mx-auto h-12 w-12 text-slate-300 mb-3" />
-                <p className="text-slate-500 mb-2">No medical records found.</p>
+                <p className="text-slate-500 mb-2">No se encontraron registros médicos.</p>
                 <Link href="/records/new">
-                  <Button variant="outline">Create your first record</Button>
+                  <Button variant="outline">Crea tu primer registro</Button>
                 </Link>
               </div>
             )}
@@ -103,11 +103,11 @@ export default function DashboardPage() {
                 <table className="w-full">
                   <thead className="bg-slate-50 border-b border-slate-200">
                     <tr>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Date</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Motive/Category</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Diagnosis</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Documents</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Status</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Fecha</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Motivo/Categoría</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Diagnóstico</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Documentos</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Estado</th>
                       <th className="w-10"></th>
                     </tr>
                   </thead>
@@ -165,7 +165,7 @@ export default function DashboardPage() {
                               ) : (
                                 <>
                                   <Paperclip size={14} className="text-slate-400 pr-1" />
-                                  <span className="text-sm text-slate-600">{record.documents.length} Documents</span>  
+                                  <span className="text-sm text-slate-600">{record.documents.length} Documentos</span>  
                                 </>  
                               )}
                             </div>
@@ -214,7 +214,7 @@ export default function DashboardPage() {
                                         window.location.href = `/records/${record.id}`;
                                       }}
                                     >
-                                      View Details
+                                      Ver Detalles
                                     </button>
                                     <button
                                       className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
@@ -227,7 +227,7 @@ export default function DashboardPage() {
                                         setShareDialogOpen(true);
                                       }}
                                     >
-                                      Share
+                                      Compartir
                                     </button>
                                   </div>
                                 </div>
@@ -287,14 +287,14 @@ export default function DashboardPage() {
                     <div className="pl-13 ml-1">
                       {record.diagnosis && (
                         <div className="mb-2">
-                          <span className="font-semibold text-xs uppercase tracking-wide text-slate-400">Diagnosis</span>
+                          <span className="font-semibold text-xs uppercase tracking-wide text-slate-400">Diagnóstico</span>
                           <p className="text-slate-700">{record.diagnosis}</p>
                         </div>
                       )}
 
                       {record.documents && record.documents.length > 0 && (
                         <div className="mt-4 pt-3 border-t border-slate-50">
-                          <span className="font-semibold text-xs uppercase tracking-wide text-slate-400 mb-2 block">Attachments</span>
+                          <span className="font-semibold text-xs uppercase tracking-wide text-slate-400 mb-2 block">Adjuntos</span>
                           <div className="flex flex-wrap gap-2">
                             {record.documents.map(doc => (
                               <a

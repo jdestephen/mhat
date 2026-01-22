@@ -43,7 +43,7 @@ export default function ViewRecordPage() {
   if (isLoading) {
     return (
       <div className="max-w-3xl mx-auto py-10">
-        <div className="text-center">Loading record...</div>
+        <div className="text-center">Cargando registro...</div>
       </div>
     );
   }
@@ -51,7 +51,7 @@ export default function ViewRecordPage() {
   if (!record) {
     return (
       <div className="max-w-3xl mx-auto py-10">
-        <div className="text-center">Record not found</div>
+        <div className="text-center">Registro no encontrado</div>
       </div>
     );
   }
@@ -93,7 +93,7 @@ export default function ViewRecordPage() {
           {/* Motive */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium text-slate-700">Motive</label>
+              <label className="block text-sm font-medium text-slate-700">Motivo</label>
               {getStatusBadge(record.status)}
             </div>
             <Input 
@@ -107,7 +107,7 @@ export default function ViewRecordPage() {
           {/* Diagnosis */}
           {record.diagnosis && (
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Diagnosis</label>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Diagnóstico</label>
               <Input 
                 value={record.diagnosis} 
                 disabled
@@ -115,7 +115,7 @@ export default function ViewRecordPage() {
               />
               {record.diagnosis_code && (
                 <p className="text-xs text-slate-500 mt-1">
-                  Code: {record.diagnosis_code}
+                  Código: {record.diagnosis_code}
                 </p>
               )}
             </div>
@@ -124,7 +124,7 @@ export default function ViewRecordPage() {
           {/* Notes */}
           {record.notes && (
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Notes</label>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Notas</label>
               <textarea 
                 value={record.notes} 
                 disabled
@@ -137,7 +137,7 @@ export default function ViewRecordPage() {
           {/* Tags */}
           {record.tags && record.tags.length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Tags</label>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Etiquetas</label>
               <div className="flex flex-wrap gap-2">
                 {record.tags.map((tag, idx) => (
                   <span 
@@ -155,26 +155,67 @@ export default function ViewRecordPage() {
           {record.documents && record.documents.length > 0 && (
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                Attachments ({record.documents.length})
+                Adjuntos ({record.documents.length})
               </label>
-              <div className="space-y-2">
-                {record.documents.map((doc) => (
-                  <a
-                    key={doc.id}
-                    href={doc.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100 rounded-md border border-slate-200 transition-colors group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Paperclip size={16} className="text-slate-400" />
-                      <span className="text-sm text-slate-700 group-hover:text-emerald-700">
-                        {doc.filename}
-                      </span>
-                    </div>
-                    <FileText size={16} className="text-slate-400" />
-                  </a>
-                ))}
+              
+              <div className="space-y-4">
+                {/* Preview first document if it's an image */}
+                {record.documents[0] && (
+                  <div className="space-y-2">
+                    {record.documents[0].filename.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                      <div className="relative">
+                        <img
+                          src={`http://localhost:8000${record.documents[0].url}`}
+                          alt={record.documents[0].filename}
+                          className="w-full rounded-lg border border-slate-200 shadow-sm"
+                          onError={(e) => {
+                            // Fallback if image fails to load
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                        <p className="text-xs text-slate-500 mt-1">{record.documents[0].filename}</p>
+                      </div>
+                    ) : (
+                      <a
+                        href={`http://localhost:8000${record.documents[0].url}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100 rounded-md border border-slate-200 transition-colors group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Paperclip size={16} className="text-slate-400" />
+                          <span className="text-sm text-slate-700 group-hover:text-emerald-700">
+                            {record.documents[0].filename}
+                          </span>
+                        </div>
+                        <FileText size={16} className="text-slate-400" />
+                      </a>
+                    )}
+                  </div>
+                )}
+                
+                {/* Show remaining documents as links */}
+                {record.documents.length > 1 && (
+                  <div className="space-y-2">
+                    {record.documents.slice(1).map((doc) => (
+                      <a
+                        key={doc.id}
+                        href={`http://localhost:8000${doc.url}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100 rounded-md border border-slate-200 transition-colors group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Paperclip size={16} className="text-slate-400" />
+                          <span className="text-sm text-slate-700 group-hover:text-emerald-700">
+                            {doc.filename}
+                          </span>
+                        </div>
+                        <FileText size={16} className="text-slate-400" />
+                      </a>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
