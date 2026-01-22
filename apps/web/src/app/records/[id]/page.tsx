@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import api from '@/lib/api';
 import { MedicalRecord } from '@/types';
-import { ArrowLeft, Calendar, FileText, Paperclip, XIcon } from 'lucide-react';
+import { ArrowLeft, Calendar, FileText, Paperclip, XIcon, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 
 export default function ViewRecordPage() {
@@ -173,7 +173,18 @@ export default function ViewRecordPage() {
                             e.currentTarget.style.display = 'none';
                           }}
                         />
-                        <p className="text-xs text-slate-500 mt-1">{record.documents[0].filename}</p>
+                        <div className="flex items-center justify-between mt-2">
+                          <p className="text-xs text-slate-500">{record.documents[0].filename}</p>
+                          <a
+                            href={`http://localhost:8000${record.documents[0].url}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-xs text-emerald-700 hover:text-emerald-800 font-medium"
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                            Abrir
+                          </a>
+                        </div>
                       </div>
                     ) : (
                       <a

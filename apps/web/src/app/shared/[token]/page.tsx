@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import api from '@/lib/api';
-import { Clock, User, FileText, Calendar, Paperclip, AlertCircle } from 'lucide-react';
+import { Clock, User, FileText, Calendar, Paperclip, AlertCircle, ExternalLink } from 'lucide-react';
 
 interface SharedRecord {
   id: string;
@@ -221,7 +221,18 @@ export default function SharedRecordPage() {
                                 e.currentTarget.style.display = 'none';
                               }}
                             />
-                            <p className="text-xs text-slate-500 mt-1">{record.documents[0].filename}</p>
+                            <div className="flex items-center justify-between mt-2">
+                              <p className="text-xs text-slate-500">{record.documents[0].filename}</p>
+                              <a
+                                href={`http://localhost:8000${record.documents[0].url}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1 text-xs text-emerald-700 hover:text-emerald-800 font-medium"
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                                Abrir
+                              </a>
+                            </div>
                           </div>
                         ) : (
                           <a
