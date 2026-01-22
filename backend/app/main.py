@@ -34,7 +34,7 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 # Mount static files for uploaded docs
 import os
 os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
+app.mount("/static/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
 
 @app.get("/")
 def read_root():

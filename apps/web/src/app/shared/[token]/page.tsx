@@ -201,23 +201,59 @@ export default function SharedRecordPage() {
               {/* Documents */}
               {record.documents && record.documents.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
+                  <h3 className="text-sm font-medium text-slate-700 mb-3 flex items-center gap-2">
                     <Paperclip className="h-4 w-4" />
                     Attachments ({record.documents.length})
                   </h3>
-                  <div className="space-y-2">
-                    {record.documents.map((doc) => (
-                      <a
-                        key={doc.id}
-                        href={doc.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 p-2 bg-slate-50 rounded hover:bg-slate-100 transition-colors"
-                      >
-                        <FileText className="h-4 w-4 text-slate-400" />
-                        <span className="text-sm text-slate-700">{doc.filename}</span>
-                      </a>
-                    ))}
+                  
+                  <div className="space-y-4">
+                    {/* Preview first document if it's an image */}
+                    {record.documents[0] && (
+                      <div className="space-y-2">
+                        {record.documents[0].filename.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                          <div className="relative">
+                            <img
+                              src={`http://localhost:8000${record.documents[0].url}`}
+                              alt={record.documents[0].filename}
+                              className="w-full rounded-lg border border-slate-200 shadow-sm"
+                              onError={(e) => {
+                                // Fallback if image fails to load
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                            <p className="text-xs text-slate-500 mt-1">{record.documents[0].filename}</p>
+                          </div>
+                        ) : (
+                          <a
+                            href={`http://localhost:8000${record.documents[0].url}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors border border-slate-200"
+                          >
+                            <FileText className="h-5 w-5 text-slate-400" />
+                            <span className="text-sm text-slate-700 font-medium">{record.documents[0].filename}</span>
+                          </a>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Show remaining documents as links */}
+                    {record.documents.length > 1 && (
+                      <div className="space-y-2">
+                        {record.documents.slice(1).map((doc) => (
+                          <a
+                            key={doc.id}
+                            href={`http://localhost:8000${doc.url}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 p-2 bg-slate-50 rounded hover:bg-slate-100 transition-colors"
+                          >
+                            <FileText className="h-4 w-4 text-slate-400" />
+                            <span className="text-sm text-slate-700">{doc.filename}</span>
+                          </a>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
