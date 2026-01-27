@@ -1,6 +1,7 @@
 from sqlalchemy import String, Integer, ForeignKey, DateTime, Date, ARRAY, Enum, Text, Boolean
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.sql import func
 from typing import Optional, List
 from uuid import UUID
 import uuid
@@ -41,6 +42,22 @@ class ConditionSource(str, enum.Enum):
     DOCTOR = "doctor"
     SUSPECTED = "suspected"
 
+class MedicationStatus(str, enum.Enum):
+    """FHIR MedicationStatement status values"""
+    ACTIVE = "active"                    # Currently taking
+    COMPLETED = "completed"              # Finished the course
+    STOPPED = "stopped"                  # Stopped before completion
+    ON_HOLD = "on_hold"                  # Temporarily paused
+    ENTERED_IN_ERROR = "entered_in_error"  # Mistaken entry
+    NOT_TAKEN = "not_taken"              # Patient chose not to take
+
+class MedicationSource(str, enum.Enum):
+    """Source/origin of the medication record"""
+    PRESCRIBED = "prescribed"            # Prescribed by a doctor
+    OTC = "otc"                         # Over-the-counter
+    SELF_REPORTED = "self_reported"     # Patient self-reported
+    TRANSFERRED = "transferred"          # From another facility/system
+
 # --- Models ---
 
 class PatientProfile(Base):
@@ -74,11 +91,41 @@ class Medication(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     patient_profile_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("patient_profiles.id"), nullable=False)
     
+    # Basic medication info
     name: Mapped[str] = mapped_column(String, nullable=False)
-    dosage: Mapped[str] = mapped_column(String, nullable=False)
-    frequency: Mapped[str] = mapped_column(String, nullable=False)
+    dosage: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    frequency: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    
+    # Status tracking (FHIR MedicationStatement)
+    status: Mapped[MedicationStatus] = mapped_column(Enum(MedicationStatus), default=MedicationStatus.ACTIVE, nullable=False)
+    status_reason: Mapped[Optional[str]] = mapped_column(String, nullable=True)  # Why stopped/on-hold
+    
+    # Temporal tracking
+    start_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    end_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)  # NULL = still taking
+    recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    
+    # Source and prescriber information
+    source: Mapped[MedicationSource] = mapped_column(Enum(MedicationSource), default=MedicationSource.SELF_REPORTED, nullable=False)
+    prescribed_by_id: Mapped[Optional[UUID]] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True)  # Internal doctor
+    external_prescriber_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)  # External doctor name
+    
+    # Condition relationship (why is the patient taking this?)
+    condition_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("conditions.id"), nullable=True)
+    
+    # Additional information
+    instructions: Mapped[Optional[str]] = mapped_column(String, nullable=True)  # "Take with food"
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # Patient notes
+    
+    # Audit fields
+    created_by_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
 
+    # Relationships
     patient_profile: Mapped["PatientProfile"] = relationship("PatientProfile", back_populates="medications")
+    condition: Mapped[Optional["Condition"]] = relationship("Condition", back_populates="medications")
+    prescribed_by: Mapped[Optional["User"]] = relationship("User", foreign_keys=[prescribed_by_id])
+    created_by: Mapped["User"] = relationship("User", foreign_keys=[created_by_id])
 
 class Allergy(Base):
     __tablename__ = "allergies"
@@ -128,3 +175,4 @@ class Condition(Base):
     
     verifier: Mapped[Optional["User"]] = relationship("User", foreign_keys=[verified_by])
     patient_profile: Mapped["PatientProfile"] = relationship("PatientProfile", back_populates="conditions")
+    medications: Mapped[List["Medication"]] = relationship("Medication", back_populates="condition")

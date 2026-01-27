@@ -36,19 +36,61 @@ class ConditionSource(str, Enum):
     DOCTOR = "doctor"
     SUSPECTED = "suspected"
 
+class MedicationStatus(str, Enum):
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    STOPPED = "stopped"
+    ON_HOLD = "on_hold"
+    ENTERED_IN_ERROR = "entered_in_error"
+    NOT_TAKEN = "not_taken"
+
+class MedicationSource(str, Enum):
+    PRESCRIBED = "prescribed"
+    OTC = "otc"
+    SELF_REPORTED = "self_reported"
+    TRANSFERRED = "transferred"
+
 
 # Medication
 class MedicationBase(BaseModel):
     name: str
-    dosage: str
-    frequency: str
+    dosage: Optional[str] = None
+    frequency: Optional[str] = None
+    status: MedicationStatus = MedicationStatus.ACTIVE
+    status_reason: Optional[str] = None
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    source: MedicationSource = MedicationSource.SELF_REPORTED
+    prescribed_by_id: Optional[UUID] = None
+    external_prescriber_name: Optional[str] = None
+    condition_id: Optional[int] = None
+    instructions: Optional[str] = None
+    notes: Optional[str] = None
 
 class MedicationCreate(MedicationBase):
     pass
 
+class MedicationUpdate(BaseModel):
+    name: Optional[str] = None
+    dosage: Optional[str] = None
+    frequency: Optional[str] = None
+    status: Optional[MedicationStatus] = None
+    status_reason: Optional[str] = None
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    source: Optional[MedicationSource] = None
+    prescribed_by_id: Optional[UUID] = None
+    external_prescriber_name: Optional[str] = None
+    condition_id: Optional[int] = None
+    instructions: Optional[str] = None
+    notes: Optional[str] = None
+
 class Medication(MedicationBase):
     id: int
     patient_profile_id: UUID
+    recorded_at: datetime
+    created_by_id: UUID
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

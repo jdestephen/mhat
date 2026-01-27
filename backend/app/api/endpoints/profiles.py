@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -7,7 +7,7 @@ from sqlalchemy.orm import selectinload
 from app.api import deps
 from app.db.session import get_db
 from app.models.user import User, UserRole
-from app.models.patient import PatientProfile
+from app.models.patient import PatientProfile, Medication, MedicationStatus, Condition
 from app.models.doctor import DoctorProfile
 from app.schemas import patient as patient_schema
 from app.schemas import doctor as doctor_schema
@@ -288,3 +288,240 @@ async def update_doctor_profile(
     await db.commit()
     await db.refresh(profile)
     return profile
+
+
+# ==========================
+# Medication Endpoints
+# ==========================
+
+@router.post("/patient/medications", response_model=patient_schema.Medication)
+async def create_patient_medication(
+    *,
+    db: AsyncSession = Depends(get_db),
+    medication_in: patient_schema.MedicationCreate,
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """Create a new medication for the current user's patient profile."""
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Not a patient")
+
+    # Get patient profile
+    result = await db.execute(select(PatientProfile).filter(PatientProfile.user_id == current_user.id))
+    profile = result.scalars().first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+
+    # Create medication
+    medication = Medication(
+        patient_profile_id=profile.id,
+        created_by_id=current_user.id,
+        **medication_in.dict()
+    )
+    db.add(medication)
+    await db.commit()
+    await db.refresh(medication)
+    return medication
+
+
+@router.get("/patient/medications", response_model=List[patient_schema.Medication])
+async def get_patient_medications(
+    *,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+    status: patient_schema.MedicationStatus = None,
+    condition_id: int = None,
+) -> Any:
+    """
+    Get all medications for the current user.
+    Optional filters: status, condition_id
+    """
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Not a patient")
+
+    # Get patient profile
+    result = await db.execute(select(PatientProfile).filter(PatientProfile.user_id == current_user.id))
+    profile = result.scalars().first()
+    if not profile:
+        return []
+
+    # Build query with filters
+    query = select(Medication).filter(Medication.patient_profile_id == profile.id)
+    
+    if status:
+        query = query.filter(Medication.status == status)
+    
+    if condition_id is not None:
+        query = query.filter(Medication.condition_id == condition_id)
+    
+    query = query.order_by(Medication.recorded_at.desc())
+    
+    result = await db.execute(query)
+    return result.scalars().all()
+
+
+@router.get("/patient/medications/active", response_model=List[patient_schema.Medication])
+async def get_active_medications(
+    *,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """Get only currently active medications (status=active AND end_date IS NULL)."""
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Not a patient")
+
+    # Get patient profile
+    result = await db.execute(select(PatientProfile).filter(PatientProfile.user_id == current_user.id))
+    profile = result.scalars().first()
+    if not profile:
+        return []
+
+    # Query active medications
+    medications = await db.execute(
+        select(Medication).filter(
+            Medication.patient_profile_id == profile.id,
+            Medication.status == MedicationStatus.ACTIVE,
+            Medication.end_date.is_(None)
+        ).order_by(Medication.start_date.desc())
+    )
+    return medications.scalars().all()
+
+
+@router.get("/patient/medications/{medication_id}", response_model=patient_schema.Medication)
+async def get_medication(
+    *,
+    medication_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """Get a specific medication by ID."""
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Not a patient")
+
+    # Get patient profile
+    result = await db.execute(select(PatientProfile).filter(PatientProfile.user_id == current_user.id))
+    profile = result.scalars().first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+
+    # Get medication
+    result = await db.execute(
+        select(Medication).filter(
+            Medication.id == medication_id,
+            Medication.patient_profile_id == profile.id
+        )
+    )
+    medication = result.scalars().first()
+    
+    if not medication:
+        raise HTTPException(status_code=404, detail="Medication not found")
+    
+    return medication
+
+
+@router.patch("/patient/medications/{medication_id}", response_model=patient_schema.Medication)
+async def update_medication(
+    *,
+    medication_id: int,
+    medication_in: patient_schema.MedicationUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """Update a medication (e.g., change status, add end_date, update dosage)."""
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Not a patient")
+
+    # Get patient profile
+    result = await db.execute(select(PatientProfile).filter(PatientProfile.user_id == current_user.id))
+    profile = result.scalars().first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+
+    # Get medication
+    result = await db.execute(
+        select(Medication).filter(
+            Medication.id == medication_id,
+            Medication.patient_profile_id == profile.id
+        )
+    )
+    medication = result.scalars().first()
+    
+    if not medication:
+        raise HTTPException(status_code=404, detail="Medication not found")
+    
+    # Update fields
+    update_data = medication_in.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(medication, field, value)
+    
+    await db.commit()
+    await db.refresh(medication)
+    return medication
+
+
+@router.delete("/patient/medications/{medication_id}", status_code=204)
+async def delete_medication(
+    *,
+    medication_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> None:
+    """Delete a medication."""
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Not a patient")
+
+    # Get patient profile
+    result = await db.execute(select(PatientProfile).filter(PatientProfile.user_id == current_user.id))
+    profile = result.scalars().first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+
+    # Get medication
+    result = await db.execute(
+        select(Medication).filter(
+            Medication.id == medication_id,
+            Medication.patient_profile_id == profile.id
+        )
+    )
+    medication = result.scalars().first()
+    
+    if not medication:
+        raise HTTPException(status_code=404, detail="Medication not found")
+    
+    await db.delete(medication)
+    await db.commit()
+
+
+@router.get("/patient/conditions/{condition_id}/medications", response_model=List[patient_schema.Medication])
+async def get_medications_for_condition(
+    *,
+    condition_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """Get all medications linked to a specific condition."""
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Not a patient")
+
+    # Get patient profile
+    result = await db.execute(select(PatientProfile).filter(PatientProfile.user_id == current_user.id))
+    profile = result.scalars().first()
+    if not profile:
+        return []
+
+    # Get condition and verify ownership
+    result = await db.execute(select(Condition).filter(Condition.id == condition_id))
+    condition = result.scalars().first()
+    
+    if not condition:
+        raise HTTPException(status_code=404, detail="Condition not found")
+    
+    if condition.patient_profile_id != profile.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    # Get medications for this condition
+    medications = await db.execute(
+        select(Medication).filter(
+            Medication.condition_id == condition_id
+        ).order_by(Medication.recorded_at.desc())
+    )
+    return medications.scalars().all()
