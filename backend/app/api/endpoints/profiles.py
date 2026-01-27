@@ -302,6 +302,17 @@ async def create_patient_medication(
     current_user: User = Depends(deps.get_current_user),
 ) -> Any:
     """Create a new medication for the current user's patient profile."""
+    
+    # DEBUG: Print the incoming medication data
+    print(f"DEBUG: Received medication_in: {medication_in}")
+    print(f"DEBUG: medication_in.dict(): {medication_in.dict()}")
+    print(f"DEBUG: Status type: {type(medication_in.status)}, value: {medication_in.status}")
+    print(f"DEBUG: Source type: {type(medication_in.source)}, value: {medication_in.source}")
+    
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Not a patient")
+
+    # Get patient profile
     if current_user.role != UserRole.PATIENT:
         raise HTTPException(status_code=403, detail="Not a patient")
 
@@ -311,11 +322,19 @@ async def create_patient_medication(
     if not profile:
         raise HTTPException(status_code=404, detail="Patient profile not found")
 
-    # Create medication
+    # Convert Pydantic model to dict and extract enum values
+    medication_data = medication_in.dict()
+    
+    # Ensure enum values are strings, not enum objects
+    if 'status' in medication_data and medication_data['status'] is not None:
+        medication_data['status'] = medication_data['status'] if isinstance(medication_data['status'], str) else medication_data['status'].value
+    if 'source' in medication_data and medication_data['source'] is not None:
+        medication_data['source'] = medication_data['source'] if isinstance(medication_data['source'], str) else medication_data['source'].value
+    
     medication = Medication(
         patient_profile_id=profile.id,
         created_by_id=current_user.id,
-        **medication_in.dict()
+        **medication_data
     )
     db.add(medication)
     await db.commit()

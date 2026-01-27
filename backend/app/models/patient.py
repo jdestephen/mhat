@@ -44,19 +44,19 @@ class ConditionSource(str, enum.Enum):
 
 class MedicationStatus(str, enum.Enum):
     """FHIR MedicationStatement status values"""
-    ACTIVE = "active"                    # Currently taking
-    COMPLETED = "completed"              # Finished the course
-    STOPPED = "stopped"                  # Stopped before completion
-    ON_HOLD = "on_hold"                  # Temporarily paused
-    ENTERED_IN_ERROR = "entered_in_error"  # Mistaken entry
-    NOT_TAKEN = "not_taken"              # Patient chose not to take
+    ACTIVE = "ACTIVE"                    # Currently taking
+    COMPLETED = "COMPLETED"              # Finished the course
+    STOPPED = "STOPPED"                  # Stopped before completion
+    ON_HOLD = "ON_HOLD"                  # Temporarily paused
+    ENTERED_IN_ERROR = "ENTERED_IN_ERROR"  # Mistaken entry
+    NOT_TAKEN = "NOT_TAKEN"              # Patient chose not to take
 
 class MedicationSource(str, enum.Enum):
     """Source/origin of the medication record"""
-    PRESCRIBED = "prescribed"            # Prescribed by a doctor
-    OTC = "otc"                         # Over-the-counter
-    SELF_REPORTED = "self_reported"     # Patient self-reported
-    TRANSFERRED = "transferred"          # From another facility/system
+    PRESCRIBED = "PRESCRIBED"            # Prescribed by a doctor
+    OTC = "OTC"                         # Over-the-counter
+    SELF_REPORTED = "SELF_REPORTED"     # Patient self-reported
+    TRANSFERRED = "TRANSFERRED"          # From another facility/system
 
 # --- Models ---
 

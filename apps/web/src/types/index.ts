@@ -14,12 +14,41 @@ export interface User {
   role: UserRole;
 }
 
+export enum MedicationStatus {
+  ACTIVE = 'ACTIVE',
+  COMPLETED = 'COMPLETED',
+  STOPPED = 'STOPPED',
+  ON_HOLD = 'ON_HOLD',
+  ENTERED_IN_ERROR = 'ENTERED_IN_ERROR',
+  NOT_TAKEN = 'NOT_TAKEN',
+}
+
+export enum MedicationSource {
+  PRESCRIBED = 'PRESCRIBED',
+  OTC = 'OTC',
+  SELF_REPORTED = 'SELF_REPORTED',
+  TRANSFERRED = 'TRANSFERRED',
+}
+
 export interface Medication {
   id: number;
   patient_profile_id: string;
   name: string;
-  dosage: string;
-  frequency: string;
+  dosage?: string;
+  frequency?: string;
+  status: MedicationStatus;
+  status_reason?: string;
+  start_date?: string;
+  end_date?: string;
+  source: MedicationSource;
+  prescribed_by_id?: string;
+  external_prescriber_name?: string;
+  condition_id?: number;
+  instructions?: string;
+  notes?: string;
+  recorded_at: string;
+  created_by_id: string;
+  updated_at?: string;
 }
 
 export interface PatientProfile {

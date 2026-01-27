@@ -37,18 +37,18 @@ class ConditionSource(str, Enum):
     SUSPECTED = "suspected"
 
 class MedicationStatus(str, Enum):
-    ACTIVE = "active"
-    COMPLETED = "completed"
-    STOPPED = "stopped"
-    ON_HOLD = "on_hold"
-    ENTERED_IN_ERROR = "entered_in_error"
-    NOT_TAKEN = "not_taken"
+    ACTIVE = "ACTIVE"
+    COMPLETED = "COMPLETED"
+    STOPPED = "STOPPED"
+    ON_HOLD = "ON_HOLD"
+    ENTERED_IN_ERROR = "ENTERED_IN_ERROR"
+    NOT_TAKEN = "NOT_TAKEN"
 
 class MedicationSource(str, Enum):
-    PRESCRIBED = "prescribed"
-    OTC = "otc"
-    SELF_REPORTED = "self_reported"
-    TRANSFERRED = "transferred"
+    PRESCRIBED = "PRESCRIBED"
+    OTC = "OTC"
+    SELF_REPORTED = "SELF_REPORTED"
+    TRANSFERRED = "TRANSFERRED"
 
 
 # Medication

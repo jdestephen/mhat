@@ -8,6 +8,7 @@ import api from '@/lib/api';
 import { User, UserRole, PatientProfile, DoctorProfile } from '@/types';
 
 import { PatientHealthHistory } from './components/patient-health-history';
+import { MedicationList } from './components/medication-list';
 
 export default function ProfilePage() {
   const [user, setUser] = useState<User | null>(null);
@@ -92,7 +93,10 @@ export default function ProfilePage() {
         <TabsList className="mb-0">
           <TabsTrigger value="info">Información Personal</TabsTrigger>
           {user.role === UserRole.PATIENT && (
-             <TabsTrigger value="history">Historial de Salud</TabsTrigger>
+            <>
+              <TabsTrigger value="history">Historial de Salud</TabsTrigger>
+              <TabsTrigger value="medications">Medicamentos</TabsTrigger>
+            </>
           )}
         </TabsList>
 
@@ -166,6 +170,17 @@ export default function ProfilePage() {
                 </Button>
               </div>
             </form>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="medications">
+          <div className="bg-white p-6 rounded-b-lg rounded-tr-lg shadow-sm border border-[var(--border-light)]">
+            {user.role === UserRole.PATIENT && profile && (
+              <MedicationList 
+                profile={profile as PatientProfile} 
+                onRefresh={fetchData}
+              />
+            )}
           </div>
         </TabsContent>
 
