@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { InputWithVoice } from '@/components/ui/input-with-voice';
 import { Autocomplete } from '@/components/ui/autocomplete';
 import { Select } from '@/components/ui/select';
 import api from '@/lib/api';
@@ -235,10 +236,12 @@ export function PatientHealthHistory({ profile, onRefresh }: PatientHealthHistor
                     </div>
                     <div className="col-span-2">
                         <label className="block text-sm font-medium mb-1">Reacción</label>
-                         <Input 
+                         <InputWithVoice 
                            placeholder="e.g. Ronchas"
                            value={newAllergy.reaction || ''}
                            onChange={(e) => setNewAllergy({...newAllergy, reaction: e.target.value})}
+                           language="es-ES"
+                           mode="append"
                          />
                     </div>
                 </div>

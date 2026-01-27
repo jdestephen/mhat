@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { InputWithVoice } from '@/components/ui/input-with-voice';
+import { TextareaWithVoice } from '@/components/ui/textarea-with-voice';
 import { Select } from '@/components/ui/select';
 import api from '@/lib/api';
 import { 
@@ -131,10 +133,12 @@ export function MedicationList({ profile, onRefresh }: MedicationListProps) {
 
             <div className="col-span-2">
               <label className="block text-sm font-medium mb-1">Instrucciones</label>
-              <Input
+              <InputWithVoice
                 placeholder="ej. Tomar con comida"
                 value={newMedication.instructions || ''}
                 onChange={(e) => setNewMedication({ ...newMedication, instructions: e.target.value })}
+                language="es-ES"
+                mode="append"
               />
             </div>
 

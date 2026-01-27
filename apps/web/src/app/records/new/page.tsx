@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { InputWithVoice } from '@/components/ui/input-with-voice';
+import { TextareaWithVoice } from '@/components/ui/textarea-with-voice';
 import { Autocomplete } from '@/components/ui/autocomplete';
 import { Select, SelectOption } from '@/components/ui/select';
 import api from '@/lib/api';
@@ -153,12 +155,14 @@ export default function NewRecordPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="col-span-2">
                    <label className="block text-sm font-medium mb-1">Motivo / Título <span className="text-red-500">*</span></label>
-                   <Input 
+                   <InputWithVoice 
                      value={motive} 
                      onChange={(e) => setMotive(e.target.value)} 
                      placeholder="ej. Chequeo Anual, Consulta por Dolor de Rodilla"
                      required
                      onKeyDown={handleKeyDown}
+                     language="es-ES"
+                     mode="append"
                    />
                 </div>
                 
@@ -213,11 +217,14 @@ export default function NewRecordPage() {
 
                 <div className="col-span-2">
                    <label className="block text-sm font-medium mb-1">Notas</label>
-                   <textarea 
-                      className="w-full min-h-[120px] rounded-md border border-slate-200 bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-600 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
+                   <TextareaWithVoice 
+                      className="min-h-[120px]"
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                       placeholder="Notas del médico, observaciones, prescripciones..."
+                      language="es-ES"
+                      mode="append"
+                      rows={5}
                    />
                 </div>
             </div>
