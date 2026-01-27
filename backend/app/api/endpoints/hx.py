@@ -11,7 +11,7 @@ from sqlalchemy.orm import selectinload
 from app.api import deps
 from app.core.config import settings
 from app.db.session import get_db
-from app.models.hx import MedicalRecord, Document, RecordStatus
+from app.models.hx import MedicalRecord, Document, RecordStatus, MedicalDiagnosis, DiagnosisStatus
 from app.models.user import User, UserRole
 from app.models.patient import PatientProfile
 from app.schemas import hx as hx_schema
@@ -33,6 +33,10 @@ async def create_medical_record(
     If user is Doctor, must specify patient_id (TODO: Permission check).
     For now, assuming Patient creates their own records.
     """
+    print(f"DEBUG: Received request to create medical record")
+    print(f"DEBUG: record_in = {record_in}")
+    print(f"DEBUG: record_in.diagnoses = {record_in.diagnoses}")
+    
     # Resolve Patient Profile
     # Simplified logic: Assumes current user is the patient
     # TODO: Add logic for Doctor creating record for a specific patient
@@ -46,29 +50,24 @@ async def create_medical_record(
     # Build search_text field by concatenating searchable content
     search_parts = []
     
-    # Add motive
     if record_in.motive:
         search_parts.append(record_in.motive.lower())
     
-    # Add diagnosis
-    if record_in.diagnosis:
-        search_parts.append(record_in.diagnosis.lower())
+    if record_in.diagnoses:
+        for diag in record_in.diagnoses:
+            search_parts.append(diag.diagnosis.lower())
     
-    # Add tags
     if record_in.tags:
         search_parts.extend([tag.lower() for tag in record_in.tags])
     
-    # Add notes
     if record_in.notes:
         search_parts.append(record_in.notes.lower())
     
-    # Determine status first
     status = RecordStatus.UNVERIFIED
     if current_user.role == UserRole.DOCTOR:
         status = RecordStatus.VERIFIED
     search_parts.append(status.value.lower())
     
-    # Add category name if category_id is provided
     if record_in.category_id:
         from app.models.hx import Category
         category_result = await db.execute(select(Category).filter(Category.id == record_in.category_id))
@@ -76,15 +75,11 @@ async def create_medical_record(
         if category:
             search_parts.append(category.name.lower())
     
-    # Concatenate all parts with spaces
     search_text = " ".join(search_parts)
 
     medical_record = MedicalRecord(
         patient_id=patient_profile.id,
         motive=record_in.motive,
-        diagnosis=record_in.diagnosis,
-        diagnosis_code=record_in.diagnosis_code,
-        diagnosis_code_system=record_in.diagnosis_code_system,
         notes=record_in.notes,
         category_id=record_in.category_id,
         tags=record_in.tags,
@@ -93,18 +88,47 @@ async def create_medical_record(
         search_text=search_text
     )
     
-    # Auto-verify if doctor creates the record (already set status above)
     if current_user.role == UserRole.DOCTOR:
         medical_record.verified_by = current_user.id
         medical_record.verified_at = datetime.utcnow()
     
     db.add(medical_record)
+    await db.flush()
+    
+    
+    if record_in.diagnoses:
+        for idx, diag_in in enumerate(record_in.diagnoses):
+            # Apply smart defaults for patients, use provided values for doctors
+            if current_user.role == UserRole.PATIENT:
+                # Patients: auto-assign rank sequentially, force PROVISIONAL status
+                rank = idx + 1  # Sequential: 1, 2, 3...
+                status = DiagnosisStatus.PROVISIONAL
+            else:
+                # Doctors: use provided values
+                rank = diag_in.rank
+                status = diag_in.status
+            
+            diagnosis = MedicalDiagnosis(
+                medical_record_id=medical_record.id,
+                diagnosis=diag_in.diagnosis,
+                diagnosis_code=diag_in.diagnosis_code,
+                diagnosis_code_system=diag_in.diagnosis_code_system,
+                rank=rank,
+                status=status,
+                notes=diag_in.notes,
+                created_by=current_user.id
+            )
+            db.add(diagnosis)
+    
     await db.commit()
-    # Re-fetch with eager loading to strictly satisfy Pydantic and Async restrictions
     result = await db.execute(
         select(MedicalRecord)
         .filter(MedicalRecord.id == medical_record.id)
-        .options(selectinload(MedicalRecord.documents), selectinload(MedicalRecord.category))
+        .options(
+            selectinload(MedicalRecord.documents), 
+            selectinload(MedicalRecord.category),
+            selectinload(MedicalRecord.diagnoses)
+        )
     )
     return result.scalars().first()
 
@@ -223,7 +247,8 @@ async def read_medical_records(
     # Apply eager loading, pagination, and ordering
     stmt = stmt.options(
         selectinload(MedicalRecord.documents),
-        selectinload(MedicalRecord.category)
+        selectinload(MedicalRecord.category),
+        selectinload(MedicalRecord.diagnoses)
     ).offset(skip).limit(limit).order_by(MedicalRecord.created_at.desc())
     
     result = await db.execute(stmt)
@@ -251,7 +276,8 @@ async def get_medical_record(
         MedicalRecord.patient_id == patient_profile.id
     ).options(
         selectinload(MedicalRecord.documents),
-        selectinload(MedicalRecord.category)
+        selectinload(MedicalRecord.category),
+        selectinload(MedicalRecord.diagnoses)
     )
     
     result = await db.execute(stmt)

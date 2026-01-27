@@ -67,7 +67,7 @@ export function InputWithVoice({
         disabled={disabled}
         className={`pr-12 ${className}`}
       />
-      <div className="absolute right-2 top-1/2 -translate-y-1/2">
+      <div className="absolute right-0 mr-[0.5px] top-1/2 -translate-y-1/2">
         <VoiceButton
           isRecording={isRecording}
           isSupported={isSupported}

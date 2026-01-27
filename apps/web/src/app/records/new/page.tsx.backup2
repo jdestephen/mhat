@@ -297,7 +297,6 @@ export default function NewRecordPage() {
                              />
                            </div>
 
-                            {!isPatient && (
                            <div className="grid grid-cols-2 gap-3">
                              <div>
                                <label className="block text-xs font-medium text-gray-600 mb-1">
@@ -332,16 +331,15 @@ export default function NewRecordPage() {
                                />
                              </div>
                            </div>
-                            )}
 
                            <div>
                              <label className="block text-xs font-medium text-gray-600 mb-1">
-                               {isPatient ? "Notas (opcional)" : "Notas específicas (opcional)"}
+                               Notas específicas (opcional)
                              </label>
                              <textarea
                                value={diag.notes || ''}
                                onChange={(e) => updateDiagnosis(idx, 'notes', e.target.value)}
-                               placeholder={isPatient ? "Información adicional sobre esta condición..." : "Detalles específicos de este diagnóstico..."}
+                               placeholder="Detalles específicos de este diagnóstico..."
                                className="w-full px-3 py-2 border rounded-md text-sm"
                                rows={2}
                              />

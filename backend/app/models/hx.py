@@ -12,9 +12,23 @@ from app.db.base_class import Base
 
 # Enums
 class RecordStatus(str, enum.Enum):
-    UNVERIFIED = "unverified"
-    BACKED_BY_DOCUMENT = "backed_by_document"
-    VERIFIED = "verified"
+    UNVERIFIED = "UNVERIFIED"
+    BACKED_BY_DOCUMENT = "BACKED_BY_DOCUMENT"
+    VERIFIED = "VERIFIED"
+
+class DiagnosisRank(int, enum.Enum):
+    PRIMARY = 1
+    SECONDARY = 2
+    TERTIARY = 3
+    QUATERNARY = 4
+    QUINARY = 5
+
+class DiagnosisStatus(str, enum.Enum):
+    CONFIRMED = "CONFIRMED"
+    PROVISIONAL = "PROVISIONAL"
+    DIFFERENTIAL = "DIFFERENTIAL"
+    REFUTED = "REFUTED"
+    ENTERED_IN_ERROR = "ENTERED_IN_ERROR"
 
 class Category(Base):
     __tablename__ = "categories"
@@ -24,6 +38,34 @@ class Category(Base):
     
     medical_records: Mapped[List["MedicalRecord"]] = relationship("MedicalRecord", back_populates="category")
 
+class MedicalDiagnosis(Base):
+    """Represents a single diagnosis associated with a medical record (FHIR Condition-like)"""
+    __tablename__ = "medical_diagnoses"
+
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    medical_record_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("medical_records.id", ondelete="CASCADE"), nullable=False)
+    
+    # Core diagnosis fields
+    diagnosis: Mapped[str] = mapped_column(String, nullable=False)
+    diagnosis_code: Mapped[Optional[str]] = mapped_column(String, nullable=True)  # SNOMED CT, ICD-10
+    diagnosis_code_system: Mapped[Optional[str]] = mapped_column(String, nullable=True)  # e.g., "SNOMED-CT", "ICD-10-CM"
+    
+    # Clinical metadata
+    rank: Mapped[int] = mapped_column(Integer, default=DiagnosisRank.PRIMARY, nullable=False)  # 1=primary, 2=secondary, etc.
+    status: Mapped[DiagnosisStatus] = mapped_column(Enum(DiagnosisStatus), default=DiagnosisStatus.PROVISIONAL, nullable=False)
+    
+    # Optional: Per-diagnosis notes
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    
+    # Audit
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_by: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    
+    # Relationships
+    medical_record: Mapped["MedicalRecord"] = relationship("MedicalRecord", back_populates="diagnoses")
+    creator: Mapped["User"] = relationship("User", foreign_keys=[created_by])
+
+
 class MedicalRecord(Base):
     __tablename__ = "medical_records"
 
@@ -32,10 +74,7 @@ class MedicalRecord(Base):
     category_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("categories.id"), nullable=True)
     
     motive: Mapped[str] = mapped_column(String, nullable=False)
-    diagnosis: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    diagnosis_code: Mapped[Optional[str]] = mapped_column(String, nullable=True)  # SNOMED CT code
-    diagnosis_code_system: Mapped[Optional[str]] = mapped_column(String, nullable=True)  # e.g., "http://snomed.info/sct"
-    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # Global encounter notes
     tags: Mapped[Optional[List[str]]] = mapped_column(ARRAY(String), nullable=True)
     
     # Search field (auto-maintained by database trigger)
@@ -52,6 +91,7 @@ class MedicalRecord(Base):
 
     patient: Mapped["PatientProfile"] = relationship("PatientProfile", back_populates="medical_records")
     category: Mapped["Category"] = relationship("Category", back_populates="medical_records")
+    diagnoses: Mapped[List["MedicalDiagnosis"]] = relationship("MedicalDiagnosis", back_populates="medical_record", cascade="all, delete-orphan")
     documents: Mapped[List["Document"]] = relationship("Document", back_populates="medical_record")
     creator: Mapped["User"] = relationship("User", foreign_keys=[created_by])
     verifier: Mapped[Optional["User"]] = relationship("User", foreign_keys=[verified_by])

@@ -30,6 +30,22 @@ export enum MedicationSource {
   TRANSFERRED = 'TRANSFERRED',
 }
 
+export enum DiagnosisRank {
+  PRIMARY = 1,
+  SECONDARY = 2,
+  TERTIARY = 3,
+  QUATERNARY = 4,
+  QUINARY = 5,
+}
+
+export enum DiagnosisStatus {
+  CONFIRMED = 'CONFIRMED',
+  PROVISIONAL = 'PROVISIONAL',
+  DIFFERENTIAL = 'DIFFERENTIAL',
+  REFUTED = 'REFUTED',
+  ENTERED_IN_ERROR = 'ENTERED_IN_ERROR',
+}
+
 export interface Medication {
   id: number;
   patient_profile_id: string;
@@ -83,23 +99,34 @@ export interface Document {
 }
 
 export enum RecordStatus {
-  UNVERIFIED = 'unverified',
-  BACKED_BY_DOCUMENT = 'backed_by_document',
-  VERIFIED = 'verified',
+  UNVERIFIED = 'UNVERIFIED',
+  BACKED_BY_DOCUMENT = 'BACKED_BY_DOCUMENT',
+  VERIFIED = 'VERIFIED',
+}
+
+export interface MedicalDiagnosis {
+  id?: string;
+  medical_record_id?: string;
+  diagnosis: string;
+  diagnosis_code?: string | null;
+  diagnosis_code_system?: string | null;
+  rank: number;
+  status: DiagnosisStatus;
+  notes?: string | null;
+  created_at?: string;
+  created_by?: string;
 }
 
 export interface MedicalRecord {
   id: string;
   patient_id: string;
   motive: string;
-  diagnosis?: string;
-  diagnosis_code?: string;
-  diagnosis_code_system?: string;
   notes?: string;
   category_id?: string;
   category?: { id: number; name: string };
   tags?: string[];
   status: RecordStatus;
+  diagnoses: MedicalDiagnosis[];
   created_by: string;
   verified_by?: string;
   verified_at?: string;

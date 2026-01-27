@@ -28,13 +28,13 @@ export default function ViewRecordPage() {
     const formatted = status.replace(/_/g, ' ').split(' ').map(capitalize).join(' ');
     
     const styles: Record<string, string> = {
-      'unverified': 'bg-slate-200 text-slate-700',
-      'backed_by_document': 'bg-blue-100 text-blue-800',
-      'verified': 'bg-emerald-100 text-emerald-800'
+      'UNVERIFIED': 'bg-slate-200 text-slate-700',
+      'BACKED_BY_DOCUMENT': 'bg-blue-100 text-blue-800',
+      'VERIFIED': 'bg-emerald-100 text-emerald-800'
     };
     
     return (
-      <span className={`px-3 py-1 text-sm rounded-full font-medium ${styles[status] || styles.unverified}`}>
+      <span className={`px-3 py-1 text-sm rounded-full font-medium ${styles[status] || styles.UNVERIFIED}`}>
         {formatted}
       </span>
     );
@@ -104,27 +104,67 @@ export default function ViewRecordPage() {
           </div>
 
 
-          {/* Diagnosis */}
-          {record.diagnosis && (
+          {/* Diagnoses */}
+          {record.diagnoses && record.diagnoses.length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Diagnóstico</label>
-              <Input 
-                value={record.diagnosis} 
-                disabled
-                className="bg-slate-50"
-              />
-              {record.diagnosis_code && (
-                <p className="text-xs text-slate-500 mt-1">
-                  Código: {record.diagnosis_code}
-                </p>
-              )}
+              <label className="block text-sm font-medium text-slate-700 mb-3">Diagnósticos</label>
+              <div className="space-y-3">
+                {record.diagnoses
+                  .sort((a, b) => a.rank - b.rank)
+                  .map((diag, idx) => (
+                    <div key={diag.id || idx} className="border-l-4 border-emerald-500 pl-4 py-2 bg-gray-50 rounded-r">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <span className="font-medium text-gray-900">{diag.diagnosis}</span>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${
+                              diag.rank === 1
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-gray-100 text-gray-700'
+                            }`}>
+                              {diag.rank === 1 ? 'Principal' :
+                               diag.rank === 2 ? 'Secundario' :
+                               diag.rank === 3 ? 'Terciario' :
+                               diag.rank === 4 ? 'Cuaternario' : 'Quinario'}
+                            </span>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${
+                              diag.status === 'CONFIRMED'
+                                ? 'bg-green-100 text-green-800'
+                                : diag.status === 'PROVISIONAL'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : diag.status === 'DIFFERENTIAL'
+                                ? 'bg-purple-100 text-purple-800'
+                                : 'bg-gray-100 text-gray-700'
+                            }`}>
+                              {diag.status === 'CONFIRMED' ? 'Confirmado' :
+                               diag.status === 'PROVISIONAL' ? 'Provisional' :
+                               diag.status === 'DIFFERENTIAL' ? 'Diferencial' :
+                               diag.status === 'REFUTED' ? 'Descartado' : diag.status}
+                            </span>
+                          </div>
+                          {diag.diagnosis_code && (
+                            <div className="text-sm text-gray-600">
+                              Código: {diag.diagnosis_code}
+                              {diag.diagnosis_code_system && ` (${diag.diagnosis_code_system})`}
+                            </div>
+                          )}
+                          {diag.notes && (
+                            <div className="mt-2 text-sm text-gray-700 bg-white p-2 rounded border border-gray-200">
+                              <span className="font-medium">Notas: </span>{diag.notes}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
             </div>
           )}
 
-          {/* Notes */}
+          {/* Global Notes */}
           {record.notes && (
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Notas</label>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Notas Generales</label>
               <textarea 
                 value={record.notes} 
                 disabled
