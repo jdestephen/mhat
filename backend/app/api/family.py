@@ -8,7 +8,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.deps import get_db, get_current_user
+from app.api import deps
 from app.models.user import User
 from app.models.family import AccessLevel
 from app.services.family_service import FamilyService
@@ -26,8 +26,8 @@ router = APIRouter(prefix="/family", tags=["family"])
 
 @router.get("/managed-patients", response_model=List[ManagedPatientResponse])
 def get_managed_patients(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    current_user: User = Depends(deps.get_current_user),
+    db: Session = Depends(deps.get_db)
 ):
     """
     Get all patient profiles that the current user can manage.
@@ -62,8 +62,8 @@ def get_managed_patients(
 @router.post("/members", response_model=PatientProfileResponse, status_code=status.HTTP_201_CREATED)
 def create_family_member(
     request: CreateFamilyMemberRequest,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    current_user: User = Depends(deps.get_current_user),
+    db: Session = Depends(deps.get_db)
 ):
     """
     Create a new patient profile for a family member (e.g., child).
@@ -88,8 +88,8 @@ def create_family_member(
 @router.post("/link-patient", response_model=PatientProfileResponse)
 def link_patient_to_user(
     request: LinkPatientToUserRequest,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    current_user: User = Depends(deps.get_current_user),
+    db: Session = Depends(deps.get_db)
 ):
     """
     Link an existing patient profile to the current user's account.
@@ -125,8 +125,8 @@ def link_patient_to_user(
 def grant_family_access(
     patient_profile_id: UUID,
     request: GrantFamilyAccessRequest,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    current_user: User = Depends(deps.get_current_user),
+    db: Session = Depends(deps.get_db)
 ):
     """
     Grant another user access to a patient profile.
@@ -150,8 +150,8 @@ def grant_family_access(
 @router.delete("/memberships/{membership_id}", response_model=FamilyMembershipResponse)
 def revoke_family_access(
     membership_id: UUID,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    current_user: User = Depends(deps.get_current_user),
+    db: Session = Depends(deps.get_db)
 ):
     """
     Revoke a user's access to a patient profile.
@@ -172,8 +172,8 @@ def revoke_family_access(
 @router.get("/patients/{patient_profile_id}/members", response_model=List[FamilyMembershipResponse])
 def get_patient_family_members(
     patient_profile_id: UUID,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    current_user: User = Depends(deps.get_current_user),
+    db: Session = Depends(deps.get_db)
 ):
     """
     Get all users who have access to a patient profile.

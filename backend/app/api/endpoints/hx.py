@@ -43,6 +43,42 @@ async def create_medical_record(
     if not patient_profile:
         raise HTTPException(status_code=400, detail="Patient profile not found for this user")
 
+    # Build search_text field by concatenating searchable content
+    search_parts = []
+    
+    # Add motive
+    if record_in.motive:
+        search_parts.append(record_in.motive.lower())
+    
+    # Add diagnosis
+    if record_in.diagnosis:
+        search_parts.append(record_in.diagnosis.lower())
+    
+    # Add tags
+    if record_in.tags:
+        search_parts.extend([tag.lower() for tag in record_in.tags])
+    
+    # Add notes
+    if record_in.notes:
+        search_parts.append(record_in.notes.lower())
+    
+    # Determine status first
+    status = RecordStatus.UNVERIFIED
+    if current_user.role == UserRole.DOCTOR:
+        status = RecordStatus.VERIFIED
+    search_parts.append(status.value.lower())
+    
+    # Add category name if category_id is provided
+    if record_in.category_id:
+        from app.models.hx import Category
+        category_result = await db.execute(select(Category).filter(Category.id == record_in.category_id))
+        category = category_result.scalars().first()
+        if category:
+            search_parts.append(category.name.lower())
+    
+    # Concatenate all parts with spaces
+    search_text = " ".join(search_parts)
+
     medical_record = MedicalRecord(
         patient_id=patient_profile.id,
         motive=record_in.motive,
@@ -53,12 +89,12 @@ async def create_medical_record(
         category_id=record_in.category_id,
         tags=record_in.tags,
         created_by=current_user.id,
-        status=RecordStatus.UNVERIFIED
+        status=status,
+        search_text=search_text
     )
     
-    # Auto-verify if doctor creates the record
+    # Auto-verify if doctor creates the record (already set status above)
     if current_user.role == UserRole.DOCTOR:
-        medical_record.status = RecordStatus.VERIFIED
         medical_record.verified_by = current_user.id
         medical_record.verified_at = datetime.utcnow()
     
