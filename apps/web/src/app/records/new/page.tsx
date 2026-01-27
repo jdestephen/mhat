@@ -8,6 +8,7 @@ import { InputWithVoice } from '@/components/ui/input-with-voice';
 import { TextareaWithVoice } from '@/components/ui/textarea-with-voice';
 import { Autocomplete } from '@/components/ui/autocomplete';
 import { Select, SelectOption } from '@/components/ui/select';
+import { MultiSelect } from '@/components/ui/multi-select';
 import api from '@/lib/api';
 import { MedicalRecord, Document, DiagnosisRank, DiagnosisStatus, MedicalDiagnosis, User, UserRole } from '@/types';
 import { UploadCloud, CheckCircle2, FileText, X, GripVertical, Plus, Trash2 } from 'lucide-react';
@@ -248,119 +249,153 @@ export default function NewRecordPage() {
                    </div>
                 </div>
 
+                {/* Diagnoses Section - Different UI for Patients vs Doctors */}
                 <div className="col-span-2 space-y-4">
-                   <div className="flex items-center justify-between">
-                     <label className="block text-sm font-medium">Diagnósticos</label>
-                     <Button
-                       type="button"
-                       onClick={addDiagnosis}
-                       variant="outline"
-                       size="sm"
-                       disabled={diagnoses.length >= 5}
-                     >
-                       <Plus className="h-4 w-4 mr-1" />
-                       Agregar Diagnóstico
-                     </Button>
-                   </div>
+                   <label className="block text-sm font-medium">
+                     {isPatient ? 'Condiciones Médicas' : 'Diagnósticos'}
+                   </label>
 
-                   {diagnoses.map((diag, idx) => (
-                     <div
-                       key={idx}
-                       className="border rounded-lg p-4 space-y-3 bg-gray-50"
-                     >
-                       <div className="flex items-start gap-3">
-                         <div className="flex-shrink-0 mt-2 cursor-move">
-                           <GripVertical className="h-5 w-5 text-gray-400" />
-                         </div>
-                         
-                         <div className="flex-1 space-y-3">
-                           <div>
-                             <label className="block text-xs font-medium text-gray-600 mb-1">
-                               Diagnóstico {idx + 1}
-                             </label>
-                             <Autocomplete
-                               endpoint="/catalog/conditions"
-                               placeholder="Buscar diagnóstico (ej., Diabetes)"
-                               value={diag.diagnosis}
-                               onSelect={(opt) => {
-                                 updateDiagnosis(idx, 'diagnosis', opt.display);
-                                 updateDiagnosis(idx, 'diagnosis_code', opt.code);
-                                 updateDiagnosis(idx, 'diagnosis_code_system', opt.code_system);
-                               }}
-                               onChange={(val) => {
-                                 updateDiagnosis(idx, 'diagnosis', val);
-                                 if (!val.trim()) {
-                                   updateDiagnosis(idx, 'diagnosis_code', null);
-                                   updateDiagnosis(idx, 'diagnosis_code_system', null);
-                                 }
-                               }}
-                             />
-                           </div>
-
-                            {!isPatient && (
-                           <div className="grid grid-cols-2 gap-3">
-                             <div>
-                               <label className="block text-xs font-medium text-gray-600 mb-1">
-                                 Importancia
-                               </label>
-                               <Select
-                                 value={diag.rank.toString()}
-                                 onChange={(val) => updateDiagnosis(idx, 'rank', parseInt(val as string))}
-                                 options={[
-                                   { value: '1', label: 'Principal' },
-                                   { value: '2', label: 'Secundario' },
-                                   { value: '3', label: 'Terciario' },
-                                   { value: '4', label: 'Cuaternario' },
-                                   { value: '5', label: 'Quinario' },
-                                 ]}
-                               />
-                             </div>
-
-                             <div>
-                               <label className="block text-xs font-medium text-gray-600 mb-1">
-                                 Estado
-                               </label>
-                               <Select
-                                 value={diag.status}
-                                 onChange={(val) => updateDiagnosis(idx, 'status', val as DiagnosisStatus)}
-                                 options={[
-                                   { value: DiagnosisStatus.CONFIRMED, label: 'Confirmado' },
-                                   { value: DiagnosisStatus.PROVISIONAL, label: 'Provisional' },
-                                   { value: DiagnosisStatus.DIFFERENTIAL, label: 'Diferencial' },
-                                   { value: DiagnosisStatus.REFUTED, label: 'Descartado' },
-                                 ]}
-                               />
-                             </div>
-                           </div>
-                            )}
-
-                           <div>
-                             <label className="block text-xs font-medium text-gray-600 mb-1">
-                               {isPatient ? "Notas (opcional)" : "Notas específicas (opcional)"}
-                             </label>
-                             <textarea
-                               value={diag.notes || ''}
-                               onChange={(e) => updateDiagnosis(idx, 'notes', e.target.value)}
-                               placeholder={isPatient ? "Información adicional sobre esta condición..." : "Detalles específicos de este diagnóstico..."}
-                               className="w-full px-3 py-2 border rounded-md text-sm"
-                               rows={2}
-                             />
-                           </div>
-                         </div>
-
-                         {diagnoses.length > 1 && (
-                           <button
-                             type="button"
-                             onClick={() => removeDiagnosis(idx)}
-                             className="flex-shrink-0 mt-2 text-red-600 hover:text-red-800"
-                           >
-                             <Trash2 className="h-5 w-5" />
-                           </button>
-                         )}
+                   {isPatient ? (
+                     /* PATIENT UI: Inline multi-select with chips */
+                     <MultiSelect
+                       endpoint="/catalog/conditions"
+                       placeholder="Buscar y seleccionar condiciones..."
+                       selectedItems={diagnoses.map(d => ({
+                         id: d.diagnosis_code || d.diagnosis, // Use code as ID if available
+                         display: d.diagnosis,
+                         code: d.diagnosis_code,
+                         code_system: d.diagnosis_code_system,
+                       }))}
+                       onItemsChange={(items) => {
+                         setDiagnoses(items.map((item, idx) => ({
+                           diagnosis: item.display,
+                           rank: idx + 1,
+                           status: DiagnosisStatus.PROVISIONAL,
+                           diagnosis_code: item.code || null,
+                           diagnosis_code_system: item.code_system || null,
+                           notes: null,
+                         })));
+                       }}
+                       maxItems={5}
+                     />
+                   ) : (
+                     /* DOCTOR UI: Comprehensive form (existing) */
+                     <>
+                       <div className="flex items-center justify-between">
+                         <span className="text-xs text-gray-500">Agregar hasta 5 diagnósticos</span>
+                         <Button
+                           type="button"
+                           onClick={addDiagnosis}
+                           variant="outline"
+                           size="sm"
+                           disabled={diagnoses.length >= 5}
+                         >
+                           <Plus className="h-4 w-4 mr-1" />
+                           Agregar Diagnóstico
+                         </Button>
                        </div>
-                     </div>
-                   ))}
+
+                       {diagnoses.map((diag, idx) => (
+                         <div
+                           key={idx}
+                           className="border rounded-lg p-4 space-y-3 bg-gray-50"
+                         >
+                           <div className="flex items-start gap-3">
+                             <div className="flex-shrink-0 mt-2 cursor-move">
+                               <GripVertical className="h-5 w-5 text-gray-400" />
+                             </div>
+                             
+                             <div className="flex-1 space-y-3">
+                               <div>
+                                 <label className="block text-xs font-medium text-gray-600 mb-1">
+                                   Diagnóstico {idx + 1}
+                                 </label>
+                                 <Autocomplete
+                                   endpoint="/catalog/conditions"
+                                   placeholder="Buscar diagnóstico (ej., Diabetes)"
+                                   value={diag.diagnosis}
+                                   onSelect={(opt) => {
+                                     updateDiagnosis(idx, 'diagnosis', opt.display);
+                                     updateDiagnosis(idx, 'diagnosis_code', opt.code);
+                                     updateDiagnosis(idx, 'diagnosis_code_system', opt.code_system);
+                                   }}
+                                   onChange={(val) => {
+                                     updateDiagnosis(idx, 'diagnosis', val);
+                                     if (!val.trim()) {
+                                       updateDiagnosis(idx, 'diagnosis_code', null);
+                                       updateDiagnosis(idx, 'diagnosis_code_system', null);
+                                     }
+                                   }}
+                                 />
+                               </div>
+
+                             {!isPatient && (
+                               <div className="grid grid-cols-2 gap-3">
+                                 <div>
+                                   <label className="block text-xs font-medium text-gray-600 mb-1">
+                                     Importancia
+                                   </label>
+                                   <Select
+                                     value={diag.rank.toString()}
+                                     onChange={(val) => updateDiagnosis(idx, 'rank', parseInt(val as string))}
+                                     options={[
+                                       { value: '1', label: 'Principal' },
+                                       { value: '2', label: 'Secundario' },
+                                       { value: '3', label: 'Terciario' },
+                                       { value: '4', label: 'Cuaternario' },
+                                       { value: '5', label: 'Quinario' },
+                                     ]}
+                                   />
+                                 </div>
+
+                                 <div>
+                                   <label className="block text-xs font-medium text-gray-600 mb-1">
+                                     Estado
+                                   </label>
+                                   <Select
+                                     value={diag.status}
+                                     onChange={(val) => updateDiagnosis(idx, 'status', val as DiagnosisStatus)}
+                                     options={[
+                                       { value: DiagnosisStatus.CONFIRMED, label: 'Confirmado' },
+                                       { value: DiagnosisStatus.PROVISIONAL, label: 'Provisional' },
+                                       { value: DiagnosisStatus.DIFFERENTIAL, label: 'Diferencial' },
+                                       { value: DiagnosisStatus.REFUTED, label: 'Descartado' },
+                                     ]}
+                                   />
+                                 </div>
+                               </div>
+                             )}
+
+                               <div>
+                                 <label className="block text-xs font-medium text-gray-600 mb-1">
+                                   {isPatient ? "Notas (opcional)" : "Notas específicas (opcional)"}
+                                 </label>
+                                 <textarea
+                                   value={diag.notes || ''}
+                                   onChange={(e) => updateDiagnosis(idx, 'notes', e.target.value)}
+                                   placeholder={isPatient ? "Información adicional sobre esta condición..." : "Detalles específicos de este diagnóstico..."}
+                                   className="w-full px-3 py-2 border rounded-md text-sm"
+                                   rows={2}
+                                 />
+                               </div>
+                             </div>
+
+                             {diagnoses.length > 1 && (
+                               <button
+                                 type="button"
+                                 onClick={() => removeDiagnosis(idx)}
+                                 className="text-red-500 hover:text-red-700 mt-2"
+                               >
+                                 <Trash2 className="h-5 w-5" />
+                               </button>
+                             )}
+                           </div>
+                         </div>
+                       ))}
+                     </>
+                   )}
                  </div>
+
 
                  <div className="col-span-2">
                     <label className="block text-sm font-medium mb-1">Notas Generales de la Consulta</label>
