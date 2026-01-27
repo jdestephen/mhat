@@ -1,6 +1,6 @@
 from datetime import datetime
 import enum
-from typing import Optional
+from typing import Optional, List
 from uuid import UUID
 import uuid
 
@@ -46,5 +46,11 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     # Relationships
-    patient_profile: Mapped["PatientProfile"] = relationship("PatientProfile", back_populates="user", uselist=False)
-    doctor_profile: Mapped["DoctorProfile"] = relationship("DoctorProfile", back_populates="user", uselist=False)
+    patient_profile: Mapped[Optional["PatientProfile"]] = relationship("PatientProfile", back_populates="user", uselist=False)
+    doctor_profile: Mapped[Optional["DoctorProfile"]] = relationship("DoctorProfile", back_populates="user", uselist=False)
+    # Patient profiles this user can manage (family members)
+    managed_patients: Mapped[List["FamilyMembership"]] = relationship(
+        "FamilyMembership",
+        foreign_keys="[FamilyMembership.user_id]",
+        back_populates="manager"
+    )

@@ -66,10 +66,30 @@ async def register_user(
     await db.commit()
     await db.refresh(user)
 
-    # Create Registry for Profile based on Role
+    # Create Profile based on Role
     if user.role == UserRole.PATIENT:
-        profile = PatientProfile(user_id=user.id)
+        # Create patient profile with user's name
+        profile = PatientProfile(
+            user_id=user.id,
+            first_name=user_in.first_name,
+            last_name=user_in.last_name
+        )
         db.add(profile)
+        await db.commit()
+        await db.refresh(profile)
+        
+        # Create self-referential family membership
+        from app.models.family import FamilyMembership, RelationshipType, AccessLevel
+        membership = FamilyMembership(
+            user_id=user.id,
+            patient_profile_id=profile.id,
+            relationship_type=RelationshipType.SELF,
+            access_level=AccessLevel.FULL_ACCESS,
+            can_manage_family=True,
+            created_by=user.id,
+            is_active=True
+        )
+        db.add(membership)
     elif user.role == UserRole.DOCTOR:
         profile = DoctorProfile(user_id=user.id)
         db.add(profile)

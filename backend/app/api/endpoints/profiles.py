@@ -37,10 +37,29 @@ async def get_patient_profile(
     profile = result.scalars().first()
     
     if not profile:
-        profile = PatientProfile(user_id=current_user.id)
+        # Create patient profile with user's name
+        profile = PatientProfile(
+            user_id=current_user.id,
+            first_name=current_user.first_name,
+            last_name=current_user.last_name
+        )
         db.add(profile)
         await db.commit()
         await db.refresh(profile)
+        
+        # Create self-referential family membership
+        from app.models.family import FamilyMembership, RelationshipType, AccessLevel
+        membership = FamilyMembership(
+            user_id=current_user.id,
+            patient_profile_id=profile.id,
+            relationship_type=RelationshipType.SELF,
+            access_level=AccessLevel.FULL_ACCESS,
+            can_manage_family=True,
+            created_by=current_user.id,
+            is_active=True
+        )
+        db.add(membership)
+        await db.commit()
         
     return profile
 
@@ -93,8 +112,27 @@ async def update_patient_profile(
     
     if not profile:
         # Should have been created at registration, but just in case
-        profile = PatientProfile(user_id=current_user.id)
+        profile = PatientProfile(
+            user_id=current_user.id,
+            first_name=current_user.first_name,
+            last_name=current_user.last_name
+        )
         db.add(profile)
+        await db.commit()
+        await db.refresh(profile)
+        
+        # Create self-referential family membership
+        from app.models.family import FamilyMembership, RelationshipType, AccessLevel
+        membership = FamilyMembership(
+            user_id=current_user.id,
+            patient_profile_id=profile.id,
+            relationship_type=RelationshipType.SELF,
+            access_level=AccessLevel.FULL_ACCESS,
+            can_manage_family=True,
+            created_by=current_user.id,
+            is_active=True
+        )
+        db.add(membership)
     
     update_data = profile_in.dict(exclude_unset=True)
     for field, value in update_data.items():
@@ -121,10 +159,28 @@ async def add_patient_allergy(
     result = await db.execute(select(PatientProfile).filter(PatientProfile.user_id == current_user.id))
     profile = result.scalars().first()
     if not profile:
-        profile = PatientProfile(user_id=current_user.id)
+        profile = PatientProfile(
+            user_id=current_user.id,
+            first_name=current_user.first_name,
+            last_name=current_user.last_name
+        )
         db.add(profile)
         await db.commit()
         await db.refresh(profile)
+        
+        # Create self-referential family membership
+        from app.models.family import FamilyMembership, RelationshipType, AccessLevel
+        membership = FamilyMembership(
+            user_id=current_user.id,
+            patient_profile_id=profile.id,
+            relationship_type=RelationshipType.SELF,
+            access_level=AccessLevel.FULL_ACCESS,
+            can_manage_family=True,
+            created_by=current_user.id,
+            is_active=True
+        )
+        db.add(membership)
+        await db.commit()
 
     # Create Allergy
     from app.models.patient import Allergy
@@ -164,10 +220,28 @@ async def add_patient_condition(
     result = await db.execute(select(PatientProfile).filter(PatientProfile.user_id == current_user.id))
     profile = result.scalars().first()
     if not profile:
-        profile = PatientProfile(user_id=current_user.id)
+        profile = PatientProfile(
+            user_id=current_user.id,
+            first_name=current_user.first_name,
+            last_name=current_user.last_name
+        )
         db.add(profile)
         await db.commit()
         await db.refresh(profile)
+        
+        # Create self-referential family membership
+        from app.models.family import FamilyMembership, RelationshipType, AccessLevel
+        membership = FamilyMembership(
+            user_id=current_user.id,
+            patient_profile_id=profile.id,
+            relationship_type=RelationshipType.SELF,
+            access_level=AccessLevel.FULL_ACCESS,
+            can_manage_family=True,
+            created_by=current_user.id,
+            is_active=True
+        )
+        db.add(membership)
+        await db.commit()
 
     # Create Condition
     from app.models.patient import Condition

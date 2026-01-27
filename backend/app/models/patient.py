@@ -47,17 +47,26 @@ class PatientProfile(Base):
     __tablename__ = "patient_profiles"
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), unique=True, nullable=False)
+    # user_id is now nullable to support profiles without user accounts (e.g., minors)
+    user_id: Mapped[Optional[UUID]] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    
+    # Demographic fields (previously inherited from User)
+    # Required for standalone patient profiles without user accounts
+    first_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    last_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     
     date_of_birth: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     blood_type: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     
-    user: Mapped["User"] = relationship("User", back_populates="patient_profile")
+    # Relationships
+    user: Mapped[Optional["User"]] = relationship("User", back_populates="patient_profile")
     medications: Mapped[List["Medication"]] = relationship("Medication", back_populates="patient_profile")
     medical_records: Mapped[List["MedicalRecord"]] = relationship("MedicalRecord", back_populates="patient")
     allergies: Mapped[List["Allergy"]] = relationship("Allergy", back_populates="patient_profile")
     conditions: Mapped[List["Condition"]] = relationship("Condition", back_populates="patient_profile")
     share_tokens: Mapped[List["ShareToken"]] = relationship("ShareToken", back_populates="patient")
+    # Who manages this patient profile (family members with access)
+    managed_by: Mapped[List["FamilyMembership"]] = relationship("FamilyMembership", back_populates="patient_profile")
 
 class Medication(Base):
     __tablename__ = "medications"
