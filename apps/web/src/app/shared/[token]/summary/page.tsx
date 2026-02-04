@@ -4,6 +4,23 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import api from '@/lib/api';
 import { Clock, User, Pill, Activity, AlertTriangle, FileText } from 'lucide-react';
+import { RecordDetailModal } from './components/RecordDetailModal';
+
+interface RecordDetail {
+  id: string;
+  motive: string;
+  diagnosis: string | null;
+  category: { id: string; name: string } | null;
+  notes: string | null;
+  tags: string[] | null;
+  status: string;
+  created_at: string;
+  documents: Array<{
+    id: string;
+    filename: string;
+    url: string;
+  }>;
+}
 
 interface SummaryData {
   patient_info: {
@@ -51,6 +68,23 @@ export default function SummaryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [timeLeft, setTimeLeft] = useState('');
+  const [selectedRecord, setSelectedRecord] = useState<RecordDetail | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [loadingRecord, setLoadingRecord] = useState(false);
+
+  const handleViewRecord = async (recordId: string) => {
+    setLoadingRecord(true);
+    try {
+      const response = await api.get(`/hx/shared/${token}/record/${recordId}`);
+      setSelectedRecord(response.data);
+      setModalOpen(true);
+    } catch (err: any) {
+      console.error('Failed to load record:', err);
+      alert('Error al cargar el registro');
+    } finally {
+      setLoadingRecord(false);
+    }
+  };
 
   useEffect(() => {
     const fetchSummary = async () => {
@@ -229,14 +263,14 @@ export default function SummaryPage() {
                 Últimos 7 Registros Médicos
               </h2>
 
-              {data.recent_records.length === 0 ? (
+               {data.recent_records.length === 0 ? (
                 <p className="text-slate-500">No hay registros disponibles</p>
               ) : (
                 <div className="space-y-4">
                   {data.recent_records.map((record) => (
-                    <div key={record.id} className="border border-slate-200 rounded-lg p-4 hover:bg-slate-50 transition-colors">
+                    <div key={record.id} className="border border-slate-200 rounded-lg p-4 hover:border-emerald-300 transition-colors">
                       <div className="flex justify-between items-start mb-2">
-                        <div>
+                        <div className="flex-1">
                           <h3 className="font-semibold text-slate-900">{record.motive}</h3>
                           {record.category && (
                             <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded mt-1 inline-block">
@@ -260,6 +294,13 @@ export default function SummaryPage() {
                       {record.has_documents && (
                         <p className="text-xs text-blue-600 mt-2">📎 Contiene documentos adjuntos</p>
                       )}
+                      <button
+                        onClick={() => handleViewRecord(record.id)}
+                        disabled={loadingRecord}
+                        className="mt-3 text-sm text-emerald-700 hover:text-emerald-900 font-medium hover:underline disabled:opacity-50"
+                      >
+                        {loadingRecord ? 'Cargando...' : 'Ver Detalle →'}
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -277,6 +318,14 @@ export default function SummaryPage() {
           </div>
         </div>
       </div>
+
+      {/* Record Detail Modal */}
+      <RecordDetailModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        record={selectedRecord}
+        token={token}
+      />
     </div>
   );
 }

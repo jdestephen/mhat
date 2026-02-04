@@ -7,7 +7,7 @@ from uuid import UUID
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request
-from sqlalchemy import select, update
+from sqlalchemy import select, update, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -431,3 +431,144 @@ async def view_medical_history_summary(
         is_expired=is_token_expired(share_token),
         access_count=share_token.access_count
     )
+
+
+@router.get("/shared/{token}/record/{record_id}", response_model=sharing_schema.SharedRecordResponse)
+async def view_summary_record_detail(
+    *,
+    db: AsyncSession = Depends(get_db),
+    token: str,
+    record_id: UUID,
+    request: Request,
+) -> Any:
+    """
+    View individual medical record detail from a summary share.
+    
+    **Public endpoint** - No authentication required.
+    
+    Returns full details of a specific medical record including:
+    - Diagnosis (all diagnoses with primary first)
+    - Notes
+    - Tags
+    - Documents
+    
+    Security:
+    - Token must be valid SUMMARY type
+    - Record must belong to the patient in the share
+    """
+    # Validate token
+    share_token = await validate_share_token(token, db)
+    
+    if not share_token:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Share link not found, expired, or already used"
+        )
+    
+    # Verify this is a SUMMARY share type
+    if share_token.share_type != "SUMMARY":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This token is not for a medical history summary"
+        )
+    
+    # Fetch the specific record and verify it belongs to this patient
+    stmt = select(MedicalRecord).filter(
+        and_(
+            MedicalRecord.id == record_id,
+            MedicalRecord.patient_id == share_token.patient_id
+        )
+    ).options(
+        selectinload(MedicalRecord.documents),
+        selectinload(MedicalRecord.category),
+        selectinload(MedicalRecord.diagnoses)
+    )
+    
+    result = await db.execute(stmt)
+    record = result.scalars().first()
+    
+    if not record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Medical record not found or does not belong to this patient"
+        )
+    
+    # Format diagnosis - combine all diagnoses with primary first
+    diagnosis_text = None
+    if record.diagnoses and len(record.diagnoses) > 0:
+        # Sort by rank (primary=1 first)
+        sorted_diagnoses = sorted(record.diagnoses, key=lambda d: d.rank)
+        diagnosis_text = sorted_diagnoses[0].diagnosis
+        if len(sorted_diagnoses) > 1:
+            additional = ", ".join([d.diagnosis for d in sorted_diagnoses[1:]])
+            diagnosis_text += f"; {additional}"
+    
+    return sharing_schema.SharedRecordResponse(
+        id=record.id,
+        motive=record.motive,
+        diagnosis=diagnosis_text,
+        category={"id": record.category.id, "name": record.category.name} if record.category else None,
+        notes=record.notes,
+        tags=record.tags,
+        status=record.status.value,
+        created_at=record.created_at,
+        documents=[{
+            "id": str(doc.id),
+            "filename": doc.filename,
+            "url": doc.url
+        } for doc in record.documents] if record.documents else []
+    )
+
+
+@router.get("/shared/{token}/document/{document_id}")
+async def view_shared_document(
+    *,
+    db: AsyncSession = Depends(get_db),
+    token: str,
+    document_id: UUID,
+    request: Request,
+) -> Any:
+    """
+    Access a document through a share token.
+    
+    **Public endpoint** - No authentication required.
+    
+    Validates the share token and ensures the document belongs
+    to a medical record of the patient in the share.
+    
+    Returns a redirect to the S3 signed URL.
+    """
+    from fastapi.responses import RedirectResponse
+    from app.models.hx import Document
+    
+    # Validate token (accepts both SPECIFIC_RECORDS and SUMMARY types)
+    share_token = await validate_share_token(token, db)
+    
+    if not share_token:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Share link not found, expired, or already used"
+        )
+    
+    # Fetch the document and verify it belongs to this patient's records
+    stmt = select(Document).join(
+        MedicalRecord,
+        Document.medical_record_id == MedicalRecord.id
+    ).filter(
+        and_(
+            Document.id == document_id,
+            MedicalRecord.patient_id == share_token.patient_id
+        )
+    )
+    
+    result = await db.execute(stmt)
+    document = result.scalars().first()
+    
+    if not document:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document not found or does not belong to this patient"
+        )
+    
+    # Return redirect to the S3 URL
+    return RedirectResponse(url=document.url)
