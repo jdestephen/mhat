@@ -111,7 +111,7 @@ export default function PersonalInfoPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto pb-20">
+    <div className="max-w-xl mx-auto pb-20">
       <h1 className="text-3xl font-bold mb-8 text-emerald-950">Datos Personales</h1>
       
       <div className="bg-white p-6 rounded-lg shadow-sm border border-[var(--border-light)]">
@@ -124,39 +124,26 @@ export default function PersonalInfoPage() {
             </div>
           </div>
 
-          {/* First Name */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Nombre</label>
-            <Input
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              placeholder="Ingresa tu nombre"
-            />
-          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {/* First Name */}
+            <div>
+                <label className="block text-sm font-medium mb-1">Nombre</label>
+                <Input
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder="Ingresa tu nombre"
+                />
+            </div>
 
-          {/* Last Name */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Apellido</label>
-            <Input
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              placeholder="Ingresa tu apellido"
-            />
-          </div>
-
-          {/* Sex */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Sexo</label>
-            <Select
-              options={[
-                { value: '', label: 'Selecciona...' },
-                { value: Sex.MASCULINO, label: 'Masculino' },
-                { value: Sex.FEMININO, label: 'Femenino' },
-              ]}
-              value={sex}
-              onChange={(val) => setSex(val as Sex | '')}
-              placeholder="Selecciona sexo..."
-            />
+            {/* Last Name */}
+            <div>
+                <label className="block text-sm font-medium mb-1">Apellido</label>
+                <Input
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder="Ingresa tu apellido"
+                />
+            </div>
           </div>
 
           {/* Date of Birth */}
@@ -169,17 +156,34 @@ export default function PersonalInfoPage() {
             />
           </div>
 
-          {/* Patient-specific fields */}
-          {user.role === UserRole.PATIENT && (
+          <div className="grid grid-cols-2 gap-4">
+          {/* Sex */}
             <div>
-              <label className="block text-sm font-medium mb-1">Tipo de Sangre</label>
-              <Input
-                value={bloodType}
-                onChange={(e) => setBloodType(e.target.value)}
-                placeholder="ej. O+"
-              />
+                <label className="block text-sm font-medium mb-1">Sexo</label>
+                <Select
+                options={[
+                    { value: '', label: 'Selecciona...' },
+                    { value: Sex.MASCULINO, label: 'Masculino' },
+                    { value: Sex.FEMININO, label: 'Femenino' },
+                ]}
+                value={sex}
+                onChange={(val) => setSex(val as Sex | '')}
+                placeholder="Selecciona sexo..."
+                />
             </div>
-          )}
+
+            {/* Patient-specific fields */}
+            {user.role === UserRole.PATIENT && (
+                <div>
+                <label className="block text-sm font-medium mb-1">Tipo de Sangre</label>
+                <Input
+                    value={bloodType}
+                    onChange={(e) => setBloodType(e.target.value)}
+                    placeholder="ej. O+"
+                />
+                </div>
+            )}
+          </div>
 
           {/* Doctor-specific fields */}
           {user.role === UserRole.DOCTOR && (
