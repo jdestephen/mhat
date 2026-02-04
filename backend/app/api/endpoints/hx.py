@@ -141,7 +141,7 @@ async def read_categories(
     Retrieve all categories.
     """
     from app.models.hx import Category
-    result = await db.execute(select(Category).order_by(Category.name))
+    result = await db.execute(select(Category).order_by(Category.order))
     return result.scalars().all()
 
 @router.post("/{record_id}/documents", response_model=hx_schema.Document)

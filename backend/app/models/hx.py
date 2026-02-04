@@ -1,4 +1,4 @@
-from sqlalchemy import String, Integer, ForeignKey, DateTime, Text, ARRAY, Enum
+from sqlalchemy import Boolean, String, Integer, ForeignKey, DateTime, Text, ARRAY, Enum
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -35,8 +35,11 @@ class Category(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
-    
+    has_diagnosis: Mapped[bool] = mapped_column(Boolean, nullable=True, default=False)
+    order: Mapped[int] = mapped_column(Integer, nullable=True, default=0)
+
     medical_records: Mapped[List["MedicalRecord"]] = relationship("MedicalRecord", back_populates="category")
+
 
 class MedicalDiagnosis(Base):
     """Represents a single diagnosis associated with a medical record (FHIR Condition-like)"""
@@ -95,6 +98,7 @@ class MedicalRecord(Base):
     documents: Mapped[List["Document"]] = relationship("Document", back_populates="medical_record")
     creator: Mapped["User"] = relationship("User", foreign_keys=[created_by])
     verifier: Mapped[Optional["User"]] = relationship("User", foreign_keys=[verified_by])
+
 
 class Document(Base):
     __tablename__ = "documents"

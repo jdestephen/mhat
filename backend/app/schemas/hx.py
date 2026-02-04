@@ -83,6 +83,8 @@ class MedicalRecordBase(BaseModel):
 class Category(BaseModel):
     id: int
     name: str
+    has_diagnosis: bool
+    order: int
 
     class Config:
         orm_mode = True
