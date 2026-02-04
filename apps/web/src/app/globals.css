@@ -1,13 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --color-background: #ffffff;
-  --color-foreground: #171717;
   
-  --color-primary: #065f46;
-  --color-primary-hover: #047857;
-  --color-primary-light: #d1fae5;
-  --color-primary-border: #6ee7b7;
 
   /* Brand Colors - Emerald Theme */
   --brand-primary: #065f46; /* emerald-800 */
@@ -22,6 +16,15 @@
 }
 
 @theme inline {
+  --color-background: rgb(255, 255, 255);
+  --color-foreground: rgb(23, 23, 23);
+  
+  --color-primary: rgb(6, 95, 70);
+  --color-primary-hover: rgb(4, 120, 87);
+  --color-primary-light: rgb(209, 250, 229);
+  --color-primary-border: rgb(110, 231, 183);
+
+
   --color-background: var(--color-background);
   --color-foreground: var(--color-foreground);
   --font-sans: var(--font-geist-sans);
@@ -30,8 +33,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-background: #0a0a0a;
-    --color-foreground: #ededed;
+    --color-background: rgb(10, 10, 10);
+    --color-foreground: rgb(237, 237, 237);
   }
 }
 
