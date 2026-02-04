@@ -7,14 +7,22 @@ from datetime import datetime
 from typing import Optional, List
 from uuid import UUID
 import uuid
+import enum
 
 from sqlalchemy import (
-    String, Boolean, Integer, Text, DateTime, ForeignKey, func
+    String, Boolean, Integer, Text, DateTime, ForeignKey, func, Enum
 )
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base_class import Base
+
+
+class ShareType(str, enum.Enum):
+    """Types of sharing: specific records or full medical summary."""
+    SPECIFIC_RECORDS = "SPECIFIC_RECORDS"
+    SUMMARY = "SUMMARY"
+
 
 
 class ShareToken(Base):
@@ -55,6 +63,14 @@ class ShareToken(Base):
         ForeignKey("users.id", ondelete="CASCADE"), 
         nullable=False
     )
+    
+    # Share type - specific records or full summary
+    share_type: Mapped[str] = mapped_column(
+        Enum(ShareType, native_enum=False, length=50),
+        default=ShareType.SPECIFIC_RECORDS,
+        nullable=False
+    )
+
     
     # Expiration
     created_at: Mapped[datetime] = mapped_column(

@@ -55,6 +55,11 @@ export function Sidebar() {
           href: '/profile/health-history',
           icon: <Stethoscope className="w-5 h-5" />,
         },
+        {
+          label: 'Links Compartidos',
+          href: '/profile/shared-links',
+          icon: <Stethoscope className="w-5 h-5" />,
+        },
       ],
     },
   ];
@@ -128,7 +133,7 @@ export function Sidebar() {
         className={clsx(
           'flex items-center gap-3 px-4 py-3 transition-colors font-primary',
           {
-            'bg-primary/10': isActive,
+            'bg-primary/10 text-primary': isActive,
             'text-accent hover:bg-primary/10': !isActive,
             'pl-8': level > 0,
           }

@@ -4,19 +4,39 @@ Pydantic schemas for medical record sharing.
 from datetime import datetime
 from typing import Optional, List
 from uuid import UUID
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field, EmailStr, field_validator
+
+from app.models.sharing import ShareType
 
 
 # Request schemas
 
 class CreateShareRequest(BaseModel):
     """Request to create a new share link."""
-    record_ids: List[UUID] = Field(..., min_length=1, description="List of medical record IDs to share")
+    share_type: ShareType = Field(
+        default=ShareType.SPECIFIC_RECORDS, 
+        description="Type of share: SPECIFIC_RECORDS or SUMMARY"
+    )
+    record_ids: Optional[List[UUID]] = Field(
+        None, 
+        description="List of medical record IDs to share (required for SPECIFIC_RECORDS)"
+    )
     expiration_minutes: int = Field(20, ge=1, le=10080, description="Expiration time in minutes (max 7 days)")
     is_single_use: bool = Field(False, description="Whether the link can only be accessed once")
     recipient_name: Optional[str] = Field(None, max_length=200, description="Optional recipient name")
     recipient_email: Optional[EmailStr] = Field(None, description="Optional recipient email")
     purpose: Optional[str] = Field(None, max_length=500, description="Purpose of sharing (e.g., 'Cardiology consultation')")
+    
+    @field_validator('record_ids')
+    @classmethod
+    def validate_record_ids(cls, v, info):
+        """Ensure record_ids is provided for SPECIFIC_RECORDS share type."""
+        share_type = info.data.get('share_type')
+        if share_type == ShareType.SPECIFIC_RECORDS:
+            if not v or len(v) == 0:
+                raise ValueError('record_ids is required for SPECIFIC_RECORDS share type')
+        return v
+
 
 
 # Response schemas
@@ -44,6 +64,7 @@ class ShareTokenInfo(BaseModel):
     is_single_use: bool
     record_count: int
     access_count: int
+    share_type: str = "SPECIFIC_RECORDS"  # Default for backward compatibility
     recipient_name: Optional[str] = None
     recipient_email: Optional[str] = None
     purpose: Optional[str] = None
@@ -89,3 +110,65 @@ class SharedRecordsViewResponse(BaseModel):
     purpose: Optional[str] = None
     is_expired: bool
     access_count: int
+
+
+# Summary view schemas
+
+class PatientInfoSummary(BaseModel):
+    """Patient demographic information for summary view."""
+    full_name: str
+    date_of_birth: Optional[datetime] = None
+    age_years: Optional[int] = None
+    age_months: Optional[int] = None
+    age_display: str
+    sex: Optional[str] = None
+
+
+class MedicationSummary(BaseModel):
+    """Active medication summary."""
+    id: str
+    name: str
+    dosage: Optional[str] = None
+    frequency: Optional[str] = None
+    start_date: Optional[datetime] = None
+
+
+class ConditionSummary(BaseModel):
+    """Active condition summary."""
+    id: str
+    name: str
+    diagnosed_date: Optional[datetime] = None
+    severity: Optional[str] = None
+
+
+class AllergySummary(BaseModel):
+    """Active allergy summary."""
+    id: str
+    allergen: str
+    reaction: Optional[str] = None
+    severity: Optional[str] = None
+
+
+class RecentRecordSummary(BaseModel):
+    """Recent medical record summary (lighter than full SharedRecordResponse)."""
+    id: UUID
+    motive: str
+    diagnosis: Optional[str] = None
+    category: Optional[dict] = None
+    created_at: datetime
+    has_documents: bool
+
+
+class MedicalHistorySummaryResponse(BaseModel):
+    """Response for medical history summary view."""
+    patient_info: PatientInfoSummary
+    active_medications: List[MedicationSummary]
+    conditions: List[ConditionSummary]
+    allergies: List[AllergySummary]
+    recent_records: List[RecentRecordSummary]
+    shared_by: str
+    expires_at: datetime
+    purpose: Optional[str] = None
+    is_expired: bool
+    access_count: int
+

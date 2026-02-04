@@ -1,8 +1,6 @@
 @import "tailwindcss";
 
 :root {
-  
-
   /* Brand Colors - Emerald Theme */
   --brand-primary: #065f46; /* emerald-800 */
   --brand-primary-hover: #047857; /* emerald-700 */

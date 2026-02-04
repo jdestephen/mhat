@@ -37,11 +37,15 @@ async def create_share_link(
     share_request: sharing_schema.CreateShareRequest,
 ) -> Any:
     """
-    Create a secure, time-limited share link for medical records.
+    Create a secure, time-limited share link for medical records or summary.
+    
+    **Types:**
+    - SPECIFIC_RECORDS: Share specific medical records (requires record_ids)
+    - SUMMARY: Share full medical history summary
     
     **Security:**
     - Requires authentication
-    - Validates patient owns all records
+    - Validates patient owns all records (for SPECIFIC_RECORDS)
     - Generates cryptographically secure token
     - Sets time-based expiration
     """
@@ -57,18 +61,25 @@ async def create_share_link(
             detail="Patient profile not found"
         )
     
-    # Verify patient owns all requested records
-    owns_all = await check_record_ownership(
-        patient_profile.id,
-        share_request.record_ids,
-        db
-    )
-    
-    if not owns_all:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not own all specified medical records"
+    # For SPECIFIC_RECORDS, verify patient owns all requested records
+    if share_request.share_type == "SPECIFIC_RECORDS":
+        if not share_request.record_ids:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="record_ids is required for SPECIFIC_RECORDS share type"
+            )
+        
+        owns_all = await check_record_ownership(
+            patient_profile.id,
+            share_request.record_ids,
+            db
         )
+        
+        if not owns_all:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not own all specified medical records"
+            )
     
     # Generate token
     token, expires_at = generate_share_token(share_request.expiration_minutes)
@@ -81,6 +92,7 @@ async def create_share_link(
         created_by_user_id=current_user.id,
         expires_at=expires_at,
         expiration_minutes=share_request.expiration_minutes,
+        share_type=share_request.share_type,
         is_single_use=share_request.is_single_use,
         recipient_name=share_request.recipient_name,
         recipient_email=share_request.recipient_email,
@@ -89,27 +101,33 @@ async def create_share_link(
     db.add(share_token)
     await db.flush()  # Get the ID
     
-    # Create shared record mappings
-    for record_id in share_request.record_ids:
-        shared_record = SharedRecord(
-            id=uuid.uuid4(),
-            share_token_id=share_token.id,
-            medical_record_id=record_id
-        )
-        db.add(shared_record)
+    # Create shared record mappings (only for SPECIFIC_RECORDS)
+    record_count = 0
+    if share_request.share_type == "SPECIFIC_RECORDS" and share_request.record_ids:
+        for record_id in share_request.record_ids:
+            shared_record = SharedRecord(
+                id=uuid.uuid4(),
+                share_token_id=share_token.id,
+                medical_record_id=record_id
+            )
+            db.add(shared_record)
+        record_count = len(share_request.record_ids)
     
     await db.commit()
     await db.refresh(share_token)
     
-    # Build share URL
+    # Build share URL based on type
     # TODO: Get base URL from config/environment
-    share_url = f"http://localhost:3000/shared/{token}"
+    if share_request.share_type == "SUMMARY":
+        share_url = f"http://localhost:3000/shared/{token}/summary"
+    else:
+        share_url = f"http://localhost:3000/shared/{token}"
     
     return sharing_schema.ShareTokenResponse(
         share_url=share_url,
         token=token,
         expires_at=expires_at,
-        record_count=len(share_request.record_ids),
+        record_count=record_count,
         expiration_minutes=share_request.expiration_minutes
     )
 
@@ -169,6 +187,7 @@ async def list_my_shares(
             is_single_use=token.is_single_use,
             record_count=len(token.shared_records),
             access_count=token.access_count,
+            share_type=token.share_type,
             recipient_name=token.recipient_name,
             recipient_email=token.recipient_email,
             purpose=token.purpose
@@ -275,7 +294,8 @@ async def view_shared_records(
         MedicalRecord.id.in_(record_ids)
     ).options(
         selectinload(MedicalRecord.documents),
-        selectinload(MedicalRecord.category)
+        selectinload(MedicalRecord.category),
+        selectinload(MedicalRecord.diagnoses)
     )
     result = await db.execute(stmt)
     records = result.scalars().all()
@@ -286,7 +306,7 @@ async def view_shared_records(
         shared_records.append(sharing_schema.SharedRecordResponse(
             id=record.id,
             motive=record.motive,
-            diagnosis=record.diagnosis,
+            diagnosis=record.diagnoses[0].diagnosis if record.diagnoses and len(record.diagnoses) > 0 else None,
             category={"id": record.category.id, "name": record.category.name} if record.category else None,
             notes=record.notes,
             tags=record.tags,
@@ -306,6 +326,105 @@ async def view_shared_records(
     
     return sharing_schema.SharedRecordsViewResponse(
         records=shared_records,
+        shared_by=shared_by,
+        expires_at=share_token.expires_at,
+        purpose=share_token.purpose,
+        is_expired=is_token_expired(share_token),
+        access_count=share_token.access_count
+    )
+
+
+@router.get("/shared/{token}/summary", response_model=sharing_schema.MedicalHistorySummaryResponse)
+async def view_medical_history_summary(
+    *,
+    db: AsyncSession = Depends(get_db),
+    token: str,
+    request: Request,
+) -> Any:
+    """
+    View medical history summary using a share token.
+    
+    **Public endpoint** - No authentication required.
+    
+    Returns comprehensive medical history including:
+    - Patient demographics (name, age, sex)
+    - Active medications
+    - Active conditions (diagnoses)
+    - Active allergies
+    - Recent 7 medical records
+    
+    Security features:
+    - Token validation (expiration, revocation, single-use)
+    - Access logging (IP, user agent, timestamp)
+    - Immediate revocation support
+    """
+    from app.services.summary import build_medical_history_summary
+    
+    # Validate token
+    share_token = await validate_share_token(token, db)
+    
+    if not share_token:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Share link not found, expired, or already used"
+        )
+    
+    # Verify this is a SUMMARY share type
+    if share_token.share_type != "SUMMARY":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This token is not for a medical history summary"
+        )
+    
+    # Log access
+    access_log = ShareAccessLog(
+        id=uuid.uuid4(),
+        share_token_id=share_token.id,
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent")
+    )
+    db.add(access_log)
+    
+    # Increment access count
+    stmt = update(ShareToken).where(
+        ShareToken.id == share_token.id
+    ).values(access_count=ShareToken.access_count + 1)
+    await db.execute(stmt)
+    
+    await db.commit()
+    
+    # Fetch patient profile and user
+    result = await db.execute(
+        select(PatientProfile).filter(
+            PatientProfile.id == share_token.patient_id
+        ).options(selectinload(PatientProfile.user))
+    )
+    patient_profile = result.scalars().first()
+    
+    if not patient_profile:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Patient profile not found"
+        )
+    
+    # Build summary data
+    summary_data = await build_medical_history_summary(
+        patient_profile,
+        patient_profile.user,
+        db
+    )
+    
+    # Get creator name
+    created_by = share_token.created_by
+    full_name = f"{created_by.first_name} {created_by.last_name}".strip() if created_by.first_name or created_by.last_name else None
+    shared_by = full_name if full_name else created_by.email
+    
+    return sharing_schema.MedicalHistorySummaryResponse(
+        patient_info=summary_data["patient_info"],
+        active_medications=summary_data["active_medications"],
+        conditions=summary_data["conditions"],
+        allergies=summary_data["allergies"],
+        recent_records=summary_data["recent_records"],
         shared_by=shared_by,
         expires_at=share_token.expires_at,
         purpose=share_token.purpose,
