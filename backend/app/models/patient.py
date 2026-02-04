@@ -74,7 +74,7 @@ class PatientProfile(Base):
     
     date_of_birth: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     blood_type: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    
+
     # Relationships
     user: Mapped[Optional["User"]] = relationship("User", back_populates="patient_profile")
     medications: Mapped[List["Medication"]] = relationship("Medication", back_populates="patient_profile")

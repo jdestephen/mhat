@@ -15,6 +15,10 @@ class UserRole(str, enum.Enum):
     DOCTOR = "doctor"
     PATIENT = "patient"
 
+class Sex(str, enum.Enum):
+    MASCULINO = "MASCULINO"
+    FEMININO = "FEMININO"
+
 class AccessType(str, enum.Enum):
     PERMANENT = "permanent"
     TEMPORARY = "temporary"
@@ -38,6 +42,7 @@ class User(Base):
     
     first_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     last_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    sex: Mapped[Optional[Sex]] = mapped_column(Enum(Sex), nullable=True)
     
     city: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     country: Mapped[Optional[str]] = mapped_column(String, nullable=True)

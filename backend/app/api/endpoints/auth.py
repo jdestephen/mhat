@@ -103,3 +103,29 @@ def read_users_me(
     current_user: User = Depends(deps.get_current_user),
 ) -> Any:
     return current_user
+
+@router.put("/me", response_model=user_schema.User)
+async def update_current_user(
+    *,
+    db: AsyncSession = Depends(get_db),
+    user_in: user_schema.UserUpdate,
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """
+    Update current user's information.
+    Email cannot be changed through this endpoint.
+    """
+    # Update fields from the input
+    update_data = user_in.dict(exclude_unset=True)
+    
+    # Remove email from update_data if somehow included (safety check)
+    update_data.pop('email', None)
+    update_data.pop('role', None)  # Also don't allow role changes
+    update_data.pop('is_active', None)  # Or active status changes
+    
+    for field, value in update_data.items():
+        setattr(current_user, field, value)
+    
+    await db.commit()
+    await db.refresh(current_user)
+    return current_user
