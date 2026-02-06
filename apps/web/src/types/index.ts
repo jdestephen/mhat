@@ -211,3 +211,85 @@ export interface Condition {
   deleted: boolean;
   deleted_at?: string;
 }
+
+// ================================
+// Doctor Workflow Types
+// ================================
+
+export enum AccessLevel {
+  READ_ONLY = 'READ_ONLY',
+  WRITE = 'WRITE',
+}
+
+export enum RecordSource {
+  PATIENT = 'PATIENT',
+  DOCTOR = 'DOCTOR',
+  IMPORTED = 'IMPORTED',
+}
+
+export enum OrderType {
+  LAB = 'LAB',
+  IMAGING = 'IMAGING',
+  REFERRAL = 'REFERRAL',
+  PROCEDURE = 'PROCEDURE',
+}
+
+export enum OrderUrgency {
+  ROUTINE = 'ROUTINE',
+  URGENT = 'URGENT',
+  STAT = 'STAT',
+}
+
+export interface PatientAccess {
+  patient_id: string;
+  first_name: string;
+  last_name: string;
+  date_of_birth?: string;
+  access_level: AccessLevel;
+  granted_at: string;
+}
+
+export interface Prescription {
+  id: string;
+  medical_record_id: string;
+  medication_name: string;
+  dosage?: string;
+  frequency?: string;
+  duration?: string;
+  route?: string;
+  quantity?: string;
+  instructions?: string;
+  created_at: string;
+  created_by: string;
+}
+
+export interface ClinicalOrder {
+  id: string;
+  medical_record_id: string;
+  order_type: OrderType;
+  description: string;
+  urgency: OrderUrgency;
+  reason?: string;
+  notes?: string;
+  referral_to?: string;
+  created_at: string;
+  created_by: string;
+}
+
+// Extended medical record for doctor view
+export interface DoctorMedicalRecord extends MedicalRecord {
+  record_source: RecordSource;
+  brief_history?: string;
+  has_red_flags?: boolean;
+  red_flags?: string[];
+  key_finding?: string;
+  clinical_impression?: string;
+  actions_today?: string[];
+  plan_bullets?: string[];
+  follow_up_interval?: string;
+  follow_up_with?: string;
+  patient_instructions?: string;
+  prescriptions?: Prescription[];
+  clinical_orders?: ClinicalOrder[];
+}
+

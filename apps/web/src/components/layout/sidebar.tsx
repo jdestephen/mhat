@@ -41,6 +41,11 @@ export function Sidebar() {
       icon: <FilePlus2 className="w-5 h-5" />,
     },
     {
+      label: 'Panel Médico',
+      href: '/doctor',
+      icon: <Stethoscope className="w-5 h-5" />,
+    },
+    {
       label: 'Perfil',
       href: '/profile',
       icon: <UserCircle className="w-5 h-5" />,
