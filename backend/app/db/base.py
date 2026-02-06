@@ -9,3 +9,5 @@ from app.models.family import FamilyMembership
 from app.models.sharing import ShareToken, SharedRecord, ShareAccessLog
 from app.models.organization import HealthCenter, HealthCenterMembership
 from app.models.clinical import Prescription, ClinicalOrder
+from app.models.access_invitation import AccessInvitation
+

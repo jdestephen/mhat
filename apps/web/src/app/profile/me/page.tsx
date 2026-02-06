@@ -147,17 +147,19 @@ export default function PersonalInfoPage() {
           </div>
 
           {/* Date of Birth */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Fecha de Nacimiento</label>
-            <Input
-              type="date"
-              value={dob}
-              onChange={(e) => setDob(e.target.value)}
-            />
-          </div>
+          {user.role === UserRole.PATIENT && (
+            <div>
+              <label className="block text-sm font-medium mb-1">Fecha de Nacimiento</label>
+              <Input
+                type="date"
+                value={dob}
+                onChange={(e) => setDob(e.target.value)}
+              />
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
-          {/* Sex */}
+            {/* Sex */}
             <div>
                 <label className="block text-sm font-medium mb-1">Sexo</label>
                 <Select
@@ -173,15 +175,24 @@ export default function PersonalInfoPage() {
             </div>
 
             {/* Patient-specific fields */}
-            {user.role === UserRole.PATIENT && (
-                <div>
+            {user.role === UserRole.PATIENT ? (
+              <div>
                 <label className="block text-sm font-medium mb-1">Tipo de Sangre</label>
                 <Input
                     value={bloodType}
                     onChange={(e) => setBloodType(e.target.value)}
                     placeholder="ej. O+"
                 />
-                </div>
+              </div>
+            ) : (
+              <div>
+                <label className="block text-sm font-medium mb-1">Fecha de Nacimiento</label>
+                <Input
+                  type="date"
+                  value={dob}
+                  onChange={(e) => setDob(e.target.value)}
+                />
+              </div>  
             )}
           </div>
 

@@ -137,8 +137,7 @@ class DoctorPatientAccessResponse(BaseModel):
     patient_profile_id: UUID
     access_level: AccessLevel
     granted_by: Optional[UUID] = None
-    granted_at: datetime
-    is_active: bool
+    created_at: datetime
 
     class Config:
         from_attributes = True
@@ -151,7 +150,7 @@ class PatientAccessSummary(BaseModel):
     last_name: str
     date_of_birth: Optional[datetime] = None
     access_level: AccessLevel
-    granted_at: datetime
+    granted_at: Optional[datetime] = None  # Maps from created_at in the endpoint
 
 
 # =====================
@@ -209,6 +208,53 @@ class DoctorMedicalRecordUpdate(BaseModel):
 class RecordVerification(BaseModel):
     """Schema for verifying a patient record."""
     notes: Optional[str] = None  # Optional verification notes
+
+
+# =====================
+# Access Invitation Schemas
+# =====================
+
+class AccessInvitationCreate(BaseModel):
+    """Schema for patient creating an invitation."""
+    access_level: AccessLevel = AccessLevel.READ_ONLY
+    access_type: str = "PERMANENT"  # PERMANENT or TEMPORARY
+    expires_in_days: Optional[int] = None  # Required if access_type is TEMPORARY
+
+
+class AccessInvitationResponse(BaseModel):
+    """Schema for invitation response."""
+    id: UUID
+    code: str
+    access_level: AccessLevel
+    access_type: str
+    expires_in_days: Optional[int] = None
+    code_expires_at: datetime
+    claimed_by: Optional[UUID] = None
+    claimed_at: Optional[datetime] = None
+    is_revoked: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ClaimInvitationRequest(BaseModel):
+    """Schema for doctor claiming an invitation code."""
+    code: str = Field(..., max_length=20)
+
+
+class DoctorAccessInfo(BaseModel):
+    """Info about a doctor with access, for patient view."""
+    access_id: UUID
+    doctor_id: UUID
+    doctor_name: str
+    specialty: Optional[str] = None
+    access_level: str
+    access_type: str
+    granted_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
 
 
 # Import at end to avoid circular imports

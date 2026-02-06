@@ -7,10 +7,22 @@ import { Button } from '@/components/ui/button';
 import { RecordSearchBar } from '@/components/search/RecordSearchBar';
 import { Plus, FileText, Calendar, Stethoscope, Paperclip, MoreVertical, Eye, Share2 } from 'lucide-react';
 import Link from 'next/link';
-import { MedicalRecord, RecordStatus } from '@/types';
+import { useRouter } from 'next/navigation';
+import { MedicalRecord, RecordStatus, UserRole } from '@/types';
 import { ShareRecordDialog } from '@/components/share/ShareRecordDialog';
+import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
 
 export default function DashboardPage() {
+  const router = useRouter();
+  const { data: user, isLoading: userLoading } = useCurrentUser();
+  
+  // Redirect doctors to their dashboard
+  useEffect(() => {
+    if (!userLoading && user?.role === UserRole.DOCTOR) {
+      router.replace('/doctor');
+    }
+  }, [user, userLoading, router]);
+  
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [selectedRecords, setSelectedRecords] = useState<{ ids: string[], titles: string[] }>({ ids: [], titles: [] });

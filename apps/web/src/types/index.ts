@@ -249,6 +249,29 @@ export interface PatientAccess {
   granted_at: string;
 }
 
+export interface AccessInvitation {
+  id: string;
+  code: string;
+  access_level: AccessLevel;
+  access_type: 'PERMANENT' | 'TEMPORARY';
+  expires_in_days?: number;
+  code_expires_at: string;
+  claimed_by?: string;
+  claimed_at?: string;
+  is_revoked: boolean;
+  created_at: string;
+}
+
+export interface DoctorAccessInfo {
+  access_id: string;
+  doctor_id: string;
+  doctor_name: string;
+  specialty?: string;
+  access_level: string;
+  access_type: string;
+  granted_at?: string;
+}
+
 export interface Prescription {
   id: string;
   medical_record_id: string;

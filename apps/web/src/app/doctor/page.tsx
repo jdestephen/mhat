@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useMyPatients } from '@/hooks/queries/useMyPatients';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
-import { useGrantAccess } from '@/hooks/mutations/useGrantAccess';
+import { useClaimInvitation } from '@/hooks/mutations/useClaimInvitation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { UserRole, AccessLevel } from '@/types';
@@ -17,14 +17,22 @@ import {
   ChevronRight,
   UserPlus,
   Shield,
-  Activity
+  Activity,
+  KeyRound,
+  Check,
+  X,
+  AlertCircle,
 } from 'lucide-react';
 
 export default function DoctorDashboardPage() {
   const router = useRouter();
   const { data: user, isLoading: userLoading } = useCurrentUser();
   const { data: patients = [], isLoading: patientsLoading } = useMyPatients();
+  const claimInvitation = useClaimInvitation();
   const [searchTerm, setSearchTerm] = useState('');
+  const [showClaimForm, setShowClaimForm] = useState(false);
+  const [claimCode, setClaimCode] = useState('');
+  const [claimResult, setClaimResult] = useState<{ success: boolean; message: string; patientName?: string } | null>(null);
 
   // Redirect non-doctors
   if (!userLoading && user?.role !== UserRole.DOCTOR) {
@@ -60,6 +68,77 @@ export default function DoctorDashboardPage() {
         <h1 className="text-3xl font-bold text-emerald-950">Panel Médico</h1>
         <p className="text-gray-600 mt-1">Gestiona tus pacientes y registros clínicos</p>
       </div>
+
+      {/* Claim Invitation */}
+      {showClaimForm && (
+        <div className="bg-white rounded-xl shadow-sm border border-emerald-200 p-6 mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-emerald-900 flex items-center gap-2">
+              <KeyRound className="w-5 h-5" />
+              Vincular Paciente
+            </h2>
+            <button onClick={() => { setShowClaimForm(false); setClaimCode(''); setClaimResult(null); }} className="text-slate-400 hover:text-slate-600">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {claimResult ? (
+            <div className={`rounded-lg p-4 flex items-start gap-3 ${
+              claimResult.success ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'
+            }`}>
+              {claimResult.success ? (
+                <Check className="w-5 h-5 text-emerald-600 mt-0.5" />
+              ) : (
+                <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
+              )}
+              <div>
+                <p className={`font-medium ${claimResult.success ? 'text-emerald-800' : 'text-red-800'}`}>
+                  {claimResult.message}
+                </p>
+                {claimResult.patientName && (
+                  <p className="text-sm text-emerald-600 mt-1">Paciente: {claimResult.patientName}</p>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div>
+              <p className="text-sm text-slate-500 mb-3">Ingresa el código de invitación que te compartió el paciente</p>
+              <div className="flex gap-3">
+                <Input
+                  type="text"
+                  placeholder="ej. MHAT-A7K9M2"
+                  value={claimCode}
+                  onChange={(e) => setClaimCode(e.target.value.toUpperCase())}
+                  className="font-mono text-lg tracking-wider max-w-xs"
+                  autoFocus
+                />
+                <Button
+                  onClick={async () => {
+                    try {
+                      const result = await claimInvitation.mutateAsync(claimCode);
+                      setClaimResult({
+                        success: true,
+                        message: result.message,
+                        patientName: result.patient_name,
+                      });
+                      setClaimCode('');
+                    } catch (err: unknown) {
+                      const error = err as { response?: { data?: { detail?: string } } };
+                      setClaimResult({
+                        success: false,
+                        message: error.response?.data?.detail || 'Error al vincular paciente',
+                      });
+                    }
+                  }}
+                  disabled={!claimCode.trim() || claimInvitation.isPending}
+                >
+                  {claimInvitation.isPending ? 'Vinculando...' : 'Vincular'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -116,6 +195,13 @@ export default function DoctorDashboardPage() {
                   className="pl-10 w-64"
                 />
               </div>
+              <Button
+                variant="outline"
+                onClick={() => { setShowClaimForm(true); setClaimResult(null); }}
+              >
+                <KeyRound className="w-4 h-4 mr-2" />
+                Vincular Paciente
+              </Button>
             </div>
           </div>
         </div>

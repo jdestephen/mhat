@@ -47,7 +47,6 @@ async def get_doctor_patient_access(
             and_(
                 DoctorPatientAccess.doctor_id == current_user.id,
                 DoctorPatientAccess.patient_profile_id == patient_profile_id,
-                DoctorPatientAccess.is_active == True
             )
         )
     )
@@ -60,6 +59,94 @@ async def get_doctor_patient_access(
         raise HTTPException(status_code=403, detail="Write access required")
     
     return access
+
+
+# =====================
+# Claim Invitation Code
+# =====================
+
+@router.post("/claim-access")
+async def claim_invitation_code(
+    claim_in: clinical_schema.ClaimInvitationRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+):
+    """
+    Claim an invitation code to get access to a patient's records.
+    The code must be valid (not expired, not revoked, not already claimed).
+    """
+    from app.models.access_invitation import AccessInvitation
+
+    # Normalize code (uppercase, trim)
+    code = claim_in.code.strip().upper()
+
+    result = await db.execute(
+        select(AccessInvitation).where(AccessInvitation.code == code)
+    )
+    invitation = result.scalar_one_or_none()
+
+    if not invitation:
+        raise HTTPException(status_code=404, detail="Código de invitación no encontrado")
+
+    # Validate invitation state
+    if invitation.is_revoked:
+        raise HTTPException(status_code=400, detail="Esta invitación fue revocada")
+
+    if invitation.claimed_by:
+        raise HTTPException(status_code=400, detail="Esta invitación ya fue utilizada")
+
+    if invitation.code_expires_at < datetime.utcnow():
+        raise HTTPException(status_code=400, detail="Esta invitación ha expirado")
+
+    # Check if doctor already has access to this patient
+    existing = await db.execute(
+        select(DoctorPatientAccess).where(
+            and_(
+                DoctorPatientAccess.doctor_id == current_user.id,
+                DoctorPatientAccess.patient_profile_id == invitation.patient_profile_id
+            )
+        )
+    )
+    existing_access = existing.scalar_one_or_none()
+
+    if existing_access:
+        # Update existing access level if different
+        existing_access.access_level = invitation.access_level
+        existing_access.access_type = invitation.access_type
+    else:
+        # Create new access
+        access = DoctorPatientAccess(
+            doctor_id=current_user.id,
+            patient_profile_id=invitation.patient_profile_id,
+            access_level=invitation.access_level,
+            access_type=invitation.access_type,
+            granted_by=invitation.created_by,
+        )
+        db.add(access)
+
+    # Mark invitation as claimed
+    invitation.claimed_by = current_user.id
+    invitation.claimed_at = datetime.utcnow()
+
+    await db.commit()
+
+    # Return patient info
+    result = await db.execute(
+        select(PatientProfile, User)
+        .join(User, PatientProfile.user_id == User.id, isouter=True)
+        .where(PatientProfile.id == invitation.patient_profile_id)
+    )
+    row = result.first()
+    if row:
+        profile, user = row
+        return {
+            "message": "Acceso concedido exitosamente",
+            "patient_name": f"{user.first_name or ''} {user.last_name or ''}".strip() if user else f"{profile.first_name or ''} {profile.last_name or ''}".strip(),
+            "access_level": invitation.access_level.value,
+            "access_type": invitation.access_type.value,
+        }
+
+    return {"message": "Acceso concedido exitosamente"}
 
 
 # =====================
@@ -81,10 +168,7 @@ async def list_my_patients(
         .join(PatientProfile, DoctorPatientAccess.patient_profile_id == PatientProfile.id)
         .join(User, PatientProfile.user_id == User.id, isouter=True)
         .where(
-            and_(
-                DoctorPatientAccess.doctor_id == current_user.id,
-                DoctorPatientAccess.is_active == True
-            )
+            DoctorPatientAccess.doctor_id == current_user.id
         )
         .offset(skip)
         .limit(limit)
@@ -98,7 +182,7 @@ async def list_my_patients(
             last_name=user.last_name if user else profile.last_name or "Patient",
             date_of_birth=profile.date_of_birth,
             access_level=access.access_level,
-            granted_at=access.granted_at
+            granted_at=access.created_at
         ))
     
     return patients
@@ -139,10 +223,8 @@ async def grant_patient_access(
     existing = result.scalar_one_or_none()
     
     if existing:
-        # Reactivate or update existing access
-        existing.is_active = True
+        # Update existing access
         existing.access_level = access_level
-        existing.granted_at = datetime.utcnow()
         await db.commit()
         await db.refresh(existing)
         return existing
@@ -153,8 +235,6 @@ async def grant_patient_access(
         patient_profile_id=patient_profile_id,
         access_level=access_level,
         granted_by=current_user.id,  # Self-granted in clinical setting
-        granted_at=datetime.utcnow(),
-        is_active=True
     )
     db.add(access)
     await db.commit()
@@ -185,7 +265,7 @@ async def revoke_patient_access(
     if not access:
         raise HTTPException(status_code=404, detail="Access not found")
     
-    access.is_active = False
+    await db.delete(access)
     await db.commit()
     
     return {"message": "Access revoked"}

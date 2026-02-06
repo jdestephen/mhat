@@ -594,10 +594,7 @@ async def list_doctors_with_access(
         .join(User, DoctorPatientAccess.doctor_id == User.id)
         .join(DoctorProfile, DoctorProfile.user_id == User.id, isouter=True)
         .where(
-            and_(
-                DoctorPatientAccess.patient_profile_id == profile.id,
-                DoctorPatientAccess.is_active == True
-            )
+            DoctorPatientAccess.patient_profile_id == profile.id
         )
     )
     
@@ -608,7 +605,7 @@ async def list_doctors_with_access(
             doctor_name=f"{user.first_name} {user.last_name}",
             specialty=doctor_profile.specialty if doctor_profile else None,
             access_level=access.access_level.value,
-            granted_at=access.granted_at
+            granted_at=access.created_at
         ))
     
     return doctors
@@ -669,9 +666,7 @@ async def grant_doctor_access(
     level = DoctorAccessLevel.WRITE if access_level == "WRITE" else DoctorAccessLevel.READ_ONLY
     
     if existing:
-        existing.is_active = True
         existing.access_level = level
-        existing.granted_at = datetime.utcnow()
         existing.granted_by = current_user.id
         await db.commit()
         return {"message": "Access updated", "access_level": level.value}
@@ -682,8 +677,6 @@ async def grant_doctor_access(
         patient_profile_id=profile.id,
         access_level=level,
         granted_by=current_user.id,
-        granted_at=datetime.utcnow(),
-        is_active=True
     )
     db.add(access)
     await db.commit()
@@ -731,8 +724,206 @@ async def revoke_doctor_access(
     if not access:
         raise HTTPException(status_code=404, detail="Access not found")
     
-    access.is_active = False
+    await db.delete(access)
     await db.commit()
     
     return {"message": "Access revoked"}
+
+
+# ==========================
+# Access Invitations (Patient Side)
+# ==========================
+
+from app.models.access_invitation import AccessInvitation
+from datetime import timedelta
+
+
+@router.post("/me/invitations", response_model=clinical_schema.AccessInvitationResponse)
+async def create_invitation(
+    invitation_in: clinical_schema.AccessInvitationCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+):
+    """
+    Create an invitation code for a doctor to claim access.
+    Code is valid for 24 hours.
+    """
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Not a patient")
+    
+    # Get patient profile
+    result = await db.execute(
+        select(PatientProfile).filter(PatientProfile.user_id == current_user.id)
+    )
+    profile = result.scalars().first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+    
+    # Validate temporary access requires expires_in_days
+    if invitation_in.access_type == "TEMPORARY" and not invitation_in.expires_in_days:
+        raise HTTPException(status_code=400, detail="expires_in_days is required for temporary access")
+    
+    from app.models.user import AccessType as UserAccessType
+    access_type = UserAccessType.TEMPORARY if invitation_in.access_type == "TEMPORARY" else UserAccessType.PERMANENT
+
+    invitation = AccessInvitation(
+        patient_profile_id=profile.id,
+        created_by=current_user.id,
+        access_level=invitation_in.access_level,
+        access_type=access_type,
+        expires_in_days=invitation_in.expires_in_days if invitation_in.access_type == "TEMPORARY" else None,
+        code_expires_at=datetime.utcnow() + timedelta(hours=24),
+    )
+    db.add(invitation)
+    await db.commit()
+    await db.refresh(invitation)
+    
+    return invitation
+
+
+@router.get("/me/invitations", response_model=List[clinical_schema.AccessInvitationResponse])
+async def list_my_invitations(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+):
+    """List all invitations created by the patient."""
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Not a patient")
+    
+    result = await db.execute(
+        select(PatientProfile).filter(PatientProfile.user_id == current_user.id)
+    )
+    profile = result.scalars().first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+    
+    result = await db.execute(
+        select(AccessInvitation)
+        .where(AccessInvitation.patient_profile_id == profile.id)
+        .order_by(AccessInvitation.created_at.desc())
+    )
+    return result.scalars().all()
+
+
+@router.delete("/me/invitations/{invitation_id}")
+async def revoke_invitation(
+    invitation_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+):
+    """Revoke an unclaimed invitation."""
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Not a patient")
+    
+    import uuid as uuid_module
+    try:
+        inv_uuid = uuid_module.UUID(invitation_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid invitation ID")
+    
+    result = await db.execute(
+        select(AccessInvitation).where(AccessInvitation.id == inv_uuid)
+    )
+    invitation = result.scalar_one_or_none()
+    
+    if not invitation:
+        raise HTTPException(status_code=404, detail="Invitation not found")
+    
+    # Verify ownership
+    result = await db.execute(
+        select(PatientProfile).filter(PatientProfile.user_id == current_user.id)
+    )
+    profile = result.scalars().first()
+    if not profile or invitation.patient_profile_id != profile.id:
+        raise HTTPException(status_code=403, detail="Not your invitation")
+    
+    if invitation.claimed_by:
+        raise HTTPException(status_code=400, detail="Cannot revoke a claimed invitation")
+    
+    invitation.is_revoked = True
+    await db.commit()
+    
+    return {"message": "Invitation revoked"}
+
+
+@router.get("/me/doctors", response_model=List[clinical_schema.DoctorAccessInfo])
+async def list_my_doctors(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+):
+    """List all doctors with access to the patient's records."""
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Not a patient")
+    
+    result = await db.execute(
+        select(PatientProfile).filter(PatientProfile.user_id == current_user.id)
+    )
+    profile = result.scalars().first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+    
+    result = await db.execute(
+        select(DoctorPatientAccess, User, DoctorProfile)
+        .join(User, DoctorPatientAccess.doctor_id == User.id)
+        .join(DoctorProfile, DoctorProfile.user_id == User.id, isouter=True)
+        .where(DoctorPatientAccess.patient_profile_id == profile.id)
+    )
+    
+    doctors = []
+    for access, user, doctor_profile in result.all():
+        doctors.append(clinical_schema.DoctorAccessInfo(
+            access_id=access.id,
+            doctor_id=access.doctor_id,
+            doctor_name=f"{user.first_name or ''} {user.last_name or ''}".strip() or "Doctor",
+            specialty=doctor_profile.specialty if doctor_profile and hasattr(doctor_profile, 'specialty') else None,
+            access_level=access.access_level.value,
+            access_type=access.access_type.value if hasattr(access, 'access_type') else "PERMANENT",
+            granted_at=access.created_at,
+        ))
+    
+    return doctors
+
+
+@router.delete("/me/doctors/{access_id}")
+async def revoke_doctor_access_by_id(
+    access_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+):
+    """Revoke a specific doctor's access to the patient's records."""
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Not a patient")
+    
+    import uuid as uuid_module
+    try:
+        access_uuid = uuid_module.UUID(access_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid access ID")
+    
+    # Get patient profile
+    result = await db.execute(
+        select(PatientProfile).filter(PatientProfile.user_id == current_user.id)
+    )
+    profile = result.scalars().first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+    
+    # Find and delete access
+    result = await db.execute(
+        select(DoctorPatientAccess).where(
+            and_(
+                DoctorPatientAccess.id == access_uuid,
+                DoctorPatientAccess.patient_profile_id == profile.id
+            )
+        )
+    )
+    access = result.scalar_one_or_none()
+    
+    if not access:
+        raise HTTPException(status_code=404, detail="Access not found")
+    
+    await db.delete(access)
+    await db.commit()
+    
+    return {"message": "Doctor access revoked"}
 

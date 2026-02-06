@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, UserCircle, FilePlus2, LogOut, Stethoscope, ChevronDown, ChevronRight, Share2 } from 'lucide-react';
+import { LayoutDashboard, UserCircle, FilePlus2, LogOut, Stethoscope, ChevronDown, ChevronRight, Share2, Users, KeyRound } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import { useState } from 'react';
+import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
+import { UserRole } from '@/types';
 
 
 interface MenuItem {
@@ -14,12 +16,17 @@ interface MenuItem {
   icon: React.ReactElement;
   children?: MenuItem[];
   onClick?: () => void;
+  roles?: UserRole[]; // Optional: restrict to specific roles
 }
 
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { data: user } = useCurrentUser();
   const [openMenus, setOpenMenus] = useState<string[]>(['Perfil']);
+
+  const isDoctor = user?.role === UserRole.DOCTOR;
+  const isPatient = user?.role === UserRole.PATIENT;
 
   const toggleMenu = (label: string) => {
     setOpenMenus((prev) =>
@@ -29,45 +36,69 @@ export function Sidebar() {
     );
   };
 
-  const sidebarItems = [
-    {
-      label: 'Panel',
-      href: '/dashboard',
-      icon: <LayoutDashboard className="w-5 h-5" />,
-    },
-    {
-      label: 'Nuevo Registro',
-      href: '/records/new',
-      icon: <FilePlus2 className="w-5 h-5" />,
-    },
-    {
-      label: 'Panel Médico',
-      href: '/doctor',
-      icon: <Stethoscope className="w-5 h-5" />,
-    },
-    {
-      label: 'Perfil',
-      href: '/profile',
-      icon: <UserCircle className="w-5 h-5" />,
-      children: [
-        {
-          label: 'Datos Personales',
-          href: '/profile/me',
-          icon: <UserCircle className="w-5 h-5" />,
-        },
+  // Build menu items based on role
+  const sidebarItems: MenuItem[] = [];
+
+  if (isDoctor) {
+    // Doctor menu
+    sidebarItems.push(
+      {
+        label: 'Panel Médico',
+        href: '/doctor',
+        icon: <Stethoscope className="w-5 h-5" />,
+      },
+      {
+        label: 'Mis Pacientes',
+        href: '/doctor/patients',
+        icon: <Users className="w-5 h-5" />,
+      }
+    );
+  } else {
+    // Patient menu
+    sidebarItems.push(
+      {
+        label: 'Panel',
+        href: '/dashboard',
+        icon: <LayoutDashboard className="w-5 h-5" />,
+      },
+      {
+        label: 'Nuevo Registro',
+        href: '/records/new',
+        icon: <FilePlus2 className="w-5 h-5" />,
+      }
+    );
+  }
+
+  // Profile section - available to both
+  sidebarItems.push({
+    label: 'Perfil',
+    href: '/profile',
+    icon: <UserCircle className="w-5 h-5" />,
+    children: [
+      {
+        label: 'Datos Personales',
+        href: '/profile/me',
+        icon: <UserCircle className="w-5 h-5" />,
+      },
+      ...(isPatient ? [
         {
           label: 'Historial de Salud',
           href: '/profile/health-history',
           icon: <Stethoscope className="w-5 h-5" />,
         },
         {
+          label: 'Acceso Médico',
+          href: '/profile/doctor-access',
+          icon: <KeyRound className="w-5 h-5" />,
+        },
+        {
           label: 'Links Compartidos',
           href: '/profile/shared-links',
           icon: <Share2 className="w-5 h-5" />,
         },
-      ],
-    },
-  ];
+      ] : []),
+    ],
+  });
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -153,7 +184,7 @@ export function Sidebar() {
   return (
     <div className="flex h-screen w-72 flex-col bg-white border-r border-[0.5px] border-emerald-900/10 shadow-sm">
       <div className="flex h-20 items-center px-6 border-b border-[0.5px] border-emerald-900/10">
-        <Link href="/dashboard" className="flex items-center gap-3 font-bold tracking-tight">
+        <Link href={isDoctor ? '/doctor' : '/dashboard'} className="flex items-center gap-3 font-bold tracking-tight">
           <div className="bg-emerald-900 p-2 rounded-lg">
              <Stethoscope className="h-6 w-6 text-white" />
           </div>
