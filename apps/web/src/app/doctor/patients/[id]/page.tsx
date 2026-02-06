@@ -3,6 +3,7 @@
 import React, { useState, use } from 'react';
 import { usePatientRecords } from '@/hooks/queries/usePatientRecords';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
+import { useMyPatients } from '@/hooks/queries/useMyPatients';
 import { useVerifyRecord } from '@/hooks/mutations/useVerifyRecord';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -21,14 +22,44 @@ import {
   User,
   Shield,
   Clock,
+  Eye,
 } from 'lucide-react';
+import { RecordDetailModal } from './components/RecordDetailModal';
 
 export default function PatientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: patientId } = use(params);
   const router = useRouter();
   const { data: user, isLoading: userLoading } = useCurrentUser();
+  const { data: patients = [] } = useMyPatients();
   const { data: records = [], isLoading: recordsLoading, refetch } = usePatientRecords(patientId);
   const verifyRecord = useVerifyRecord();
+  const [selectedRecord, setSelectedRecord] = useState<DoctorMedicalRecord | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+
+  // Find current patient from doctor's patient list
+  const patient = patients.find((p) => p.patient_id === patientId);
+
+  const computeAge = (dob: string): number => {
+    const birth = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  const patientName = patient
+    ? `${patient.first_name} ${patient.last_name}`
+    : 'Paciente';
+
+  const patientSubtitle = patient
+    ? [
+        patient.date_of_birth ? `${computeAge(patient.date_of_birth)} años` : null,
+        patient.sex ? patient.sex : null,
+      ].filter(Boolean).join(' • ')
+    : '';
 
   // Redirect non-doctors
   if (!userLoading && user?.role !== UserRole.DOCTOR) {
@@ -79,9 +110,6 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
   const allPrescriptions = records.flatMap((r) => r.prescriptions || []);
   const allOrders = records.flatMap((r) => r.clinical_orders || []);
 
-  // Get patient name from first record (if available)
-  const patientRecord = records[0];
-
   if (userLoading || recordsLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -109,9 +137,11 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                Paciente
+                {patientName}
               </h1>
-              <p className="text-gray-500">ID: {patientId.slice(0, 8)}...</p>
+              {patientSubtitle && (
+                <p className="text-gray-500">{patientSubtitle}</p>
+              )}
             </div>
           </div>
 
@@ -232,6 +262,15 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
 
                       {/* Actions */}
                       <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => { setSelectedRecord(record); setModalOpen(true); }}
+                          className="flex items-center gap-1"
+                        >
+                          <Eye className="h-4 w-4" />
+                          Ver
+                        </Button>
                         {record.status === RecordStatus.UNVERIFIED && (
                           <Button
                             variant="outline"
@@ -336,8 +375,15 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
               </div>
             )}
           </TabsContent>
-        </Tabs>
+          </Tabs>
       </div>
+
+      {/* Record Detail Modal */}
+      <RecordDetailModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        record={selectedRecord}
+      />
     </div>
   );
 }

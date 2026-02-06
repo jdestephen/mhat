@@ -5,7 +5,7 @@ Endpoints for doctor workflow: patient access, medical records, prescriptions, o
 """
 import uuid
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -95,7 +95,7 @@ async def claim_invitation_code(
     if invitation.claimed_by:
         raise HTTPException(status_code=400, detail="Esta invitación ya fue utilizada")
 
-    if invitation.code_expires_at < datetime.utcnow():
+    if invitation.code_expires_at < datetime.now(timezone.utc):
         raise HTTPException(status_code=400, detail="Esta invitación ha expirado")
 
     # Check if doctor already has access to this patient
@@ -126,7 +126,7 @@ async def claim_invitation_code(
 
     # Mark invitation as claimed
     invitation.claimed_by = current_user.id
-    invitation.claimed_at = datetime.utcnow()
+    invitation.claimed_at = datetime.now(timezone.utc)
 
     await db.commit()
 
@@ -181,6 +181,7 @@ async def list_my_patients(
             first_name=user.first_name if user else profile.first_name or "Unknown",
             last_name=user.last_name if user else profile.last_name or "Patient",
             date_of_birth=profile.date_of_birth,
+            sex=user.sex.value if user and user.sex else None,
             access_level=access.access_level,
             granted_at=access.created_at
         ))

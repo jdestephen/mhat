@@ -149,6 +149,7 @@ class PatientAccessSummary(BaseModel):
     first_name: str
     last_name: str
     date_of_birth: Optional[datetime] = None
+    sex: Optional[str] = None
     access_level: AccessLevel
     granted_at: Optional[datetime] = None  # Maps from created_at in the endpoint
 

@@ -245,6 +245,7 @@ export interface PatientAccess {
   first_name: string;
   last_name: string;
   date_of_birth?: string;
+  sex?: string;
   access_level: AccessLevel;
   granted_at: string;
 }

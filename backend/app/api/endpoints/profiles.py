@@ -553,7 +553,7 @@ async def get_medications_for_condition(
 from app.models.user import DoctorPatientAccess, AccessLevel as DoctorAccessLevel
 from app.models.doctor import DoctorProfile
 from app.schemas import clinical as clinical_schema
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import and_
 
 
@@ -772,7 +772,7 @@ async def create_invitation(
         access_level=invitation_in.access_level,
         access_type=access_type,
         expires_in_days=invitation_in.expires_in_days if invitation_in.access_type == "TEMPORARY" else None,
-        code_expires_at=datetime.utcnow() + timedelta(hours=24),
+        code_expires_at=datetime.now(timezone.utc) + timedelta(hours=24),
     )
     db.add(invitation)
     await db.commit()
