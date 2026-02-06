@@ -59,3 +59,10 @@ class User(Base):
         foreign_keys="[FamilyMembership.user_id]",
         back_populates="manager"
     )
+    # Health center memberships (for doctors/admins)
+    health_center_memberships: Mapped[List["HealthCenterMembership"]] = relationship(
+        "HealthCenterMembership",
+        foreign_keys="[HealthCenterMembership.user_id]",
+        back_populates="user"
+    )
+

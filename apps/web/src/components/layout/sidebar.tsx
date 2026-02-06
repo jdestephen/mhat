@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, UserCircle, FilePlus2, LogOut, Stethoscope, ChevronDown, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, UserCircle, FilePlus2, LogOut, Stethoscope, ChevronDown, ChevronRight, Share2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import { useState } from 'react';
@@ -58,7 +58,7 @@ export function Sidebar() {
         {
           label: 'Links Compartidos',
           href: '/profile/shared-links',
-          icon: <Stethoscope className="w-5 h-5" />,
+          icon: <Share2 className="w-5 h-5" />,
         },
       ],
     },
