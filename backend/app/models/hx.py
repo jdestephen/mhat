@@ -30,6 +30,12 @@ class DiagnosisStatus(str, enum.Enum):
     REFUTED = "REFUTED"
     ENTERED_IN_ERROR = "ENTERED_IN_ERROR"
 
+class RecordSource(str, enum.Enum):
+    """Who created the medical record."""
+    PATIENT = "PATIENT"       # Created by patient or family member
+    DOCTOR = "DOCTOR"         # Created by doctor
+    IMPORTED = "IMPORTED"     # Imported from external system
+
 class Category(Base):
     __tablename__ = "categories"
 
@@ -76,12 +82,49 @@ class MedicalRecord(Base):
     patient_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("patient_profiles.id"), nullable=False)
     category_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("categories.id"), nullable=True)
     
+    # Core fields (used by both patient and doctor)
     motive: Mapped[str] = mapped_column(String, nullable=False)
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # Global encounter notes
     tags: Mapped[Optional[List[str]]] = mapped_column(ARRAY(String), nullable=True)
     
+    # Record source - who created this record
+    record_source: Mapped[RecordSource] = mapped_column(
+        Enum(RecordSource), 
+        default=RecordSource.PATIENT, 
+        nullable=False
+    )
+    
+    # === DOCTOR-SPECIFIC FIELDS (is_doctor_only=True) ===
+    # Brief history - context max 280 chars
+    brief_history: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)
+    
+    # Red flags / urgency
+    has_red_flags: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True, default=False)
+    red_flags: Mapped[Optional[List[str]]] = mapped_column(ARRAY(String), nullable=True)  # disnea, dolor torácico, etc.
+    
+    # Key finding from exam
+    key_finding: Mapped[Optional[str]] = mapped_column(String(250), nullable=True)
+    
+    # Clinical impression (doctor's internal interpretation)
+    clinical_impression: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    
+    # Actions taken today (multi-select chips)
+    actions_today: Mapped[Optional[List[str]]] = mapped_column(ARRAY(String), nullable=True)  # Consejería, Receta, Lab, etc.
+    
+    # Plan bullets (max 3)
+    plan_bullets: Mapped[Optional[List[str]]] = mapped_column(ARRAY(String), nullable=True)
+    
+    # === PATIENT-VISIBLE FIELDS ===
+    # Follow-up information
+    follow_up_interval: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)  # 24-48h, 7d, 1m, 3m, PRN
+    follow_up_with: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)  # Clinic/specialist
+    
+    # Instructions for patient
+    patient_instructions: Mapped[Optional[str]] = mapped_column(String(350), nullable=True)
+    
     # Search field (auto-maintained by database trigger)
     search_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)    
+    
     # Status tracking
     status: Mapped[RecordStatus] = mapped_column(Enum(RecordStatus), default=RecordStatus.UNVERIFIED, nullable=False)
     
@@ -92,12 +135,16 @@ class MedicalRecord(Base):
     
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
+    # Relationships
     patient: Mapped["PatientProfile"] = relationship("PatientProfile", back_populates="medical_records")
     category: Mapped["Category"] = relationship("Category", back_populates="medical_records")
     diagnoses: Mapped[List["MedicalDiagnosis"]] = relationship("MedicalDiagnosis", back_populates="medical_record", cascade="all, delete-orphan")
     documents: Mapped[List["Document"]] = relationship("Document", back_populates="medical_record")
+    prescriptions: Mapped[List["Prescription"]] = relationship("Prescription", back_populates="medical_record", cascade="all, delete-orphan")
+    clinical_orders: Mapped[List["ClinicalOrder"]] = relationship("ClinicalOrder", back_populates="medical_record", cascade="all, delete-orphan")
     creator: Mapped["User"] = relationship("User", foreign_keys=[created_by])
     verifier: Mapped[Optional["User"]] = relationship("User", foreign_keys=[verified_by])
+
 
 
 class Document(Base):

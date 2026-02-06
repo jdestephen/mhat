@@ -544,3 +544,195 @@ async def get_medications_for_condition(
         ).order_by(Medication.recorded_at.desc())
     )
     return medications.scalars().all()
+
+
+# ==========================
+# Doctor Access Management (Patient Side)
+# ==========================
+
+from app.models.user import DoctorPatientAccess, AccessLevel as DoctorAccessLevel
+from app.models.doctor import DoctorProfile
+from app.schemas import clinical as clinical_schema
+from datetime import datetime
+from sqlalchemy import and_
+
+
+class DoctorAccessInfo(patient_schema.BaseModel):
+    """Information about a doctor with access to patient records."""
+    doctor_id: str  # UUID as string
+    doctor_name: str
+    specialty: str | None = None
+    access_level: str
+    granted_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+
+@router.get("/me/doctor-access", response_model=List[DoctorAccessInfo])
+async def list_doctors_with_access(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+):
+    """
+    List all doctors who have access to the current patient's records.
+    """
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Not a patient")
+    
+    # Get patient profile
+    result = await db.execute(
+        select(PatientProfile).filter(PatientProfile.user_id == current_user.id)
+    )
+    profile = result.scalars().first()
+    if not profile:
+        return []
+    
+    # Get all active doctor access records
+    result = await db.execute(
+        select(DoctorPatientAccess, User, DoctorProfile)
+        .join(User, DoctorPatientAccess.doctor_id == User.id)
+        .join(DoctorProfile, DoctorProfile.user_id == User.id, isouter=True)
+        .where(
+            and_(
+                DoctorPatientAccess.patient_profile_id == profile.id,
+                DoctorPatientAccess.is_active == True
+            )
+        )
+    )
+    
+    doctors = []
+    for access, user, doctor_profile in result.all():
+        doctors.append(DoctorAccessInfo(
+            doctor_id=str(access.doctor_id),
+            doctor_name=f"{user.first_name} {user.last_name}",
+            specialty=doctor_profile.specialty if doctor_profile else None,
+            access_level=access.access_level.value,
+            granted_at=access.granted_at
+        ))
+    
+    return doctors
+
+
+@router.post("/me/doctor-access")
+async def grant_doctor_access(
+    doctor_id: str,
+    access_level: str = "READ_ONLY",
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+):
+    """
+    Grant a doctor access to the patient's records.
+    Patient-initiated access grant.
+    """
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Not a patient")
+    
+    import uuid as uuid_module
+    try:
+        doctor_uuid = uuid_module.UUID(doctor_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid doctor ID")
+    
+    # Verify doctor exists and is a doctor
+    result = await db.execute(
+        select(User).where(
+            and_(
+                User.id == doctor_uuid,
+                User.role == UserRole.DOCTOR
+            )
+        )
+    )
+    doctor = result.scalar_one_or_none()
+    if not doctor:
+        raise HTTPException(status_code=404, detail="Doctor not found")
+    
+    # Get patient profile
+    result = await db.execute(
+        select(PatientProfile).filter(PatientProfile.user_id == current_user.id)
+    )
+    profile = result.scalars().first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+    
+    # Check if access already exists
+    result = await db.execute(
+        select(DoctorPatientAccess).where(
+            and_(
+                DoctorPatientAccess.doctor_id == doctor_uuid,
+                DoctorPatientAccess.patient_profile_id == profile.id
+            )
+        )
+    )
+    existing = result.scalar_one_or_none()
+    
+    level = DoctorAccessLevel.WRITE if access_level == "WRITE" else DoctorAccessLevel.READ_ONLY
+    
+    if existing:
+        existing.is_active = True
+        existing.access_level = level
+        existing.granted_at = datetime.utcnow()
+        existing.granted_by = current_user.id
+        await db.commit()
+        return {"message": "Access updated", "access_level": level.value}
+    
+    # Create new access
+    access = DoctorPatientAccess(
+        doctor_id=doctor_uuid,
+        patient_profile_id=profile.id,
+        access_level=level,
+        granted_by=current_user.id,
+        granted_at=datetime.utcnow(),
+        is_active=True
+    )
+    db.add(access)
+    await db.commit()
+    
+    return {"message": "Access granted", "access_level": level.value}
+
+
+@router.delete("/me/doctor-access/{doctor_id}")
+async def revoke_doctor_access(
+    doctor_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+):
+    """
+    Revoke a doctor's access to the patient's records.
+    """
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Not a patient")
+    
+    import uuid as uuid_module
+    try:
+        doctor_uuid = uuid_module.UUID(doctor_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid doctor ID")
+    
+    # Get patient profile
+    result = await db.execute(
+        select(PatientProfile).filter(PatientProfile.user_id == current_user.id)
+    )
+    profile = result.scalars().first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+    
+    # Find and deactivate access
+    result = await db.execute(
+        select(DoctorPatientAccess).where(
+            and_(
+                DoctorPatientAccess.doctor_id == doctor_uuid,
+                DoctorPatientAccess.patient_profile_id == profile.id
+            )
+        )
+    )
+    access = result.scalar_one_or_none()
+    
+    if not access:
+        raise HTTPException(status_code=404, detail="Access not found")
+    
+    access.is_active = False
+    await db.commit()
+    
+    return {"message": "Access revoked"}
+

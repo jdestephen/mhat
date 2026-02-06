@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.endpoints import auth, hx, profiles, catalog, sharing
+from app.api.endpoints import auth, hx, profiles, catalog, sharing, doctor
 from app.api import family
 
 api_router = APIRouter()
@@ -11,3 +11,5 @@ api_router.include_router(sharing.router, tags=["public_sharing"])  # Public sha
 api_router.include_router(profiles.router, prefix="/profiles", tags=["profiles"])
 api_router.include_router(catalog.router, prefix="/catalog", tags=["catalog"])
 api_router.include_router(family.router)  # Family management endpoints
+api_router.include_router(doctor.router, prefix="/doctor", tags=["doctor"])
+

@@ -23,14 +23,36 @@ class AccessType(str, enum.Enum):
     PERMANENT = "permanent"
     TEMPORARY = "temporary"
 
+class AccessLevel(str, enum.Enum):
+    """Level of access a doctor has to a patient's records."""
+    READ_ONLY = "READ_ONLY"       # Doctor can view records
+    WRITE = "WRITE"               # Doctor can create/verify records
+
 class DoctorPatientAccess(Base):
+    """
+    Tracks which doctors have access to which patients.
+    
+    A doctor can have access to:
+    - Patients with user accounts (via patient_id -> users.id for backward compat)
+    - Patients without user accounts (via patient_profile_id)
+    """
     __tablename__ = "doctor_patient_access"
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    doctor_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    patient_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    doctor_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    
+    # Legacy field - kept for backward compatibility
+    patient_id: Mapped[Optional[UUID]] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    
+    # New field - supports non-user patients
+    patient_profile_id: Mapped[Optional[UUID]] = mapped_column(PGUUID(as_uuid=True), ForeignKey("patient_profiles.id"), nullable=True, index=True)
+    
     access_type: Mapped[AccessType] = mapped_column(Enum(AccessType), default=AccessType.PERMANENT)
+    access_level: Mapped[AccessLevel] = mapped_column(Enum(AccessLevel), default=AccessLevel.READ_ONLY)
+    
+    # Audit
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    granted_by: Mapped[Optional[UUID]] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
 
 class User(Base):
     __tablename__ = "users"
