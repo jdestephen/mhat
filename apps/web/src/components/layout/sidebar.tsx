@@ -2,7 +2,20 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, UserCircle, FilePlus2, LogOut, Stethoscope, ChevronDown, ChevronRight, Share2, Users, KeyRound } from 'lucide-react';
+import {
+  LayoutDashboard,
+  UserCircle,
+  FilePlus2,
+  LogOut,
+  Stethoscope,
+  ChevronDown,
+  ChevronRight,
+  Share2,
+  Users,
+  KeyRound,
+  PanelLeftClose,
+  PanelLeftOpen,
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import { useState } from 'react';
@@ -16,7 +29,7 @@ interface MenuItem {
   icon: React.ReactElement;
   children?: MenuItem[];
   onClick?: () => void;
-  roles?: UserRole[]; // Optional: restrict to specific roles
+  roles?: UserRole[];
 }
 
 export function Sidebar() {
@@ -24,11 +37,13 @@ export function Sidebar() {
   const router = useRouter();
   const { data: user } = useCurrentUser();
   const [openMenus, setOpenMenus] = useState<string[]>(['Perfil']);
+  const [collapsed, setCollapsed] = useState(false);
 
   const isDoctor = user?.role === UserRole.DOCTOR;
   const isPatient = user?.role === UserRole.PATIENT;
 
   const toggleMenu = (label: string) => {
+    if (collapsed) return;
     setOpenMenus((prev) =>
       prev.includes(label)
         ? prev.filter((l) => l !== label)
@@ -40,7 +55,6 @@ export function Sidebar() {
   const sidebarItems: MenuItem[] = [];
 
   if (isDoctor) {
-    // Doctor menu
     sidebarItems.push(
       {
         label: 'Panel Médico',
@@ -54,7 +68,6 @@ export function Sidebar() {
       }
     );
   } else {
-    // Patient menu
     sidebarItems.push(
       {
         label: 'Panel',
@@ -69,7 +82,6 @@ export function Sidebar() {
     );
   }
 
-  // Profile section - available to both
   sidebarItems.push({
     label: 'Perfil',
     href: '/profile',
@@ -105,7 +117,6 @@ export function Sidebar() {
     router.push('/auth/login');
   };
 
-
   const renderMenuItem = (item: MenuItem, level = 0) => {
     const isActive = item.href === pathname;
     const hasChildren = item.children && item.children.length > 0;
@@ -113,33 +124,48 @@ export function Sidebar() {
 
     if (hasChildren) {
       return (
-          <div key={item.label}>
-            <button
-              onClick={() => toggleMenu(item.label)}
-              className={clsx(
-                'w-full flex items-center gap-3 px-4 py-3 text-left transition-colors',
-                'hover:bg-primary/10 font-primary',
-                {
-                  'text-primary': isOpen,
-                  'text-accent': !isOpen,
+        <div key={item.label}>
+          <button
+            onClick={() => {
+              if (collapsed) {
+                setCollapsed(false);
+                if (!openMenus.includes(item.label)) {
+                  setOpenMenus((prev) => [...prev, item.label]);
                 }
-              )}
-            >
-              {item.icon}
-              <span className="flex-1">{item.label}</span>
-              {isOpen ? (
-                <ChevronDown className="w-4 h-4" />
-              ) : (
-                <ChevronRight className="w-4 h-4" />
-              )}
-            </button>
-
-            {isOpen && item.children && (
-              <div className="bg-background-secondary">
-                {item.children.map((child) => renderMenuItem(child, level + 1))}
-              </div>
+              } else {
+                toggleMenu(item.label);
+              }
+            }}
+            title={collapsed ? item.label : undefined}
+            className={clsx(
+              'w-full flex items-center gap-3 px-4 py-3 text-left transition-colors',
+              'hover:bg-primary/10 font-primary',
+              {
+                'text-primary': isOpen && !collapsed,
+                'text-accent': !(isOpen && !collapsed),
+                'justify-center px-0': collapsed,
+              }
             )}
-          </div>
+          >
+            <span className="flex-shrink-0">{item.icon}</span>
+            {!collapsed && (
+              <>
+                <span className="flex-1 truncate">{item.label}</span>
+                {isOpen ? (
+                  <ChevronDown className="w-4 h-4 flex-shrink-0" />
+                ) : (
+                  <ChevronRight className="w-4 h-4 flex-shrink-0" />
+                )}
+              </>
+            )}
+          </button>
+
+          {isOpen && !collapsed && item.children && (
+            <div className="bg-background-secondary">
+              {item.children.map((child) => renderMenuItem(child, level + 1))}
+            </div>
+          )}
+        </div>
       );
     }
 
@@ -148,16 +174,18 @@ export function Sidebar() {
         <button
           key={item.label}
           onClick={item.onClick}
+          title={collapsed ? item.label : undefined}
           className={clsx(
             'w-full flex items-center gap-3 px-4 py-3 text-left transition-colors',
             'hover:bg-primary/10 font-primary text-accent',
             {
-              'pl-8': level > 0,
+              'pl-8': level > 0 && !collapsed,
+              'justify-center px-0': collapsed,
             }
           )}
         >
-          {item.icon}
-          <span>{item.label}</span>
+          <span className="flex-shrink-0">{item.icon}</span>
+          {!collapsed && <span className="truncate">{item.label}</span>}
         </button>
       );
     }
@@ -166,45 +194,84 @@ export function Sidebar() {
       <Link
         key={item.href}
         href={item.href!}
+        title={collapsed ? item.label : undefined}
         className={clsx(
           'flex items-center gap-3 px-4 py-3 transition-colors font-primary',
           {
             'bg-primary/10 text-primary': isActive,
             'text-accent hover:bg-primary/10': !isActive,
-            'pl-8': level > 0,
+            'pl-8': level > 0 && !collapsed,
+            'justify-center px-0': collapsed,
           }
         )}
       >
-        {item.icon}
-        <span>{item.label}</span>
+        <span className="flex-shrink-0">{item.icon}</span>
+        {!collapsed && <span className="truncate">{item.label}</span>}
       </Link>
     );
   };
 
   return (
-    <div className="flex h-screen w-72 flex-col bg-white border-r border-[0.5px] border-emerald-900/10 shadow-sm">
-      <div className="flex h-20 items-center px-6 border-b border-[0.5px] border-emerald-900/10">
-        <Link href={isDoctor ? '/doctor' : '/dashboard'} className="flex items-center gap-3 font-bold tracking-tight">
-          <div className="bg-emerald-900 p-2 rounded-lg">
-             <Stethoscope className="h-6 w-6 text-white" />
-          </div>
-          <span className="text-2xl text-emerald-950">MHAT</span>
-        </Link>
+    <div
+      className={clsx(
+        'flex h-screen flex-col bg-white border-r border-[0.5px] border-emerald-900/10 shadow-sm transition-all duration-300',
+        collapsed ? 'w-16' : 'w-72'
+      )}
+    >
+      {/* Logo + Collapse Toggle */}
+      <div className="flex h-20 items-center justify-between px-4 border-b border-[0.5px] border-emerald-900/10">
+        {!collapsed ? (
+          <Link href={isDoctor ? '/doctor' : '/dashboard'} className="flex items-center gap-3 font-bold tracking-tight">
+            <div className="bg-emerald-900 p-2 rounded-lg flex-shrink-0">
+              <Stethoscope className="h-6 w-6 text-white" />
+            </div>
+            <span className="text-2xl text-emerald-950">MHAT</span>
+          </Link>
+        ) : (
+          <Link href={isDoctor ? '/doctor' : '/dashboard'} className="mx-auto">
+            <div className="bg-emerald-900 p-2 rounded-lg">
+              <Stethoscope className="h-6 w-6 text-white" />
+            </div>
+          </Link>
+        )}
       </div>
-      
-      <div className="flex-1 overflow-auto py-6 px-4">
+
+      {/* Nav */}
+      <div className="flex-1 overflow-auto py-6 px-2">
         <nav className="flex flex-col gap-2">
           {sidebarItems.map((item) => renderMenuItem(item))}
         </nav>
       </div>
 
-      <div className="p-4 border-t border-[0.5px] border-emerald-900/10 bg-slate-50/50">
+      {/* Footer: Collapse Toggle + Logout */}
+      <div className="p-2 border-t border-[0.5px] border-emerald-900/10 bg-slate-50/50 space-y-1">
+        <button
+          onClick={() => setCollapsed((prev) => !prev)}
+          title={collapsed ? 'Expandir menú' : 'Colapsar menú'}
+          className={clsx(
+            'flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-600',
+            { 'justify-center px-0': collapsed }
+          )}
+        >
+          {collapsed ? (
+            <PanelLeftOpen className="h-5 w-5 flex-shrink-0" />
+          ) : (
+            <>
+              <PanelLeftClose className="h-5 w-5 flex-shrink-0" />
+              <span>Colapsar</span>
+            </>
+          )}
+        </button>
         <button
           onClick={handleLogout}
-          className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-500 transition-all hover:bg-red-50 hover:text-red-600"
+          title={collapsed ? 'Cerrar Sesión' : undefined}
+          className={clsx(
+            'flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-500 transition-all hover:bg-red-50 hover:text-red-600',
+            { 'justify-center px-0': collapsed }
+          )}
         >
-          <LogOut className="h-5 w-5" />
-          Cerrar Sesión
+          <LogOut className="h-5 w-5 flex-shrink-0" />
+          {!collapsed && <span>Cerrar Sesión</span>}
         </button>
       </div>
     </div>

@@ -273,6 +273,83 @@ async def revoke_patient_access(
 
 
 # =====================
+# Patient Health Profile
+# =====================
+
+@router.get("/patients/{patient_profile_id}/health")
+async def get_patient_health_profile(
+    patient_profile_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+):
+    """
+    Get patient health profile: active medications, allergies, and conditions.
+    Requires doctor access to the patient.
+    """
+    from app.models.patient import Medication, Allergy, Condition, MedicationStatus
+
+    await get_doctor_patient_access(patient_profile_id, db, current_user)
+
+    # Fetch active medications
+    meds_result = await db.execute(
+        select(Medication).where(
+            Medication.patient_profile_id == patient_profile_id,
+            Medication.status == MedicationStatus.ACTIVE,
+        )
+    )
+    medications = meds_result.scalars().all()
+
+    # Fetch allergies (not deleted)
+    allergies_result = await db.execute(
+        select(Allergy).where(
+            Allergy.patient_profile_id == patient_profile_id,
+            Allergy.deleted == False,
+        )
+    )
+    allergies = allergies_result.scalars().all()
+
+    # Fetch conditions (not deleted)
+    conditions_result = await db.execute(
+        select(Condition).where(
+            Condition.patient_profile_id == patient_profile_id,
+            Condition.deleted == False,
+        )
+    )
+    conditions = conditions_result.scalars().all()
+
+    return {
+        "medications": [
+            {
+                "id": m.id,
+                "name": m.name,
+                "dosage": m.dosage,
+                "frequency": m.frequency,
+                "instructions": m.instructions,
+            }
+            for m in medications
+        ],
+        "allergies": [
+            {
+                "id": a.id,
+                "allergen": a.allergen,
+                "reaction": a.reaction,
+                "severity": a.severity.value if a.severity else None,
+            }
+            for a in allergies
+        ],
+        "conditions": [
+            {
+                "id": c.id,
+                "name": c.name,
+                "status": c.status.value if c.status else None,
+                "since_year": c.since_year,
+            }
+            for c in conditions
+        ],
+    }
+
+
+# =====================
 # Medical Record Endpoints
 # =====================
 
