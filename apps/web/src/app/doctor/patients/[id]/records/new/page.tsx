@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { InputWithVoice } from '@/components/ui/input-with-voice';
 import { TextareaWithVoice } from '@/components/ui/textarea-with-voice';
+import { TagInput } from '@/components/ui/tag-input';
 import { Select } from '@/components/ui/select';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { 
@@ -47,16 +48,7 @@ interface OrderForm {
   referral_to: string;
 }
 
-const RED_FLAG_OPTIONS = [
-  'Disnea',
-  'Dolor torácico',
-  'Síncope',
-  'Fiebre alta',
-  'Cefalea severa',
-  'Debilidad focal',
-  'Sangrado activo',
-  'Dolor abdominal intenso',
-];
+
 
 const ACTIONS_OPTIONS = [
   'Consejería',
@@ -281,7 +273,7 @@ export default function NewDoctorRecordPage({ params }: { params: Promise<{ id: 
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-emerald-900 flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-amber-500" />
-              Banderas Rojas
+              Alertas Rojas
             </h2>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -290,33 +282,17 @@ export default function NewDoctorRecordPage({ params }: { params: Promise<{ id: 
                 onChange={(e) => setHasRedFlags(e.target.checked)}
                 className="rounded border-gray-300"
               />
-              <span className="text-sm">Paciente presenta banderas rojas</span>
+              <span className="text-sm">Paciente presenta alertas rojas</span>
             </label>
           </div>
 
           {hasRedFlags && (
-            <div className="flex flex-wrap gap-2">
-              {RED_FLAG_OPTIONS.map((flag) => (
-                <button
-                  key={flag}
-                  type="button"
-                  onClick={() => {
-                    setRedFlags(prev =>
-                      prev.includes(flag)
-                        ? prev.filter(f => f !== flag)
-                        : [...prev, flag]
-                    );
-                  }}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                    redFlags.includes(flag)
-                      ? 'bg-red-100 text-red-700 border border-red-300'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  {flag}
-                </button>
-              ))}
-            </div>
+            <TagInput
+              value={redFlags}
+              onChange={setRedFlags}
+              variant="red"
+              placeholder="Escriba una alerta y presione Enter..."
+            />
           )}
         </div>
 
@@ -329,11 +305,13 @@ export default function NewDoctorRecordPage({ params }: { params: Promise<{ id: 
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-1">Hallazgo Clave</label>
-              <Input
+              <InputWithVoice
                 value={keyFinding}
                 onChange={(e) => setKeyFinding(e.target.value)}
                 placeholder="Principal hallazgo del examen físico"
                 maxLength={250}
+                language="es-ES"
+                mode="append"
               />
             </div>
 
@@ -415,7 +393,7 @@ export default function NewDoctorRecordPage({ params }: { params: Promise<{ id: 
             <div>
               <label className="block text-sm font-medium mb-1">Puntos del Plan (máx 3)</label>
               {planBullets.map((bullet, idx) => (
-                <Input
+                <InputWithVoice
                   key={idx}
                   value={bullet}
                   onChange={(e) => {
@@ -423,6 +401,8 @@ export default function NewDoctorRecordPage({ params }: { params: Promise<{ id: 
                   }}
                   placeholder={`Punto ${idx + 1}`}
                   className="mb-2"
+                  language="es-ES"
+                  mode="append"
                 />
               ))}
             </div>
@@ -439,10 +419,12 @@ export default function NewDoctorRecordPage({ params }: { params: Promise<{ id: 
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Seguimiento Con</label>
-                <Input
+                <InputWithVoice
                   value={followUpWith}
                   onChange={(e) => setFollowUpWith(e.target.value)}
                   placeholder="Clínica o especialista"
+                  language="es-ES"
+                  mode="append"
                 />
               </div>
             </div>
@@ -491,50 +473,62 @@ export default function NewDoctorRecordPage({ params }: { params: Promise<{ id: 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="col-span-2">
                       <label className="block text-xs font-medium mb-1">Medicamento</label>
-                      <Input
+                      <InputWithVoice
                         value={rx.medication_name}
                         onChange={(e) => updatePrescription(idx, 'medication_name', e.target.value)}
                         placeholder="Nombre del medicamento"
+                        language="es-ES"
+                        mode="append"
                       />
                     </div>
                     <div>
                       <label className="block text-xs font-medium mb-1">Dosis</label>
-                      <Input
+                      <InputWithVoice
                         value={rx.dosage}
                         onChange={(e) => updatePrescription(idx, 'dosage', e.target.value)}
                         placeholder="ej. 500mg"
+                        language="es-ES"
+                        mode="append"
                       />
                     </div>
                     <div>
                       <label className="block text-xs font-medium mb-1">Frecuencia</label>
-                      <Input
+                      <InputWithVoice
                         value={rx.frequency}
                         onChange={(e) => updatePrescription(idx, 'frequency', e.target.value)}
                         placeholder="ej. cada 8 horas"
+                        language="es-ES"
+                        mode="append"
                       />
                     </div>
                     <div>
                       <label className="block text-xs font-medium mb-1">Duración</label>
-                      <Input
+                      <InputWithVoice
                         value={rx.duration}
                         onChange={(e) => updatePrescription(idx, 'duration', e.target.value)}
                         placeholder="ej. 7 días"
+                        language="es-ES"
+                        mode="append"
                       />
                     </div>
                     <div>
                       <label className="block text-xs font-medium mb-1">Cantidad</label>
-                      <Input
+                      <InputWithVoice
                         value={rx.quantity}
                         onChange={(e) => updatePrescription(idx, 'quantity', e.target.value)}
                         placeholder="ej. 21 tabletas"
+                        language="es-ES"
+                        mode="append"
                       />
                     </div>
                     <div className="col-span-2">
                       <label className="block text-xs font-medium mb-1">Instrucciones</label>
-                      <Input
+                      <InputWithVoice
                         value={rx.instructions}
                         onChange={(e) => updatePrescription(idx, 'instructions', e.target.value)}
                         placeholder="Instrucciones adicionales"
+                        language="es-ES"
+                        mode="append"
                       />
                     </div>
                   </div>
@@ -603,27 +597,33 @@ export default function NewDoctorRecordPage({ params }: { params: Promise<{ id: 
                     </div>
                     <div className="col-span-2">
                       <label className="block text-xs font-medium mb-1">Descripción</label>
-                      <Input
+                      <InputWithVoice
                         value={order.description}
                         onChange={(e) => updateOrder(idx, 'description', e.target.value)}
                         placeholder="¿Qué se está ordenando?"
+                        language="es-ES"
+                        mode="append"
                       />
                     </div>
                     <div className="col-span-2">
                       <label className="block text-xs font-medium mb-1">Razón</label>
-                      <Input
+                      <InputWithVoice
                         value={order.reason}
                         onChange={(e) => updateOrder(idx, 'reason', e.target.value)}
                         placeholder="Justificación clínica"
+                        language="es-ES"
+                        mode="append"
                       />
                     </div>
                     {order.order_type === OrderType.REFERRAL && (
                       <div className="col-span-2">
                         <label className="block text-xs font-medium mb-1">Referir A</label>
-                        <Input
+                        <InputWithVoice
                           value={order.referral_to}
                           onChange={(e) => updateOrder(idx, 'referral_to', e.target.value)}
                           placeholder="Especialista o clínica"
+                          language="es-ES"
+                          mode="append"
                         />
                       </div>
                     )}

@@ -286,21 +286,25 @@ export default function SummaryPage() {
                           })}
                         </span>
                       </div>
-                      {record.diagnosis && (
-                        <p className="text-sm text-slate-700 mt-2">
-                          <span className="font-medium">Diagnóstico:</span> {record.diagnosis}
-                        </p>
-                      )}
-                      {record.has_documents && (
-                        <p className="text-xs text-blue-600 mt-2">📎 Contiene documentos adjuntos</p>
-                      )}
-                      <button
-                        onClick={() => handleViewRecord(record.id)}
-                        disabled={loadingRecord}
-                        className="mt-3 text-sm text-emerald-700 hover:text-emerald-900 font-medium hover:underline disabled:opacity-50"
-                      >
-                        {loadingRecord ? 'Cargando...' : 'Ver Detalle →'}
-                      </button>
+                      <div className="flex flex-col justify-between">
+                        {record.diagnosis && (
+                          <p className="text-sm text-slate-700 mt-2">
+                            <span className="font-medium">Diagnóstico:</span> {record.diagnosis}
+                          </p>
+                        )}
+                        {record.has_documents && (
+                          <p className="text-xs text-blue-600 mt-2">📎 Contiene documentos adjuntos</p>
+                        )}
+                        <div className="flex justify-end">
+                          <button
+                            onClick={() => handleViewRecord(record.id)}
+                            disabled={loadingRecord}
+                            className="mt-3 text-sm text-emerald-700 hover:text-emerald-900 font-medium hover:underline disabled:opacity-50"
+                          >
+                            {loadingRecord ? 'Cargando...' : 'Ver Detalle →'}
+                          </button>
+                        </div>
+                      </div>  
                     </div>
                   ))}
                 </div>

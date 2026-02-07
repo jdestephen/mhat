@@ -9,6 +9,7 @@ import { useMyInvitations } from '@/hooks/queries/useMyInvitations';
 import { useCreateInvitation } from '@/hooks/mutations/useCreateInvitation';
 import { useRevokeInvitation } from '@/hooks/mutations/useRevokeInvitation';
 import { useRevokeDoctorAccess } from '@/hooks/mutations/useRevokeDoctorAccess';
+import { useUpdateAccessLevel } from '@/hooks/mutations/useUpdateAccessLevel';
 import { AccessLevel } from '@/types';
 import {
   UserPlus,
@@ -29,6 +30,7 @@ export default function DoctorAccessPage() {
   const createInvitation = useCreateInvitation();
   const revokeInvitation = useRevokeInvitation();
   const revokeDoctorAccess = useRevokeDoctorAccess();
+  const updateAccessLevel = useUpdateAccessLevel();
 
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [accessLevel, setAccessLevel] = useState<AccessLevel>(AccessLevel.READ_ONLY);
@@ -255,17 +257,29 @@ export default function DoctorAccessPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="flex gap-2">
-                    <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full ${
-                      doc.access_level === 'WRITE'
-                        ? 'bg-amber-100 text-amber-700'
-                        : 'bg-blue-100 text-blue-700'
-                    }`}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newLevel = doc.access_level === 'WRITE' ? 'READ_ONLY' : 'WRITE';
+                        updateAccessLevel.mutate({
+                          doctorId: doc.doctor_id,
+                          accessLevel: newLevel,
+                        });
+                      }}
+                      disabled={updateAccessLevel.isPending}
+                      title={doc.access_level === 'WRITE' ? 'Cambiar a solo lectura' : 'Cambiar a escritura'}
+                      className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full cursor-pointer transition-colors hover:ring-2 hover:ring-offset-1 ${
+                        doc.access_level === 'WRITE'
+                          ? 'bg-amber-100 text-amber-700 hover:ring-amber-300'
+                          : 'bg-blue-100 text-blue-700 hover:ring-blue-300'
+                      }`}
+                    >
                       {doc.access_level === 'WRITE' ? (
                         <><ShieldAlert className="w-3 h-3" /> Escritura</>
                       ) : (
                         <><ShieldCheck className="w-3 h-3" /> Lectura</>
                       )}
-                    </span>
+                    </button>
                     <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full ${
                       doc.access_type === 'TEMPORARY'
                         ? 'bg-orange-100 text-orange-700'

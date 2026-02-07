@@ -8,7 +8,7 @@ import { usePatientHealth } from '@/hooks/queries/usePatientHealth';
 import { useVerifyRecord } from '@/hooks/mutations/useVerifyRecord';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { UserRole, RecordStatus, RecordSource, DoctorMedicalRecord } from '@/types';
+import { UserRole, RecordStatus, RecordSource, DoctorMedicalRecord, AccessLevel } from '@/types';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -63,6 +63,8 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
         patient.sex ? patient.sex : null,
       ].filter(Boolean).join(' • ')
     : '';
+
+  const isReadOnly = patient?.access_level === AccessLevel.READ_ONLY;
 
   // Redirect non-doctors
   if (!userLoading && user?.role !== UserRole.DOCTOR) {
@@ -148,12 +150,19 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
             </div>
           </div>
 
-          <Link href={`/doctor/patients/${patientId}/records/new`}>
-            <Button className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              Nuevo Registro
-            </Button>
-          </Link>
+          {isReadOnly ? (
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 text-sm font-medium">
+              <Eye className="h-4 w-4" />
+              Solo lectura
+            </span>
+          ) : (
+            <Link href={`/doctor/patients/${patientId}/records/new`}>
+              <Button className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Nuevo Registro
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 
@@ -333,7 +342,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                               <Eye className="h-4 w-4" />
                               Ver
                             </Button>
-                            {record.status === RecordStatus.UNVERIFIED && (
+                            {!isReadOnly && record.status !== RecordStatus.VERIFIED && (
                               <Button
                                 variant="outline"
                                 size="sm"
