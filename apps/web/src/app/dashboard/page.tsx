@@ -213,7 +213,7 @@ export default function DashboardPage() {
                                   e.stopPropagation();
                                   setOpenDropdown(openDropdown === record.id ? null : record.id);
                                 }}
-                                className="text-slate-400 hover:text-slate-600"
+                                className="text-slate-400 hover:text-slate-600 hover:cursor-pointer"
                               >
                                 <MoreVertical className="h-5 w-5" />
                               </button>

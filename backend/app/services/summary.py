@@ -179,7 +179,7 @@ async def get_recent_records(
         sharing_schema.RecentRecordSummary(
             id=str(record.id),
             motive=record.motive,
-            diagnosis=record.diagnoses[0].diagnosis if record.diagnoses and len(record.diagnoses) > 0 else None,
+            diagnosis=", ".join([d.diagnosis for d in record.diagnoses]) if record.diagnoses and len(record.diagnoses) > 0 else None,
             category={
                 "id": str(record.category.id),
                 "name": record.category.name

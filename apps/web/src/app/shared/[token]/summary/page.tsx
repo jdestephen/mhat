@@ -299,7 +299,7 @@ export default function SummaryPage() {
                           <button
                             onClick={() => handleViewRecord(record.id)}
                             disabled={loadingRecord}
-                            className="mt-3 text-sm text-emerald-700 hover:text-emerald-900 font-medium hover:underline disabled:opacity-50"
+                            className="mt-3 text-sm text-emerald-700 hover:text-emerald-900 hover:cursor-pointer font-medium hover:underline disabled:opacity-50"
                           >
                             {loadingRecord ? 'Cargando...' : 'Ver Detalle →'}
                           </button>
