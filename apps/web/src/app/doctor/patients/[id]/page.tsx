@@ -124,17 +124,9 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
   }
 
   return (
-    <div className="max-w-8xl mx-auto">
+    <div className="flex flex-row max-w-8xl mx-auto gap-6">
       {/* Header */}
-      <div className="mb-6">
-        <button
-          onClick={() => router.push('/doctor')}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span>Volver al panel</span>
-        </button>
-
+      <div className="flex flex-col flex-1 mb-6 gap-7">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center">
@@ -149,25 +141,8 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
               )}
             </div>
           </div>
-
-          {isReadOnly ? (
-            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 text-sm font-medium">
-              <Eye className="h-4 w-4" />
-              Solo lectura
-            </span>
-          ) : (
-            <Link href={`/doctor/patients/${patientId}/records/new`}>
-              <Button className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Nuevo Registro
-              </Button>
-            </Link>
-          )}
         </div>
-      </div>
 
-      {/* Main Content: Sidebar + Tabs */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Left Sidebar - Health Profile */}
         <div className="lg:col-span-1 space-y-4">
           {/* Active Medications */}
@@ -206,11 +181,10 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                     <p className="font-medium text-slate-800">{cond.name}</p>
                     <div className="flex items-center gap-2 mt-0.5">
                       {cond.status && (
-                        <span className={`text-xs px-2 py-0.5 rounded ${
-                          cond.status === 'active' ? 'bg-amber-100 text-amber-700' :
-                          cond.status === 'resolved' ? 'bg-green-100 text-green-700' :
-                          'bg-gray-100 text-gray-600'
-                        }`}>
+                        <span className={`text-xs px-2 py-0.5 rounded ${cond.status === 'active' ? 'bg-amber-100 text-amber-700' :
+                            cond.status === 'resolved' ? 'bg-green-100 text-green-700' :
+                              'bg-gray-100 text-gray-600'
+                          }`}>
                           {cond.status}
                         </span>
                       )}
@@ -239,11 +213,10 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                     <p className="font-medium text-red-800">{allergy.allergen}</p>
                     {allergy.reaction && <p className="text-xs text-red-700">{allergy.reaction}</p>}
                     {allergy.severity && (
-                      <span className={`text-xs px-2 py-0.5 rounded mt-0.5 inline-block ${
-                        allergy.severity === 'severe' ? 'bg-red-200 text-red-800' :
-                        allergy.severity === 'moderate' ? 'bg-amber-100 text-amber-700' :
-                        'bg-gray-100 text-gray-600'
-                      }`}>
+                      <span className={`text-xs px-2 py-0.5 rounded mt-0.5 inline-block ${allergy.severity === 'severe' ? 'bg-red-200 text-red-800' :
+                          allergy.severity === 'moderate' ? 'bg-amber-100 text-amber-700' :
+                            'bg-gray-100 text-gray-600'
+                        }`}>
                         {allergy.severity}
                       </span>
                     )}
@@ -253,13 +226,16 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
             )}
           </div>
         </div>
+      </div>
 
+      {/* Main Content: Sidebar + Tabs */}
+      <div className="flex flex-col flex-4 gap-6">
         {/* Right Content - 3/4 width */}
-        <div className="lg:col-span-4 space-y-6">
+        <div className="space-y-6">
           {/* Tabs */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100">
             <Tabs defaultValue="records">
-              <TabsList className="border-b border-gray-100 px-6">
+              <TabsList className="border-b border-gray-100 pl-3 pr-1">
                 <TabsTrigger value="records" className="flex items-center gap-2">
                   <FileText className="h-4 w-4" />
                   Registros
@@ -272,6 +248,22 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                   <ClipboardList className="h-4 w-4" />
                   Órdenes
                 </TabsTrigger>
+
+                <div className="flex-1 flex justify-end">
+                  {isReadOnly ? (
+                    <span className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 text-sm font-medium">
+                      <Eye className="h-4 w-4" />
+                      Solo lectura
+                    </span>
+                  ) : (
+                    <Link className="self-end" href={`/doctor/patients/${patientId}/records/new`}>
+                      <Button className="flex items-center gap-2" variant='ghost'>
+                        <Plus className="h-4 w-4" />
+                        Nuevo
+                      </Button>
+                    </Link>
+                  )}
+                </div>
               </TabsList>
 
               {/* Records Tab */}
