@@ -136,16 +136,16 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
         </button>
 
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center">
-              <User className="h-8 w-8 text-emerald-600" />
+          <div className="flex items-center gap-3">
+            <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center">
+              <User className="h-7 w-7 text-emerald-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-xl font-bold text-gray-900">
                 {patientName}
               </h1>
               {patientSubtitle && (
-                <p className="text-gray-500">{patientSubtitle}</p>
+                <p className="text-gray-500 text-sm">{patientSubtitle}</p>
               )}
             </div>
           </div>
@@ -167,7 +167,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
       </div>
 
       {/* Main Content: Sidebar + Tabs */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Left Sidebar - Health Profile */}
         <div className="lg:col-span-1 space-y-4">
           {/* Active Medications */}
@@ -255,7 +255,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
         </div>
 
         {/* Right Content - 3/4 width */}
-        <div className="lg:col-span-3 space-y-6">
+        <div className="lg:col-span-4 space-y-6">
           {/* Tabs */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100">
             <Tabs defaultValue="records">
