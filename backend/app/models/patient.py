@@ -12,35 +12,35 @@ from app.db.base_class import Base
 
 # --- Enums ---
 class AllergyType(str, enum.Enum):
-    MEDICATION = "medication"
-    FOOD = "food"
-    SUBSTANCE = "substance"
-    OTHER = "other"
+    MEDICATION = "MEDICATION"
+    FOOD = "FOOD"
+    SUBSTANCE = "SUBSTANCE"
+    OTHER = "OTHER"
 
 class AllergySeverity(str, enum.Enum):
-    MILD = "mild"
-    MODERATE = "moderate"
-    SEVERE = "severe"
-    UNKNOWN = "unknown"
+    MILD = "MILD"
+    MODERATE = "MODERATE"
+    SEVERE = "SEVERE"
+    UNKNOWN = "UNKNOWN"
 
 class AllergySource(str, enum.Enum):
-    DOCTOR = "doctor"
-    SUSPECTED = "suspected"
-    NOT_SURE = "not_sure"
+    DOCTOR = "DOCTOR"
+    SUSPECTED = "SUSPECTED"
+    NOT_SURE = "NOT_SURE"
 
 class AllergyStatus(str, enum.Enum):
-    UNVERIFIED = "unverified"
-    VERIFIED = "verified"
+    UNVERIFIED = "UNVERIFIED"
+    VERIFIED = "VERIFIED"
 
 class ConditionStatus(str, enum.Enum):
-    ACTIVE = "active"
-    CONTROLLED = "controlled"
-    RESOLVED = "resolved"
-    UNKNOWN = "unknown"
+    ACTIVE = "ACTIVE"
+    CONTROLLED = "CONTROLLED"
+    RESOLVED = "RESOLVED"
+    UNKNOWN = "UNKNOWN"
 
 class ConditionSource(str, enum.Enum):
-    DOCTOR = "doctor"
-    SUSPECTED = "suspected"
+    DOCTOR = "DOCTOR"
+    SUSPECTED = "SUSPECTED"
 
 class MedicationStatus(str, enum.Enum):
     """FHIR MedicationStatement status values"""

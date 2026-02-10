@@ -6,35 +6,35 @@ from enum import Enum
 
 # Enums
 class AllergyType(str, Enum):
-    MEDICATION = "medication"
-    FOOD = "food"
-    SUBSTANCE = "substance"
-    OTHER = "other"
+    MEDICATION = "MEDICATION"
+    FOOD = "FOOD"
+    SUBSTANCE = "SUBSTANCE"
+    OTHER = "OTHER"
 
 class AllergySeverity(str, Enum):
-    MILD = "mild"
-    MODERATE = "moderate"
-    SEVERE = "severe"
-    UNKNOWN = "unknown"
+    MILD = "MILD"
+    MODERATE = "MODERATE"
+    SEVERE = "SEVERE"
+    UNKNOWN = "UNKNOWN"
 
 class AllergySource(str, Enum):
-    DOCTOR = "doctor"
-    SUSPECTED = "suspected"
-    NOT_SURE = "not_sure"
+    DOCTOR = "DOCTOR"
+    SUSPECTED = "SUSPECTED"
+    NOT_SURE = "NOT_SURE"
 
 class AllergyStatus(str, Enum):
-    UNVERIFIED = "unverified"
-    VERIFIED = "verified"
+    UNVERIFIED = "UNVERIFIED"
+    VERIFIED = "VERIFIED"
 
 class ConditionStatus(str, Enum):
-    ACTIVE = "active"
-    CONTROLLED = "controlled"
-    RESOLVED = "resolved"
-    UNKNOWN = "unknown"
+    ACTIVE = "ACTIVE"
+    CONTROLLED = "CONTROLLED"
+    RESOLVED = "RESOLVED"
+    UNKNOWN = "UNKNOWN"
 
 class ConditionSource(str, Enum):
-    DOCTOR = "doctor"
-    SUSPECTED = "suspected"
+    DOCTOR = "DOCTOR"
+    SUSPECTED = "SUSPECTED"
 
 class MedicationStatus(str, Enum):
     ACTIVE = "ACTIVE"

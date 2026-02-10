@@ -550,7 +550,7 @@ async def get_medications_for_condition(
 # Doctor Access Management (Patient Side)
 # ==========================
 
-from app.models.user import DoctorPatientAccess, AccessLevel as DoctorAccessLevel
+from app.models.user import DoctorPatientAccess, DoctorAccessLevel
 from app.models.doctor import DoctorProfile
 from app.schemas import clinical as clinical_schema
 from datetime import datetime, timezone

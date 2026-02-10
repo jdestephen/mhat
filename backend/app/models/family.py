@@ -22,22 +22,22 @@ from app.db.base_class import Base
 
 class RelationshipType(str, enum.Enum):
     """Defines the type of relationship between a user and a patient profile."""
-    SELF = "self"              # User managing their own profile
-    PARENT = "parent"          # Parent→Child
-    CHILD = "child"            # Child→Parent (elderly care)
-    SPOUSE = "spouse"          # Spouse→Spouse
-    SIBLING = "sibling"        # Sibling→Sibling
-    GRANDPARENT = "grandparent"
-    GRANDCHILD = "grandchild"
-    GUARDIAN = "guardian"      # Legal guardian (not parent)
-    OTHER = "other"
+    SELF = "SELF"              # User managing their own profile
+    PARENT = "PARENT"          # Parent→Child
+    CHILD = "CHILD"            # Child→Parent (elderly care)
+    SPOUSE = "SPOUSE"          # Spouse→Spouse
+    SIBLING = "SIBLING"        # Sibling→Sibling
+    GRANDPARENT = "GRANDPARENT"
+    GRANDCHILD = "GRANDCHILD"
+    GUARDIAN = "GUARDIAN"      # Legal guardian (not parent)
+    OTHER = "OTHER"
 
 
 class AccessLevel(str, enum.Enum):
     """Defines the level of access a user has to a patient profile."""
-    FULL_ACCESS = "full_access"      # Can view, create, edit all records
-    READ_ONLY = "read_only"          # Can only view records
-    EMERGENCY_ONLY = "emergency_only"  # Only critical info (allergies, conditions)
+    FULL_ACCESS = "FULL_ACCESS"      # Can view, create, edit all records
+    READ_ONLY = "READ_ONLY"          # Can only view records
+    EMERGENCY_ONLY = "EMERGENCY_ONLY"  # Only critical info (allergies, conditions)
 
 
 class FamilyMembership(Base):

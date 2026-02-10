@@ -15,7 +15,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 
 from app.db.base_class import Base
-from app.models.user import AccessLevel, AccessType
+from app.models.user import DoctorAccessLevel, AccessType
 
 
 def generate_invitation_code() -> str:
@@ -48,7 +48,7 @@ class AccessInvitation(Base):
     code: Mapped[str] = mapped_column(String(20), unique=True, index=True, nullable=False, default=generate_invitation_code)
 
     # Access configuration
-    access_level: Mapped[AccessLevel] = mapped_column(Enum(AccessLevel), default=AccessLevel.READ_ONLY, nullable=False)
+    access_level: Mapped[DoctorAccessLevel] = mapped_column(Enum(DoctorAccessLevel, name='doctoraccesslevel', create_type=True), default=DoctorAccessLevel.READ_ONLY, nullable=False)
     access_type: Mapped[AccessType] = mapped_column(Enum(AccessType), default=AccessType.PERMANENT, nullable=False)
     expires_in_days: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)  # For temporary access
 

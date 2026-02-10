@@ -15,7 +15,7 @@ from sqlalchemy import and_, or_
 
 from app.api import deps
 from app.api.deps import get_db
-from app.models.user import User, UserRole, DoctorPatientAccess, AccessLevel
+from app.models.user import User, UserRole, DoctorPatientAccess, DoctorAccessLevel
 from app.models.patient import PatientProfile
 from app.models.hx import MedicalRecord, RecordSource, RecordStatus, MedicalDiagnosis
 from app.models.clinical import Prescription, ClinicalOrder
@@ -55,7 +55,7 @@ async def get_doctor_patient_access(
     if not access:
         raise HTTPException(status_code=403, detail="No access to this patient")
     
-    if require_write and access.access_level != AccessLevel.WRITE:
+    if require_write and access.access_level != DoctorAccessLevel.WRITE:
         raise HTTPException(status_code=403, detail="Write access required")
     
     return access
@@ -196,7 +196,7 @@ async def list_my_patients(
 @router.post("/patients/{patient_profile_id}/access", response_model=clinical_schema.DoctorPatientAccessResponse)
 async def grant_patient_access(
     patient_profile_id: uuid.UUID,
-    access_level: AccessLevel = AccessLevel.WRITE,
+    access_level: DoctorAccessLevel = DoctorAccessLevel.WRITE,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_doctor_role),
 ):

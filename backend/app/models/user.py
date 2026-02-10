@@ -12,18 +12,18 @@ from sqlalchemy.sql import func
 from app.db.base_class import Base
 
 class UserRole(str, enum.Enum):
-    DOCTOR = "doctor"
-    PATIENT = "patient"
+    DOCTOR = "DOCTOR"
+    PATIENT = "PATIENT"
 
 class Sex(str, enum.Enum):
     MASCULINO = "MASCULINO"
-    FEMININO = "FEMININO"
+    FEMININO = "FEMENINO"
 
 class AccessType(str, enum.Enum):
-    PERMANENT = "permanent"
-    TEMPORARY = "temporary"
+    PERMANENT = "PERMANENT"
+    TEMPORARY = "TEMPORARY"
 
-class AccessLevel(str, enum.Enum):
+class DoctorAccessLevel(str, enum.Enum):
     """Level of access a doctor has to a patient's records."""
     READ_ONLY = "READ_ONLY"       # Doctor can view records
     WRITE = "WRITE"               # Doctor can create/verify records
@@ -48,7 +48,7 @@ class DoctorPatientAccess(Base):
     patient_profile_id: Mapped[Optional[UUID]] = mapped_column(PGUUID(as_uuid=True), ForeignKey("patient_profiles.id"), nullable=True, index=True)
     
     access_type: Mapped[AccessType] = mapped_column(Enum(AccessType), default=AccessType.PERMANENT)
-    access_level: Mapped[AccessLevel] = mapped_column(Enum(AccessLevel), default=AccessLevel.READ_ONLY)
+    access_level: Mapped[DoctorAccessLevel] = mapped_column(Enum(DoctorAccessLevel, name='doctoraccesslevel', create_type=True), default=DoctorAccessLevel.READ_ONLY)
     
     # Audit
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
