@@ -18,7 +18,10 @@ origins = [
     "http://localhost:19000",
     "http://localhost:19006",
     "http://localhost:8081",
-    "exp://localhost:19000"
+    "exp://localhost:19000",
+    # Production origins (update with your actual URLs)
+    "https://mhat-production.up.railway.app/",
+    "https://mhat-production.up.railway.app/api",
 ]
 
 app.add_middleware(
