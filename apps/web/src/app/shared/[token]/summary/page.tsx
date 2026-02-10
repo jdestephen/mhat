@@ -3,23 +3,21 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import api from '@/lib/api';
-import { Clock, User, Pill, Activity, AlertTriangle, FileText } from 'lucide-react';
-import { RecordDetailModal } from './components/RecordDetailModal';
+import { Clock, User, FileText } from 'lucide-react';
+import { RecordDetailModal, RecordDetailData } from '@/components/records/RecordDetailModal';
+import { RecordCard, RecordCardData } from '@/components/records/RecordCard';
+import { HealthSidebar } from '@/components/patient/HealthSidebar';
 
-interface RecordDetail {
+interface RecentRecord {
   id: string;
   motive: string;
-  diagnosis: string | null;
+  diagnoses: Array<{ diagnosis: string }>;
   category: { id: string; name: string } | null;
-  notes: string | null;
-  tags: string[] | null;
   status: string;
+  red_flags: string[] | null;
+  key_finding: string | null;
+  documents: Array<{ id: string; filename: string; url: string }>;
   created_at: string;
-  documents: Array<{
-    id: string;
-    filename: string;
-    url: string;
-  }>;
 }
 
 interface SummaryData {
@@ -46,14 +44,7 @@ interface SummaryData {
     reaction: string;
     severity: string;
   }>;
-  recent_records: Array<{
-    id: string;
-    motive: string;
-    diagnosis: string;
-    category: { name: string };
-    created_at: string;
-    has_documents: boolean;
-  }>;
+  recent_records: RecentRecord[];
   shared_by: string;
   expires_at: string;
   purpose: string;
@@ -68,7 +59,7 @@ export default function SummaryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [timeLeft, setTimeLeft] = useState('');
-  const [selectedRecord, setSelectedRecord] = useState<RecordDetail | null>(null);
+  const [selectedRecord, setSelectedRecord] = useState<RecordDetailData | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [loadingRecord, setLoadingRecord] = useState(false);
 
@@ -76,9 +67,17 @@ export default function SummaryPage() {
     setLoadingRecord(true);
     try {
       const response = await api.get(`/hx/shared/${token}/record/${recordId}`);
-      setSelectedRecord(response.data);
+      const raw = response.data;
+      // Transform API response to match RecordDetailData
+      const transformed: RecordDetailData = {
+        ...raw,
+        diagnoses: raw.diagnosis
+          ? [{ diagnosis: raw.diagnosis }]
+          : [],
+      };
+      setSelectedRecord(transformed);
       setModalOpen(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to load record:', err);
       alert('Error al cargar el registro');
     } finally {
@@ -86,13 +85,18 @@ export default function SummaryPage() {
     }
   };
 
+  const handleCardViewDetail = (cardData: RecordCardData) => {
+    handleViewRecord(cardData.id);
+  };
+
   useEffect(() => {
     const fetchSummary = async () => {
       try {
         const response = await api.get(`/hx/shared/${token}/summary`);
         setData(response.data);
-      } catch (err: any) {
-        setError(err.response?.data?.detail || 'Error al cargar el resumen médico');
+      } catch (err: unknown) {
+        const error = err as { response?: { data?: { detail?: string } } };
+        setError(error.response?.data?.detail || 'Error al cargar el resumen médico');
       } finally {
         setLoading(false);
       }
@@ -184,76 +188,11 @@ export default function SummaryPage() {
       <div className="max-w-7xl mx-auto p-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Left Sidebar - 1/4 width */}
-          <div className="lg:col-span-1 space-y-4">
-            {/* Active Medications */}
-            <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
-              <h2 className="font-semibold text-slate-900 flex items-center gap-2 mb-3">
-                <Pill className="w-5 h-5 text-blue-600" />
-                Medicamentos Activos
-              </h2>
-              {data.active_medications.length === 0 ? (
-                <p className="text-sm text-slate-500">Ninguno</p>
-              ) : (
-                <ul className="space-y-2">
-                  {data.active_medications.map((med) => (
-                    <li key={med.id} className="text-sm">
-                      <p className="font-medium text-slate-800">{med.name}</p>
-                      {med.dosage && <p className="text-xs text-slate-600">{med.dosage}</p>}
-                      {med.frequency && <p className="text-xs text-slate-600">{med.frequency}</p>}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            {/* Active Conditions */}
-            <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
-              <h2 className="font-semibold text-slate-900 flex items-center gap-2 mb-3">
-                <Activity className="w-5 h-5 text-purple-600" />
-                Condiciones Activas
-              </h2>
-              {data.conditions.length === 0 ? (
-                <p className="text-sm text-slate-500">Ninguna</p>
-              ) : (
-                <ul className="space-y-2">
-                  {data.conditions.map((cond) => (
-                    <li key={cond.id} className="text-sm">
-                      <p className="font-medium text-slate-800">{cond.name}</p>
-                      {cond.severity && (
-                        <span className={`text-xs px-2 py-0.5 rounded ${
-                          cond.severity === 'HIGH' ? 'bg-red-100 text-red-700' :
-                          cond.severity === 'MEDIUM' ? 'bg-amber-100 text-amber-700' :
-                          'bg-green-100 text-green-700'
-                        }`}>
-                          {cond.severity}
-                        </span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            {/* Allergies */}
-            <div className="bg-white rounded-lg shadow-sm border border-red-200 p-4 bg-red-50">
-              <h2 className="font-semibold text-red-900 flex items-center gap-2 mb-3">
-                <AlertTriangle className="w-5 h-5 text-red-600" />
-                Alergias
-              </h2>
-              {data.allergies.length === 0 ? (
-                <p className="text-sm text-red-600">Ninguna conocida</p>
-              ) : (
-                <ul className="space-y-2">
-                  {data.allergies.map((allergy) => (
-                    <li key={allergy.id} className="text-sm">
-                      <p className="font-medium text-red-800">{allergy.allergen}</p>
-                      {allergy.reaction && <p className="text-xs text-red-700">{allergy.reaction}</p>}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
+          <HealthSidebar
+            medications={data.active_medications}
+            conditions={data.conditions}
+            allergies={data.allergies}
+          />
 
           {/* Right Content - 3/4 width */}
           <div className="lg:col-span-3">
@@ -263,49 +202,17 @@ export default function SummaryPage() {
                 Últimos 7 Registros Médicos
               </h2>
 
-               {data.recent_records.length === 0 ? (
+              {data.recent_records.length === 0 ? (
                 <p className="text-slate-500">No hay registros disponibles</p>
               ) : (
-                <div className="space-y-4">
-                  {data.recent_records.map((record) => (
-                    <div key={record.id} className="border border-slate-200 rounded-lg p-4 hover:border-emerald-300 transition-colors">
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-slate-900">{record.motive}</h3>
-                          {record.category && (
-                            <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded mt-1 inline-block">
-                              {record.category.name}
-                            </span>
-                          )}
-                        </div>
-                        <span className="text-sm text-slate-500">
-                          {new Date(record.created_at).toLocaleDateString('es-MX', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric'
-                          })}
-                        </span>
-                      </div>
-                      <div className="flex flex-col justify-between">
-                        {record.diagnosis && (
-                          <p className="text-sm text-slate-700 mt-2">
-                            <span className="font-medium">Diagnóstico:</span> {record.diagnosis}
-                          </p>
-                        )}
-                        {record.has_documents && (
-                          <p className="text-xs text-blue-600 mt-2">📎 Contiene documentos adjuntos</p>
-                        )}
-                        <div className="flex justify-end">
-                          <button
-                            onClick={() => handleViewRecord(record.id)}
-                            disabled={loadingRecord}
-                            className="mt-3 text-sm text-emerald-700 hover:text-emerald-900 hover:cursor-pointer font-medium hover:underline disabled:opacity-50"
-                          >
-                            {loadingRecord ? 'Cargando...' : 'Ver Detalle →'}
-                          </button>
-                        </div>
-                      </div>  
-                    </div>
+                <div className="flex flex-col gap-2">
+                  {data.recent_records.map((record, index) => (
+                    <RecordCard
+                      key={record.id}
+                      record={record}
+                      index={index}
+                      onViewDetail={handleCardViewDetail}
+                    />
                   ))}
                 </div>
               )}
@@ -323,12 +230,10 @@ export default function SummaryPage() {
         </div>
       </div>
 
-      {/* Record Detail Modal */}
       <RecordDetailModal
         open={modalOpen}
         onOpenChange={setModalOpen}
         record={selectedRecord}
-        token={token}
       />
     </div>
   );

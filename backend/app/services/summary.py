@@ -179,13 +179,26 @@ async def get_recent_records(
         sharing_schema.RecentRecordSummary(
             id=str(record.id),
             motive=record.motive,
-            diagnosis=", ".join([d.diagnosis for d in record.diagnoses]) if record.diagnoses and len(record.diagnoses) > 0 else None,
+            diagnoses=[
+                {"diagnosis": d.diagnosis}
+                for d in record.diagnoses
+            ] if record.diagnoses else [],
             category={
                 "id": str(record.category.id),
                 "name": record.category.name
             } if record.category else None,
+            status=record.status.value,
+            red_flags=record.red_flags if hasattr(record, "red_flags") else None,
+            key_finding=record.key_finding if hasattr(record, "key_finding") else None,
+            documents=[
+                {
+                    "id": str(doc.id),
+                    "filename": doc.filename,
+                    "url": doc.url,
+                }
+                for doc in record.documents
+            ] if record.documents else [],
             created_at=record.created_at,
-            has_documents=len(record.documents) > 0 if record.documents else False
         )
         for record in records
     ]

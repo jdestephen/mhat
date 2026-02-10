@@ -150,13 +150,16 @@ class AllergySummary(BaseModel):
 
 
 class RecentRecordSummary(BaseModel):
-    """Recent medical record summary (lighter than full SharedRecordResponse)."""
+    """Recent medical record summary used in shared summary view."""
     id: UUID
     motive: str
-    diagnosis: Optional[str] = None
+    diagnoses: List[dict] = []
     category: Optional[dict] = None
+    status: str
+    red_flags: Optional[List[str]] = None
+    key_finding: Optional[str] = None
+    documents: List[dict] = []
     created_at: datetime
-    has_documents: bool
 
 
 class MedicalHistorySummaryResponse(BaseModel):
