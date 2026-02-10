@@ -26,7 +26,11 @@ class Settings(BaseSettings):
     def assemble_db_url(self):
         if not self.DATABASE_URL:
             return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
-        return self.DATABASE_URL
+        # Normalize: ensure asyncpg driver is always used
+        url = self.DATABASE_URL
+        if url.startswith("postgresql://"):
+            url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return url
 
     class Config:
         case_sensitive = True
