@@ -17,7 +17,7 @@ class UserRole(str, enum.Enum):
 
 class Sex(str, enum.Enum):
     MASCULINO = "MASCULINO"
-    FEMININO = "FEMENINO"
+    FEMENINO = "FEMENINO"
 
 class AccessType(str, enum.Enum):
     PERMANENT = "PERMANENT"
