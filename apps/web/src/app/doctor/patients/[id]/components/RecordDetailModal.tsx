@@ -26,7 +26,7 @@ export function RecordDetailModal({ open, onOpenChange, record }: RecordDetailMo
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
       year: 'numeric',
-      month: 'long',
+      month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
@@ -37,19 +37,19 @@ export function RecordDetailModal({ open, onOpenChange, record }: RecordDetailMo
     switch (status) {
       case RecordStatus.VERIFIED:
         return (
-          <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium">
+          <span className="inline-flex items-center gap-1 text-xs px-2.5 py-0.75 rounded-full bg-emerald-100 text-emerald-700 font-medium">
             <CheckCircle className="h-3 w-3" /> Verificado
           </span>
         );
       case RecordStatus.BACKED_BY_DOCUMENT:
         return (
-          <span className="text-xs px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 font-medium">
+          <span className="text-xs px-2.5 py-0.75 rounded-full bg-blue-100 text-blue-700 font-medium">
             Con Documento
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 font-medium">
+          <span className="inline-flex items-center gap-1 text-xs px-2.5 py-0.75 rounded-full bg-amber-100 text-amber-700 font-medium">
             <AlertTriangle className="h-3 w-3" /> Sin Verificar
           </span>
         );
@@ -58,48 +58,27 @@ export function RecordDetailModal({ open, onOpenChange, record }: RecordDetailMo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[750px] max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[750px] max-h-[85vh] min-w-[750px] overflow-y-auto">
+        <DialogHeader onOpenChange={onOpenChange}>
           <DialogTitle>
-            <span className="text-xl font-bold text-emerald-900">Detalle del Registro Médico</span>
+            <span className="text-xl font-bold text-gray-900">
+              {record.category ? record.category.name : 'Consulta Médica'}
+            </span>
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-5 py-4">
-          {/* Motive + Status */}
-          <div className="flex items-start justify-between">
-            <div>
+        <div className="space-y-5 py-3">
+          {/* Category & Date */}
+          <div className="flex flex-row justify-between items-start">
+            <div className="flex flex-col">
               <label className="text-sm font-semibold text-slate-500">Motivo de Consulta</label>
               <p className="text-lg font-medium text-slate-900 mt-1">{record.motive}</p>
             </div>
-            <div className="flex flex-col items-end gap-1">
+            <div className="flex flex-row gap-1">
+              <span className="text-xs px-2.5 py-0.75 rounded-full bg-blue-100 text-blue-700">
+                {formatDate(record.created_at)}
+              </span>
               {statusLabel(record.status)}
-              {record.record_source === RecordSource.PATIENT && (
-                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">Paciente</span>
-              )}
-              {record.record_source === RecordSource.DOCTOR && (
-                <span className="text-xs bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded">Médico</span>
-              )}
-            </div>
-          </div>
-
-          {/* Category & Date */}
-          <div className="grid grid-cols-2 gap-4">
-            {record.category && (
-              <div>
-                <label className="text-sm font-semibold text-slate-500">Categoría</label>
-                <p className="mt-1">
-                  <span className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-xs font-medium">
-                    {record.category.name}
-                  </span>
-                </p>
-              </div>
-            )}
-            <div>
-              <label className="text-sm font-semibold text-slate-500 flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5" /> Fecha
-              </label>
-              <p className="text-sm text-slate-900 mt-1">{formatDate(record.created_at)}</p>
             </div>
           </div>
 
@@ -113,12 +92,6 @@ export function RecordDetailModal({ open, onOpenChange, record }: RecordDetailMo
                 {record.diagnoses.map((dx, idx) => (
                   <div key={dx.id || idx} className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                     <p className="text-sm font-medium text-slate-900">{dx.diagnosis}</p>
-                    {dx.diagnosis_code && (
-                      <span className="text-xs text-blue-600 mt-1 inline-block">
-                        {dx.diagnosis_code_system}: {dx.diagnosis_code}
-                      </span>
-                    )}
-                    {dx.notes && <p className="text-xs text-slate-600 mt-1">{dx.notes}</p>}
                   </div>
                 ))}
               </div>
@@ -151,7 +124,7 @@ export function RecordDetailModal({ open, onOpenChange, record }: RecordDetailMo
           {record.has_red_flags && record.red_flags && record.red_flags.length > 0 && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3">
               <label className="text-sm font-semibold text-red-700 flex items-center gap-1">
-                <AlertTriangle className="w-3.5 h-3.5" /> Banderas Rojas
+                <AlertTriangle className="w-3.5 h-3.5" /> Signos de Alerta
               </label>
               <ul className="list-disc list-inside text-sm text-red-700 mt-1 space-y-1">
                 {record.red_flags.map((flag, idx) => (
@@ -244,11 +217,15 @@ export function RecordDetailModal({ open, onOpenChange, record }: RecordDetailMo
                 {record.prescriptions.map((rx) => (
                   <div key={rx.id} className="border border-slate-200 rounded-lg p-3">
                     <p className="font-medium text-slate-900 text-sm">{rx.medication_name}</p>
-                    <div className="text-xs text-slate-600 mt-1 space-y-0.5">
-                      {rx.dosage && <p>Dosis: {rx.dosage}</p>}
-                      {rx.frequency && <p>Frecuencia: {rx.frequency}</p>}
-                      {rx.duration && <p>Duración: {rx.duration}</p>}
-                      {rx.instructions && <p className="text-slate-500 mt-1">{rx.instructions}</p>}
+                    <div className="text-sm text-slate-600 mt-1 space-y-0.5">
+                      <div className="flex flex-row gap-2 mb-2">
+                        {rx.dosage && <p>Dosis: {rx.dosage}, </p>}
+                        {rx.frequency && <p>Frecuencia: {rx.frequency}, </p>}
+                        {rx.duration && <p>Duración: {rx.duration}</p>}
+                      </div>
+                      <div>
+                        {rx.instructions && <p className="text-slate-500 mt-1">{rx.instructions}</p>}
+                      </div>
                     </div>
                   </div>
                 ))}

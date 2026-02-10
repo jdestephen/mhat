@@ -287,7 +287,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                         <div className="flex items-start justify-between min-h-[130px]">
                           <div className="flex-1">
                             <div className="flex flex-row gap-2 font-semibold items-center">
-                              <div className="flex flex-col flex-2">
+                              <div className="flex flex-col flex-1">
                                 <span className="flex items-center gap-1 text-blue-800 ">
                                   <Calendar className="h-3.5 w-3.5" />
                                   {formatDate(record.created_at)}
@@ -375,13 +375,14 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                     <p className="text-gray-500">No hay recetas para este paciente</p>
                   </div>
                 ) : (
-                  <div className="divide-y divide-gray-100">
+                  <div className="flex flex-col gap-2 divide-y divide-gray-100 p-2">
                     {allPrescriptions.map((rx) => (
-                      <div key={rx.id} className="p-4">
+                      <div key={rx.id} className="p-4 rounded-lg border border-gray-200">
                         <div className="flex items-start justify-between">
                           <div>
                             <h3 className="font-medium text-gray-900">{rx.medication_name}</h3>
-                            <div className="text-sm text-gray-500 mt-1 space-y-1">
+                            <div className="text-sm text-gray-500 mt-2 space-y-1">
+
                               {rx.dosage && <p>Dosis: {rx.dosage}</p>}
                               {rx.frequency && <p>Frecuencia: {rx.frequency}</p>}
                               {rx.duration && <p>Duración: {rx.duration}</p>}
@@ -390,7 +391,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                               )}
                             </div>
                           </div>
-                          <span className="text-xs text-gray-400">
+                          <span className="text-sm text-blue-700">
                             {formatDate(rx.created_at)}
                           </span>
                         </div>
@@ -409,11 +410,11 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                     <p className="text-gray-500">No hay órdenes clínicas para este paciente</p>
                   </div>
                 ) : (
-                  <div className="divide-y divide-gray-100">
+                  <div className="flex flex-col p-2 gap-2 divide-y divide-gray-100">
                     {allOrders.map((order) => (
-                      <div key={order.id} className="p-4">
+                      <div key={order.id} className="p-4 rounded-lg border border-gray-200">
                         <div className="flex items-start justify-between">
-                          <div>
+                          <div className="flex flex-col gap-1">
                             <div className="flex items-center gap-2 mb-1">
                               <span className={`px-2 py-0.5 rounded text-xs font-medium ${
                                 order.order_type === 'LAB' ? 'bg-purple-100 text-purple-700' :
@@ -431,9 +432,9 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                                 {order.urgency}
                               </span>
                             </div>
-                            <h3 className="font-medium text-gray-900">{order.description}</h3>
+                            <h3 className="font-medium text-gray-900 mt-2">{order.description}</h3>
                             {order.reason && (
-                              <p className="text-sm text-gray-500 mt-1">{order.reason}</p>
+                              <p className="text-sm text-gray-500">{order.reason}</p>
                             )}
                             {order.referral_to && (
                               <p className="text-sm text-gray-600 mt-1">
@@ -441,7 +442,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                               </p>
                             )}
                           </div>
-                          <span className="text-xs text-gray-400">
+                          <span className="text-sm text-blue-600">
                             {formatDate(order.created_at)}
                           </span>
                         </div>

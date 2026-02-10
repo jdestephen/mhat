@@ -47,12 +47,16 @@ export function DialogContent({ children, className }: DialogContentProps) {
 
 interface DialogHeaderProps {
   children: React.ReactNode;
+  onOpenChange: (open: boolean) => void;
 }
 
-export function DialogHeader({ children }: DialogHeaderProps) {
+export function DialogHeader({ children, onOpenChange }: DialogHeaderProps) {
   return (
-    <div className="mb-4">
+    <div className="flex flex-row justify-between items-center mb-2 border-b border-gray-200 pb-2">
       {children}
+      <div className="flex items-center">
+        <X className="h-7 w-7 text-gray-500 cursor-pointer" onClick={() => onOpenChange(false)} />
+      </div>  
     </div>
   );
 }
