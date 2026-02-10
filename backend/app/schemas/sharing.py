@@ -91,11 +91,23 @@ class SharedRecordResponse(BaseModel):
     id: UUID
     motive: str
     diagnosis: Optional[str] = None
+    diagnoses: List[dict] = []
     category: Optional[dict] = None
     notes: Optional[str] = None
     tags: Optional[List[str]] = None
     status: str
+    brief_history: Optional[str] = None
+    red_flags: Optional[List[str]] = None
+    key_finding: Optional[str] = None
+    actions_today: Optional[List[str]] = None
+    plan_bullets: Optional[List[str]] = None
+    follow_up_interval: Optional[str] = None
+    follow_up_with: Optional[str] = None
+    patient_instructions: Optional[str] = None
+    prescriptions: List[dict] = []
+    clinical_orders: List[dict] = []
     created_at: datetime
+    verified_at: Optional[datetime] = None
     documents: List[dict] = []
     
     class Config:

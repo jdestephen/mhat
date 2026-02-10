@@ -1,4 +1,4 @@
-from typing import Optional, List, Any
+from typing import Optional, List
 from datetime import datetime
 from uuid import UUID
 from pydantic import BaseModel, Field
@@ -95,6 +95,36 @@ class MedicalRecordCreate(MedicalRecordBase):
 class MedicalRecordUpdate(MedicalRecordBase):
     pass
 
+# Inline response schemas for prescriptions/orders to avoid circular imports
+class PrescriptionInline(BaseModel):
+    """Inline prescription for MedicalRecord response."""
+    id: UUID
+    medication_name: str
+    dosage: Optional[str] = None
+    frequency: Optional[str] = None
+    duration: Optional[str] = None
+    route: Optional[str] = None
+    quantity: Optional[str] = None
+    instructions: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class ClinicalOrderInline(BaseModel):
+    """Inline clinical order for MedicalRecord response."""
+    id: UUID
+    order_type: str
+    description: str
+    urgency: str
+    reason: Optional[str] = None
+    notes: Optional[str] = None
+    referral_to: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
 class MedicalRecord(MedicalRecordBase):
     id: UUID
     patient_id: UUID
@@ -106,6 +136,18 @@ class MedicalRecord(MedicalRecordBase):
     diagnoses: List[MedicalDiagnosis] = []
     documents: List[Document] = []
     category: Optional[Category] = None
+    brief_history: Optional[str] = None
+    has_red_flags: Optional[bool] = None
+    red_flags: Optional[List[str]] = None
+    key_finding: Optional[str] = None
+    clinical_impression: Optional[str] = None
+    actions_today: Optional[List[str]] = None
+    plan_bullets: Optional[List[str]] = None
+    follow_up_interval: Optional[str] = None
+    follow_up_with: Optional[str] = None
+    patient_instructions: Optional[str] = None
+    prescriptions: List[PrescriptionInline] = []
+    clinical_orders: List[ClinicalOrderInline] = []
 
     class Config:
         from_attributes = True

@@ -481,7 +481,9 @@ async def view_summary_record_detail(
     ).options(
         selectinload(MedicalRecord.documents),
         selectinload(MedicalRecord.category),
-        selectinload(MedicalRecord.diagnoses)
+        selectinload(MedicalRecord.diagnoses),
+        selectinload(MedicalRecord.prescriptions),
+        selectinload(MedicalRecord.clinical_orders)
     )
     
     result = await db.execute(stmt)
@@ -507,11 +509,41 @@ async def view_summary_record_detail(
         id=record.id,
         motive=record.motive,
         diagnosis=diagnosis_text,
+        diagnoses=[
+            {"id": str(d.id), "diagnosis": d.diagnosis}
+            for d in (sorted(record.diagnoses, key=lambda d: d.rank) if record.diagnoses else [])
+        ],
         category={"id": record.category.id, "name": record.category.name} if record.category else None,
         notes=record.notes,
         tags=record.tags,
         status=record.status.value,
+        brief_history=record.brief_history if hasattr(record, "brief_history") else None,
+        red_flags=record.red_flags if hasattr(record, "red_flags") else None,
+        key_finding=record.key_finding if hasattr(record, "key_finding") else None,
+        actions_today=record.actions_today if hasattr(record, "actions_today") else None,
+        plan_bullets=record.plan_bullets if hasattr(record, "plan_bullets") else None,
+        follow_up_interval=record.follow_up_interval if hasattr(record, "follow_up_interval") else None,
+        follow_up_with=record.follow_up_with if hasattr(record, "follow_up_with") else None,
+        patient_instructions=record.patient_instructions if hasattr(record, "patient_instructions") else None,
+        prescriptions=[{
+            "id": str(rx.id),
+            "medication_name": rx.medication_name,
+            "dosage": rx.dosage,
+            "frequency": rx.frequency,
+            "duration": rx.duration,
+            "instructions": rx.instructions,
+            "created_at": rx.created_at.isoformat() if rx.created_at else None,
+        } for rx in record.prescriptions] if record.prescriptions else [],
+        clinical_orders=[{
+            "id": str(order.id),
+            "order_type": order.order_type.value if hasattr(order.order_type, "value") else order.order_type,
+            "description": order.description,
+            "urgency": order.urgency.value if hasattr(order.urgency, "value") else order.urgency,
+            "reason": order.reason,
+            "referral_to": order.referral_to,
+        } for order in record.clinical_orders] if record.clinical_orders else [],
         created_at=record.created_at,
+        verified_at=record.verified_at,
         documents=[{
             "id": str(doc.id),
             "filename": doc.filename,

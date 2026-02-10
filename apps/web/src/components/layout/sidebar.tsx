@@ -211,6 +211,27 @@ export function Sidebar() {
     );
   };
 
+  const renderCollapseToggle = () => {
+    return (
+      <button
+        onClick={() => setCollapsed((prev) => !prev)}
+        title={collapsed ? 'Expandir menú' : 'Colapsar menú'}
+        className={clsx(
+          'flex w-full items-center gap-3 rounded-xl px-0 py-0 text-sm font-medium text-slate-400 transition-all hover:cursor-pointer hover:bg-slate-100 hover:text-slate-600',
+          { 'justify-center px-0': collapsed }
+        )}
+      >
+        {collapsed ? (
+          <div className="bg-emerald-900 p-2 rounded-lg">
+            <Stethoscope className="h-6 w-6 text-white" />
+          </div>
+        ) : (
+          <PanelLeftClose className="h-7 w-7 flex-shrink-0" />
+        )}
+      </button>
+    );
+  };
+
   return (
     <div
       className={clsx(
@@ -219,20 +240,23 @@ export function Sidebar() {
       )}
     >
       {/* Logo + Collapse Toggle */}
-      <div className="flex h-20 items-center justify-between px-4 border-b border-[0.5px] border-emerald-900/10">
+      <div className={`flex h-20 items-center justify-between px-4 border-b border-[0.5px] border-emerald-900/10`}>
         {!collapsed ? (
-          <Link href={isDoctor ? '/doctor' : '/dashboard'} className="flex items-center gap-3 font-bold tracking-tight">
-            <div className="bg-emerald-900 p-2 rounded-lg flex-shrink-0">
-              <Stethoscope className="h-6 w-6 text-white" />
-            </div>
-            <span className="text-2xl text-emerald-950">MHAT</span>
-          </Link>
+          <>
+            <Link href={isDoctor ? '/doctor' : '/dashboard'} className="flex items-center gap-3 font-bold tracking-tight">
+              <div className="bg-emerald-900 p-2 rounded-lg flex-shrink-0">
+                <Stethoscope className="h-6 w-6 text-white" />
+              </div>
+              <span className="text-2xl text-emerald-950">MHAT</span>
+            </Link>
+            <div className="flex justify-end">
+              {renderCollapseToggle()}
+            </div>  
+          </>
         ) : (
-          <Link href={isDoctor ? '/doctor' : '/dashboard'} className="mx-auto">
-            <div className="bg-emerald-900 p-2 rounded-lg">
-              <Stethoscope className="h-6 w-6 text-white" />
-            </div>
-          </Link>
+          <>
+            {renderCollapseToggle()}
+          </>
         )}
       </div>
 
@@ -246,27 +270,10 @@ export function Sidebar() {
       {/* Footer: Collapse Toggle + Logout */}
       <div className="p-2 border-t border-[0.5px] border-emerald-900/10 bg-slate-50/50 space-y-1">
         <button
-          onClick={() => setCollapsed((prev) => !prev)}
-          title={collapsed ? 'Expandir menú' : 'Colapsar menú'}
-          className={clsx(
-            'flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-600',
-            { 'justify-center px-0': collapsed }
-          )}
-        >
-          {collapsed ? (
-            <PanelLeftOpen className="h-5 w-5 flex-shrink-0" />
-          ) : (
-            <>
-              <PanelLeftClose className="h-5 w-5 flex-shrink-0" />
-              <span>Colapsar</span>
-            </>
-          )}
-        </button>
-        <button
           onClick={handleLogout}
           title={collapsed ? 'Cerrar Sesión' : undefined}
           className={clsx(
-            'flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-500 transition-all hover:bg-red-50 hover:text-red-600',
+            'flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-500 transition-all hover:cursor-pointer hover:bg-red-50 hover:text-red-600',
             { 'justify-center px-0': collapsed }
           )}
         >

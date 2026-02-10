@@ -72,9 +72,10 @@ interface RecordDetailModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   record: RecordDetailData | null;
+  readOnly?: boolean;
 }
 
-export function RecordDetailModal({ open, onOpenChange, record }: RecordDetailModalProps) {
+export function RecordDetailModal({ open, onOpenChange, record, readOnly = false }: RecordDetailModalProps) {
   if (!record) return null;
 
   const formatDate = (dateString: string) => {
@@ -152,7 +153,7 @@ export function RecordDetailModal({ open, onOpenChange, record }: RecordDetailMo
           )}
 
           {/* Clinical Fields (doctor-created records) */}
-          {record.clinical_impression && (
+          {!readOnly && record.clinical_impression && (
             <div>
               <label className="text-sm font-semibold text-slate-500">Impresión Clínica</label>
               <p className="text-sm text-slate-800 mt-1 bg-slate-50 p-3 rounded-lg">{record.clinical_impression}</p>

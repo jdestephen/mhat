@@ -138,6 +138,18 @@ export interface MedicalRecord {
   verified_at?: string;
   created_at: string;
   documents?: Document[];
+  brief_history?: string;
+  has_red_flags?: boolean;
+  red_flags?: string[];
+  key_finding?: string;
+  clinical_impression?: string;
+  actions_today?: string[];
+  plan_bullets?: string[];
+  follow_up_interval?: string;
+  follow_up_with?: string;
+  patient_instructions?: string;
+  prescriptions?: Prescription[];
+  clinical_orders?: ClinicalOrder[];
 }
 
 export enum AllergyType {

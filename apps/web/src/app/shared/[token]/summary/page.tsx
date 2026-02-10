@@ -67,15 +67,7 @@ export default function SummaryPage() {
     setLoadingRecord(true);
     try {
       const response = await api.get(`/hx/shared/${token}/record/${recordId}`);
-      const raw = response.data;
-      // Transform API response to match RecordDetailData
-      const transformed: RecordDetailData = {
-        ...raw,
-        diagnoses: raw.diagnosis
-          ? [{ diagnosis: raw.diagnosis }]
-          : [],
-      };
-      setSelectedRecord(transformed);
+      setSelectedRecord(response.data as RecordDetailData);
       setModalOpen(true);
     } catch (err: unknown) {
       console.error('Failed to load record:', err);
@@ -234,6 +226,7 @@ export default function SummaryPage() {
         open={modalOpen}
         onOpenChange={setModalOpen}
         record={selectedRecord}
+        readOnly
       />
     </div>
   );
