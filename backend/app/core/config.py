@@ -22,6 +22,9 @@ class Settings(BaseSettings):
 
     # STORAGE
     UPLOAD_DIR: str = "/app/uploads"
+
+    # FRONTEND
+    FRONTEND_URL: str = "http://localhost:3000"
     
     def assemble_db_url(self):
         if not self.DATABASE_URL:

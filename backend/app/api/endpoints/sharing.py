@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.api import deps
+from app.core.config import settings
 from app.db.session import get_db
 from app.models.user import User
 from app.models.patient import PatientProfile
@@ -117,11 +118,11 @@ async def create_share_link(
     await db.refresh(share_token)
     
     # Build share URL based on type
-    # TODO: Get base URL from config/environment
+    base_url = settings.FRONTEND_URL.rstrip("/")
     if share_request.share_type == "SUMMARY":
-        share_url = f"http://localhost:3000/shared/{token}/summary"
+        share_url = f"{base_url}/shared/{token}/summary"
     else:
-        share_url = f"http://localhost:3000/shared/{token}"
+        share_url = f"{base_url}/shared/{token}"
     
     return sharing_schema.ShareTokenResponse(
         share_url=share_url,
