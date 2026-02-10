@@ -20,8 +20,7 @@ origins = [
     "http://localhost:8081",
     "exp://localhost:19000",
     # Production origins (update with your actual URLs)
-    "https://mhat-production.up.railway.app/",
-    "https://mhat-production.up.railway.app/api",
+    "https://mhat-web.vercel.app",
 ]
 
 app.add_middleware(
