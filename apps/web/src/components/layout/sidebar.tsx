@@ -61,11 +61,6 @@ export function Sidebar() {
         href: '/doctor',
         icon: <Stethoscope className="w-5 h-5" />,
       },
-      {
-        label: 'Mis Pacientes',
-        href: '/doctor/patients',
-        icon: <Users className="w-5 h-5" />,
-      }
     );
   } else {
     sidebarItems.push(
