@@ -97,7 +97,7 @@ export function ShareRecordDialog({
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[550px]">
-        <DialogHeader>
+        <DialogHeader onOpenChange={() => { }}>
           <DialogTitle>Compartir Registros Médicos</DialogTitle>
           <DialogDescription>
             Genera un enlace seguro y de tiempo limitado para compartir {recordIds.length} registro{recordIds.length > 1 ? 's' : ''}
