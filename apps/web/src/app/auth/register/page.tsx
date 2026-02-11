@@ -57,7 +57,16 @@ export default function RegisterPage() {
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Contraseña</label>
-            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <Input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              minLength={8}
+              required
+            />
+            {password.length > 0 && password.length < 8 && (
+              <p className="text-red-500 text-xs mt-1">La contraseña debe tener al menos 8 caracteres.</p>
+            )}
           </div>
           
           <div>

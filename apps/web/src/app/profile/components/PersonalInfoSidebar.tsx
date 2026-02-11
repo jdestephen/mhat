@@ -131,7 +131,7 @@ export function PersonalInfoSidebar({ user, profile, onUpdate }: PersonalInfoSid
               options={[
                 { value: '', label: 'Selecciona...' },
                 { value: Sex.MASCULINO, label: 'Masculino' },
-                { value: Sex.FEMININO, label: 'Femenino' },
+                { value: Sex.FEMENINO, label: 'Femenino' },
               ]}
               value={sex}
               onChange={(val) => setSex(val as Sex | '')}

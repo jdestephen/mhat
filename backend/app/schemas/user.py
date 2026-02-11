@@ -18,11 +18,12 @@ class UserCreate(UserBase):
     password: str
 
     @validator("password")
-    def validate_password_length(cls, v):
+    def validate_password_length(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError("La contraseña debe tener al menos 8 caracteres.")
         encoded = v.encode('utf-8')
-        print(f"DEBUG: Password received. Length: {len(v)} chars, {len(encoded)} bytes. Value (first 10): {v[:10]}")
         if len(encoded) > 72:
-            raise ValueError(f"Password cannot be longer than 72 bytes. Received {len(encoded)} bytes.")
+            raise ValueError(f"La contraseña no puede exceder 72 bytes. Se recibieron {len(encoded)} bytes.")
         return v
 
 class UserUpdate(BaseModel):

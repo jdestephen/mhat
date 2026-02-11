@@ -1,11 +1,11 @@
 export enum UserRole {
-  PATIENT = 'patient',
-  DOCTOR = 'doctor',
+  PATIENT = 'PATIENT',
+  DOCTOR = 'DOCTOR',
 }
 
 export enum Sex {
   MASCULINO = 'MASCULINO',
-  FEMININO = 'FEMININO',
+  FEMENINO = 'FEMENINO',
 }
 
 export interface User {
@@ -153,28 +153,28 @@ export interface MedicalRecord {
 }
 
 export enum AllergyType {
-  MEDICATION = 'medication',
-  FOOD = 'food',
-  SUBSTANCE = 'substance',
-  OTHER = 'other',
+  MEDICATION = 'MEDICATION',
+  FOOD = 'FOOD',
+  SUBSTANCE = 'SUBSTANCE',
+  OTHER = 'OTHER',
 }
 
 export enum AllergySeverity {
-  MILD = 'mild',
-  MODERATE = 'moderate',
-  SEVERE = 'severe',
-  UNKNOWN = 'unknown',
+  MILD = 'MILD',
+  MODERATE = 'MODERATE',
+  SEVERE = 'SEVERE',
+  UNKNOWN = 'UNKNOWN',
 }
 
 export enum AllergySource {
-  DOCTOR = 'doctor',
-  SUSPECTED = 'suspected',
-  NOT_SURE = 'not_sure',
+  DOCTOR = 'DOCTOR',
+  SUSPECTED = 'SUSPECTED',
+  NOT_SURE = 'NOT_SURE',
 }
 
 export enum AllergyStatus {
-  UNVERIFIED = 'unverified',
-  VERIFIED = 'verified',
+  UNVERIFIED = 'UNVERIFIED',
+  VERIFIED = 'VERIFIED',
 }
 
 export interface Allergy {
@@ -196,15 +196,15 @@ export interface Allergy {
 }
 
 export enum ConditionStatus {
-  ACTIVE = 'active',
-  CONTROLLED = 'controlled',
-  RESOLVED = 'resolved',
-  UNKNOWN = 'unknown',
+  ACTIVE = 'ACTIVE',
+  CONTROLLED = 'CONTROLLED',
+  RESOLVED = 'RESOLVED',
+  UNKNOWN = 'UNKNOWN',
 }
 
 export enum ConditionSource {
-  DOCTOR = 'doctor',
-  SUSPECTED = 'suspected',
+  DOCTOR = 'DOCTOR',
+  SUSPECTED = 'SUSPECTED',
 }
 
 export interface Condition {
