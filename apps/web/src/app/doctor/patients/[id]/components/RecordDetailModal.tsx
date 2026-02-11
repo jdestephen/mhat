@@ -13,6 +13,7 @@ import {
   Tag,
 } from 'lucide-react';
 import { DoctorMedicalRecord, RecordStatus, RecordSource } from '@/types';
+import { getDocumentUrl } from '@/lib/api';
 
 interface RecordDetailModalProps {
   open: boolean;
@@ -285,7 +286,7 @@ export function RecordDetailModal({ open, onOpenChange, record }: RecordDetailMo
                       <p className="text-sm font-medium text-slate-900">{doc.filename}</p>
                     </div>
                     <Button
-                      onClick={() => window.open(doc.url, '_blank')}
+                      onClick={() => window.open(getDocumentUrl(doc.url), '_blank')}
                       variant="ghost"
                       size="sm"
                       className="text-blue-600 hover:text-blue-700"

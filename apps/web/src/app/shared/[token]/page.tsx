@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import api from '@/lib/api';
+import api, { getDocumentUrl } from '@/lib/api';
 import { Clock, User, FileText, Calendar, Paperclip, AlertCircle, ExternalLink } from 'lucide-react';
 
 interface SharedRecord {
@@ -213,7 +213,7 @@ export default function SharedRecordPage() {
                         {record.documents[0].filename.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
                           <div className="relative">
                             <img
-                              src={`http://localhost:8000${record.documents[0].url}`}
+                              src={getDocumentUrl(record.documents[0].url)}
                               alt={record.documents[0].filename}
                               className="w-full rounded-lg border border-slate-200 shadow-sm"
                               onError={(e) => {
@@ -224,7 +224,7 @@ export default function SharedRecordPage() {
                             <div className="flex items-center justify-between mt-2">
                               <p className="text-xs text-slate-500">{record.documents[0].filename}</p>
                               <a
-                                href={`http://localhost:8000${record.documents[0].url}`}
+                                href={getDocumentUrl(record.documents[0].url)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center gap-1 text-xs text-emerald-700 hover:text-emerald-800 font-medium"
@@ -236,7 +236,7 @@ export default function SharedRecordPage() {
                           </div>
                         ) : (
                           <a
-                            href={`http://localhost:8000${record.documents[0].url}`}
+                            href={getDocumentUrl(record.documents[0].url)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors border border-slate-200"
@@ -254,7 +254,7 @@ export default function SharedRecordPage() {
                         {record.documents.slice(1).map((doc) => (
                           <a
                             key={doc.id}
-                            href={`http://localhost:8000${doc.url}`}
+                            href={getDocumentUrl(doc.url)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-2 p-2 bg-slate-50 rounded hover:bg-slate-100 transition-colors"

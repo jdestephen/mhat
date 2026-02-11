@@ -4,7 +4,7 @@ import React from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import api from '@/lib/api';
+import api, { getDocumentUrl } from '@/lib/api';
 import { MedicalRecord, RecordStatus } from '@/types';
 import {
   ArrowLeft,
@@ -341,7 +341,7 @@ export default function ViewRecordPage() {
                       <p className="text-sm font-medium text-slate-900">{doc.filename}</p>
                     </div>
                     <Button
-                      onClick={() => window.open(doc.url, '_blank')}
+                      onClick={() => window.open(getDocumentUrl(doc.url), '_blank')}
                       variant="ghost"
                       size="sm"
                       className="text-blue-600 hover:text-blue-700"

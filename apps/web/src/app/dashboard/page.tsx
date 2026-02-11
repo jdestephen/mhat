@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import api from '@/lib/api';
+import api, { getDocumentUrl } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { RecordSearchBar } from '@/components/search/RecordSearchBar';
 import { Plus, FileText, Calendar, Stethoscope, Paperclip, MoreVertical, Eye, Share2 } from 'lucide-react';
@@ -180,7 +180,7 @@ export default function DashboardPage() {
                                 {record.documents.length === 1 ? (
                                   <a
                                     key={record.documents[0].id}
-                                    href={record.documents[0].url}
+                                    href={getDocumentUrl(record.documents[0].url)}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="flex items-center text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-full transition-colors"
@@ -335,7 +335,7 @@ export default function DashboardPage() {
                               {record.documents.map(doc => (
                                 <a
                                   key={doc.id}
-                                  href={doc.url}
+                                  href={getDocumentUrl(doc.url)}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="flex items-center text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-full transition-colors"
