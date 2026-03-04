@@ -7,6 +7,9 @@ class DoctorProfileBase(BaseModel):
     date_of_birth: Optional[date] = None
     degree: Optional[str] = None
     short_bio: Optional[str] = None
+    dni: Optional[str] = None
+    phone: Optional[str] = None
+    college_number: Optional[str] = None
     workplaces: Optional[List[str]] = []
 
 class DoctorProfileCreate(DoctorProfileBase):
@@ -20,4 +23,5 @@ class DoctorProfile(DoctorProfileBase):
     user_id: UUID
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+

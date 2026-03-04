@@ -58,6 +58,20 @@ class MedicationSource(str, enum.Enum):
     SELF_REPORTED = "SELF_REPORTED"     # Patient self-reported
     TRANSFERRED = "TRANSFERRED"          # From another facility/system
 
+# --- Enums (Personal References) ---
+
+class RelationshipType(str, enum.Enum):
+    PADRE = "PADRE"
+    MADRE = "MADRE"
+    HERMANO_A = "HERMANO_A"
+    ESPOSO_A = "ESPOSO_A"
+    HIJO_A = "HIJO_A"
+    TIO_A = "TIO_A"
+    ABUELO_A = "ABUELO_A"
+    AMIGO_A = "AMIGO_A"
+    GUARDIAN = "GUARDIAN"
+    OTRO = "OTRO"
+
 # --- Models ---
 
 class PatientProfile(Base):
@@ -74,6 +88,8 @@ class PatientProfile(Base):
     
     date_of_birth: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     blood_type: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    dni: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    phone: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
     # Relationships
     user: Mapped[Optional["User"]] = relationship("User", back_populates="patient_profile")
@@ -82,6 +98,7 @@ class PatientProfile(Base):
     allergies: Mapped[List["Allergy"]] = relationship("Allergy", back_populates="patient_profile")
     conditions: Mapped[List["Condition"]] = relationship("Condition", back_populates="patient_profile")
     share_tokens: Mapped[List["ShareToken"]] = relationship("ShareToken", back_populates="patient")
+    personal_references: Mapped[List["PersonalReference"]] = relationship("PersonalReference", back_populates="patient_profile", cascade="all, delete-orphan")
     # Who manages this patient profile (family members with access)
     managed_by: Mapped[List["FamilyMembership"]] = relationship("FamilyMembership", back_populates="patient_profile")
 
@@ -176,3 +193,18 @@ class Condition(Base):
     verifier: Mapped[Optional["User"]] = relationship("User", foreign_keys=[verified_by])
     patient_profile: Mapped["PatientProfile"] = relationship("PatientProfile", back_populates="conditions")
     medications: Mapped[List["Medication"]] = relationship("Medication", back_populates="condition")
+
+
+class PersonalReference(Base):
+    __tablename__ = "personal_references"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    patient_profile_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("patient_profiles.id"), nullable=False)
+
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    phone: Mapped[str] = mapped_column(String, nullable=False)
+    relationship_type: Mapped[RelationshipType] = mapped_column(Enum(RelationshipType), nullable=False)
+
+    patient_profile: Mapped["PatientProfile"] = relationship("PatientProfile", back_populates="personal_references")
+
+

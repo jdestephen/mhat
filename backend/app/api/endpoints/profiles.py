@@ -7,7 +7,7 @@ from sqlalchemy.orm import selectinload
 from app.api import deps
 from app.db.session import get_db
 from app.models.user import User, UserRole
-from app.models.patient import PatientProfile, Medication, MedicationStatus, Condition
+from app.models.patient import PatientProfile, Medication, MedicationStatus, Condition, PersonalReference
 from app.models.doctor import DoctorProfile
 from app.schemas import patient as patient_schema
 from app.schemas import doctor as doctor_schema
@@ -31,7 +31,8 @@ async def get_patient_profile(
         .options(
             selectinload(PatientProfile.medications),
             selectinload(PatientProfile.allergies),
-            selectinload(PatientProfile.conditions)
+            selectinload(PatientProfile.conditions),
+            selectinload(PatientProfile.personal_references)
         )
     )
     profile = result.scalars().first()
@@ -105,7 +106,8 @@ async def update_patient_profile(
         .options(
             selectinload(PatientProfile.medications),
             selectinload(PatientProfile.allergies),
-            selectinload(PatientProfile.conditions)
+            selectinload(PatientProfile.conditions),
+            selectinload(PatientProfile.personal_references)
         )
     )
     profile = result.scalars().first()
@@ -288,6 +290,113 @@ async def update_doctor_profile(
     await db.commit()
     await db.refresh(profile)
     return profile
+
+
+# ==========================
+# Personal Reference Endpoints
+# ==========================
+
+@router.post("/patient/references", response_model=patient_schema.PersonalReference)
+async def create_personal_reference(
+    *,
+    db: AsyncSession = Depends(get_db),
+    ref_in: patient_schema.PersonalReferenceCreate,
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """Add a personal reference to the patient profile (max 3)."""
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Not a patient")
+
+    result = await db.execute(
+        select(PatientProfile)
+        .filter(PatientProfile.user_id == current_user.id)
+        .options(selectinload(PatientProfile.personal_references))
+    )
+    profile = result.scalars().first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+
+    if len(profile.personal_references) >= 3:
+        raise HTTPException(status_code=400, detail="Máximo 3 referencias personales permitidas")
+
+    reference = PersonalReference(
+        patient_profile_id=profile.id,
+        **ref_in.dict()
+    )
+    db.add(reference)
+    await db.commit()
+    await db.refresh(reference)
+    return reference
+
+
+@router.put("/patient/references/{ref_id}", response_model=patient_schema.PersonalReference)
+async def update_personal_reference(
+    *,
+    ref_id: int,
+    ref_in: patient_schema.PersonalReferenceUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """Update a personal reference."""
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Not a patient")
+
+    result = await db.execute(
+        select(PatientProfile).filter(PatientProfile.user_id == current_user.id)
+    )
+    profile = result.scalars().first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+
+    result = await db.execute(
+        select(PersonalReference).filter(
+            PersonalReference.id == ref_id,
+            PersonalReference.patient_profile_id == profile.id
+        )
+    )
+    reference = result.scalars().first()
+    if not reference:
+        raise HTTPException(status_code=404, detail="Reference not found")
+
+    update_data = ref_in.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(reference, field, value)
+
+    await db.commit()
+    await db.refresh(reference)
+    return reference
+
+
+@router.delete("/patient/references/{ref_id}", status_code=204)
+async def delete_personal_reference(
+    *,
+    ref_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> None:
+    """Delete a personal reference."""
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Not a patient")
+
+    result = await db.execute(
+        select(PatientProfile).filter(PatientProfile.user_id == current_user.id)
+    )
+    profile = result.scalars().first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+
+    result = await db.execute(
+        select(PersonalReference).filter(
+            PersonalReference.id == ref_id,
+            PersonalReference.patient_profile_id == profile.id
+        )
+    )
+    reference = result.scalars().first()
+    if not reference:
+        raise HTTPException(status_code=404, detail="Reference not found")
+
+    await db.delete(reference)
+    await db.commit()
 
 
 # ==========================

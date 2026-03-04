@@ -50,6 +50,18 @@ class MedicationSource(str, Enum):
     SELF_REPORTED = "SELF_REPORTED"
     TRANSFERRED = "TRANSFERRED"
 
+class RelationshipType(str, Enum):
+    PADRE = "PADRE"
+    MADRE = "MADRE"
+    HERMANO_A = "HERMANO_A"
+    ESPOSO_A = "ESPOSO_A"
+    HIJO_A = "HIJO_A"
+    TIO_A = "TIO_A"
+    ABUELO_A = "ABUELO_A"
+    AMIGO_A = "AMIGO_A"
+    GUARDIAN = "GUARDIAN"
+    OTRO = "OTRO"
+
 
 # Medication
 class MedicationBase(BaseModel):
@@ -147,10 +159,34 @@ class Condition(ConditionBase):
         from_attributes = True
 
 
+# Personal Reference
+class PersonalReferenceBase(BaseModel):
+    name: str
+    phone: str
+    relationship_type: RelationshipType
+
+class PersonalReferenceCreate(PersonalReferenceBase):
+    pass
+
+class PersonalReferenceUpdate(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    relationship_type: Optional[RelationshipType] = None
+
+class PersonalReference(PersonalReferenceBase):
+    id: int
+    patient_profile_id: UUID
+
+    class Config:
+        from_attributes = True
+
+
 # Patient Profile
 class PatientProfileBase(BaseModel):
     date_of_birth: Optional[date] = None
     blood_type: Optional[str] = None
+    dni: Optional[str] = None
+    phone: Optional[str] = None
 
 class PatientProfileCreate(PatientProfileBase):
     pass
@@ -164,6 +200,8 @@ class PatientProfile(PatientProfileBase):
     medications: List[Medication] = []
     allergies: List[Allergy] = []
     conditions: List[Condition] = []
+    personal_references: List[PersonalReference] = []
 
     class Config:
         from_attributes = True
+

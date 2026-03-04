@@ -78,9 +78,33 @@ export interface PatientProfile {
   user_id: string;
   date_of_birth?: string;
   blood_type?: string;
+  dni?: string;
+  phone?: string;
   medications?: Medication[];
   allergies?: Allergy[];
   conditions?: Condition[];
+  personal_references?: PersonalReference[];
+}
+
+export enum RelationshipType {
+  PADRE = 'PADRE',
+  MADRE = 'MADRE',
+  HERMANO_A = 'HERMANO_A',
+  ESPOSO_A = 'ESPOSO_A',
+  HIJO_A = 'HIJO_A',
+  TIO_A = 'TIO_A',
+  ABUELO_A = 'ABUELO_A',
+  AMIGO_A = 'AMIGO_A',
+  GUARDIAN = 'GUARDIAN',
+  OTRO = 'OTRO',
+}
+
+export interface PersonalReference {
+  id: number;
+  patient_profile_id: string;
+  name: string;
+  phone: string;
+  relationship_type: RelationshipType;
 }
 
 export interface DoctorProfile {
@@ -89,6 +113,9 @@ export interface DoctorProfile {
   date_of_birth?: string;
   degree?: string;
   short_bio?: string;
+  dni?: string;
+  phone?: string;
+  college_number?: string;
   workplaces?: string[];
 }
 
