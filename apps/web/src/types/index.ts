@@ -80,6 +80,7 @@ export interface PatientProfile {
   blood_type?: string;
   dni?: string;
   phone?: string;
+  address?: string;
   medications?: Medication[];
   allergies?: Allergy[];
   conditions?: Condition[];
@@ -189,6 +190,7 @@ export interface DoctorProfile {
   dni?: string;
   phone?: string;
   college_number?: string;
+  address?: string;
   workplaces?: string[];
 }
 

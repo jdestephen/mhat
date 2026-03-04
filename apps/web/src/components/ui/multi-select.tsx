@@ -18,6 +18,7 @@ interface MultiSelectProps {
   onItemsChange: (items: Option[]) => void;
   className?: string;
   maxItems?: number;
+  disabled?: boolean;
 }
 
 export function MultiSelect({ 
@@ -25,6 +26,7 @@ export function MultiSelect({
   placeholder = "Buscar y seleccionar...", 
   selectedItems,
   onItemsChange,
+  disabled = false,
   className,
   maxItems = 5
 }: MultiSelectProps) {
@@ -132,7 +134,8 @@ export function MultiSelect({
               if (query.length >= 2) setOpen(true);
             }}
             placeholder={selectedItems.length === 0 ? placeholder : ""}
-            className="flex-1 min-w-[120px] outline-none bg-transparent text-sm"
+            disabled={disabled}
+            className={cn("flex-1 min-w-[120px] outline-none bg-transparent text-sm", disabled && "opacity-50 cursor-not-allowed")}
           />
         )}
         

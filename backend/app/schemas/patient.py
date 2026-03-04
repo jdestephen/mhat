@@ -269,6 +269,7 @@ class PatientProfileBase(BaseModel):
     blood_type: Optional[str] = None
     dni: Optional[str] = None
     phone: Optional[str] = None
+    address: Optional[str] = None
 
 class PatientProfileCreate(PatientProfileBase):
     pass

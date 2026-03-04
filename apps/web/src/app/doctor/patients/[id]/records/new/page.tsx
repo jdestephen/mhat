@@ -264,13 +264,13 @@ export default function NewDoctorRecordPage({ params }: { params: Promise<{ id: 
 
               <div className="col-span-2">
                 <label className="block text-sm font-medium mb-1">
-                  Historia Breve
-                  <span className="text-xs text-gray-400 ml-2">({briefHistory.length}/280)</span>
+                  Historia de la enfermedad
+                  <span className="text-xs text-gray-400 ml-2">({briefHistory.length}/1100)</span>
                 </label>
                 <TextareaWithVoice
                   value={briefHistory}
-                  onChange={(e) => setBriefHistory(e.target.value.slice(0, 280))}
-                  placeholder="Contexto clínico relevante (max 280 caracteres)"
+                  onChange={(e) => setBriefHistory(e.target.value.slice(0, 1100))}
+                  placeholder="Contexto clínico relevante (max 1,100 caracteres)"
                   language="es-ES"
                   mode="append"
                 />
@@ -284,19 +284,46 @@ export default function NewDoctorRecordPage({ params }: { params: Promise<{ id: 
                   value={redFlags}
                   onChange={setRedFlags}
                   variant="red"
-                  placeholder="Escriba una alerta y presione Enter..."
+                  placeholder="Escriba un signo de alerta y presione Enter (ej: Dolor en el pecho, Visión borrosa, Fatiga extrema, etc.)"
                 />
               </div>
 
               <div className="col-span-2">
-                <label className="block text-sm font-medium mb-1">Hallazgo Clave</label>
+                <label className="block text-sm font-medium mb-1">Examen Físico</label>
                 <InputWithVoice
                   value={keyFinding}
                   onChange={(e) => setKeyFinding(e.target.value)}
-                  placeholder="Principal hallazgo del examen físico"
+                  placeholder="Hallazgos relevantes del examen físico"
                   maxLength={250}
                   language="es-ES"
                   mode="append"
+                />
+              </div>
+
+              {/* Diagnoses (if category has diagnosis) */}
+              <div className="col-span-2 mb-1">
+                <label className="block text-sm font-medium mb-1">Diagnósticos</label>
+                <MultiSelect
+                  endpoint="/catalog/conditions"
+                  placeholder="Buscar y seleccionar diagnósticos..."
+                  selectedItems={diagnoses.map(d => ({
+                    id: d.diagnosis_code || d.diagnosis,
+                    display: d.diagnosis,
+                    code: d.diagnosis_code,
+                    code_system: d.diagnosis_code_system,
+                  }))}
+                  onItemsChange={(items) => {
+                    setDiagnoses(items.map((item, idx) => ({
+                      diagnosis: item.display,
+                      rank: idx + 1,
+                      status: DiagnosisStatus.PROVISIONAL,
+                      diagnosis_code: item.code || null,
+                      diagnosis_code_system: item.code_system || null,
+                      notes: null,
+                    })));
+                  }}
+                  disabled={!showDiagnosis}
+                  maxItems={5}
                 />
               </div>
 
@@ -311,34 +338,6 @@ export default function NewDoctorRecordPage({ params }: { params: Promise<{ id: 
                   rows={3}
                 />
               </div>
-
-              {/* Diagnoses (if category has diagnosis) */}
-              {showDiagnosis && (
-                <div className="col-span-2 mb-1">
-                  <label className="block text-sm font-medium mb-1">Diagnósticos</label>
-                  <MultiSelect
-                    endpoint="/catalog/conditions"
-                    placeholder="Buscar y seleccionar diagnósticos..."
-                    selectedItems={diagnoses.map(d => ({
-                      id: d.diagnosis_code || d.diagnosis,
-                      display: d.diagnosis,
-                      code: d.diagnosis_code,
-                      code_system: d.diagnosis_code_system,
-                    }))}
-                    onItemsChange={(items) => {
-                      setDiagnoses(items.map((item, idx) => ({
-                        diagnosis: item.display,
-                        rank: idx + 1,
-                        status: DiagnosisStatus.PROVISIONAL,
-                        diagnosis_code: item.code || null,
-                        diagnosis_code_system: item.code_system || null,
-                        notes: null,
-                      })));
-                    }}
-                    maxItems={5}
-                  />
-                </div>
-              )}
 
               <div className="col-span-2">
                 <label className="block text-sm font-medium mb-1">Acciones de Hoy</label>
@@ -374,7 +373,7 @@ export default function NewDoctorRecordPage({ params }: { params: Promise<{ id: 
               onClick={() => setShowPlan(!showPlan)}
               className="w-full p-4 flex items-center justify-between hover:bg-gray-50 rounded-t-lg"
             >
-              <span className="text-lg font-semibold text-emerald-900">Plan</span>
+              <span className="text-lg font-semibold text-emerald-900">Plan para el paciente</span>
               {showPlan ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
             </button>
 
@@ -389,7 +388,7 @@ export default function NewDoctorRecordPage({ params }: { params: Promise<{ id: 
                       onChange={(e) => {
                         setPlanBullets(prev => prev.map((b, i) => i === idx ? e.target.value : b));
                       }}
-                      placeholder={`Punto ${idx + 1}`}
+                      placeholder="Ej: Realizar reposo y evitar esfuerzo físico"
                       className="mb-2"
                       language="es-ES"
                       mode="append"

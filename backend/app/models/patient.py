@@ -131,6 +131,7 @@ class PatientProfile(Base):
     blood_type: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     dni: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     phone: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    address: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
     # Relationships
     user: Mapped[Optional["User"]] = relationship("User", back_populates="patient_profile")

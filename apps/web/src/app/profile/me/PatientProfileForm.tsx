@@ -38,6 +38,7 @@ interface FormData {
   bloodType: string;
   dni: string;
   phone: string;
+  address: string;
   city: string;
   country: string;
 }
@@ -52,6 +53,7 @@ export function PatientProfileForm({ user, profile, onSaved }: PatientProfileFor
     bloodType: profile.blood_type || '',
     dni: profile.dni || '',
     phone: profile.phone || '',
+    address: profile.address || '',
     city: user.city || '',
     country: user.country || '',
   });
@@ -79,6 +81,7 @@ export function PatientProfileForm({ user, profile, onSaved }: PatientProfileFor
         blood_type: formData.bloodType || null,
         dni: formData.dni || null,
         phone: formData.phone || null,
+        address: formData.address || null,
       });
 
       alert('¡Perfil actualizado!');
@@ -167,6 +170,15 @@ export function PatientProfileForm({ user, profile, onSaved }: PatientProfileFor
             placeholder="Número de celular"
           />
         </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">Dirección</label>
+        <Input
+          value={formData.address}
+          onChange={(e) => updateField('address', e.target.value)}
+          placeholder="Ingresa tu dirección"
+        />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

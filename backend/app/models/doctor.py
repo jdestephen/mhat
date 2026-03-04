@@ -20,6 +20,7 @@ class DoctorProfile(Base):
     dni: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     phone: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     college_number: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    address: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     
     # Hospitals/Clinics where they work
     workplaces: Mapped[Optional[List[str]]] = mapped_column(ARRAY(String), nullable=True)

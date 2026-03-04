@@ -10,6 +10,7 @@ class DoctorProfileBase(BaseModel):
     dni: Optional[str] = None
     phone: Optional[str] = None
     college_number: Optional[str] = None
+    address: Optional[str] = None
     workplaces: Optional[List[str]] = []
 
 class DoctorProfileCreate(DoctorProfileBase):

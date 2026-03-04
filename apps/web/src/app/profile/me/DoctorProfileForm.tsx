@@ -28,6 +28,7 @@ interface FormData {
   degree: string;
   collegeNumber: string;
   shortBio: string;
+  address: string;
   city: string;
   country: string;
 }
@@ -44,6 +45,7 @@ export function DoctorProfileForm({ user, profile, onSaved }: DoctorProfileFormP
     degree: profile.degree || '',
     collegeNumber: profile.college_number || '',
     shortBio: profile.short_bio || '',
+    address: profile.address || '',
     city: user.city || '',
     country: user.country || '',
   });
@@ -73,6 +75,7 @@ export function DoctorProfileForm({ user, profile, onSaved }: DoctorProfileFormP
         dni: formData.dni || null,
         phone: formData.phone || null,
         college_number: formData.collegeNumber || null,
+        address: formData.address || null,
       });
 
       alert('¡Perfil actualizado!');
@@ -177,6 +180,15 @@ export function DoctorProfileForm({ user, profile, onSaved }: DoctorProfileFormP
           className="w-full min-h-[100px] rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-600 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
           value={formData.shortBio}
           onChange={(e) => updateField('shortBio', e.target.value)}
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">Dirección</label>
+        <Input
+          value={formData.address}
+          onChange={(e) => updateField('address', e.target.value)}
+          placeholder="Ingresa tu dirección"
         />
       </div>
 
