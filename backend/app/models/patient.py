@@ -203,7 +203,7 @@ class PersonalReference(Base):
 
     name: Mapped[str] = mapped_column(String, nullable=False)
     phone: Mapped[str] = mapped_column(String, nullable=False)
-    relationship_type: Mapped[RelationshipType] = mapped_column(Enum(RelationshipType), nullable=False)
+    relationship_type: Mapped[RelationshipType] = mapped_column(Enum(RelationshipType, name='personalreferencetype'), nullable=False)
 
     patient_profile: Mapped["PatientProfile"] = relationship("PatientProfile", back_populates="personal_references")
 
