@@ -84,6 +84,8 @@ export interface PatientProfile {
   allergies?: Allergy[];
   conditions?: Condition[];
   personal_references?: PersonalReference[];
+  health_habit?: HealthHabit | null;
+  family_history?: FamilyHistoryCondition[];
 }
 
 export enum RelationshipType {
@@ -105,6 +107,77 @@ export interface PersonalReference {
   name: string;
   phone: string;
   relationship_type: RelationshipType;
+}
+
+// Health Habits
+export enum TobaccoUse {
+  NEVER = 'NEVER',
+  EX_SMOKER = 'EX_SMOKER',
+  OCCASIONAL = 'OCCASIONAL',
+  ACTIVE = 'ACTIVE',
+}
+
+export enum AlcoholUse {
+  NONE = 'NONE',
+  OCCASIONAL = 'OCCASIONAL',
+  SOCIAL = 'SOCIAL',
+  FREQUENT = 'FREQUENT',
+}
+
+export enum PhysicalActivity {
+  SEDENTARY = 'SEDENTARY',
+  ONE_TWO = 'ONE_TWO',
+  THREE_FOUR = 'THREE_FOUR',
+  FIVE_PLUS = 'FIVE_PLUS',
+}
+
+export enum DietType {
+  BALANCED = 'BALANCED',
+  HIGH_CARB = 'HIGH_CARB',
+  HIGH_FAT = 'HIGH_FAT',
+  VEGETARIAN = 'VEGETARIAN',
+  VEGAN = 'VEGAN',
+  OTHER = 'OTHER',
+}
+
+export interface HealthHabit {
+  id: number;
+  patient_profile_id: string;
+  tobacco_use?: TobaccoUse | null;
+  cigarettes_per_day?: number | null;
+  years_smoking?: number | null;
+  years_since_quit?: number | null;
+  alcohol_use?: AlcoholUse | null;
+  drinks_per_week?: number | null;
+  drug_use?: boolean | null;
+  drug_type?: string | null;
+  drug_frequency?: string | null;
+  physical_activity?: PhysicalActivity | null;
+  diet?: DietType | null;
+  sleep_hours?: number | null;
+  sleep_problems?: boolean | null;
+  observations?: string | null;
+}
+
+// Family History
+export enum FamilyMemberType {
+  PADRE = 'PADRE',
+  MADRE = 'MADRE',
+  HERMANO_A = 'HERMANO_A',
+  ABUELO_PATERNO = 'ABUELO_PATERNO',
+  ABUELA_PATERNA = 'ABUELA_PATERNA',
+  ABUELO_MATERNO = 'ABUELO_MATERNO',
+  ABUELA_MATERNA = 'ABUELA_MATERNA',
+  TIO_A = 'TIO_A',
+  OTRO = 'OTRO',
+}
+
+export interface FamilyHistoryCondition {
+  id: number;
+  patient_profile_id: string;
+  condition_name: string;
+  family_members: string[];
+  notes?: string | null;
 }
 
 export interface DoctorProfile {

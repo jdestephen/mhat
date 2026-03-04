@@ -62,6 +62,44 @@ class RelationshipType(str, Enum):
     GUARDIAN = "GUARDIAN"
     OTRO = "OTRO"
 
+# Habit Enums
+class TobaccoUse(str, Enum):
+    NEVER = "NEVER"
+    EX_SMOKER = "EX_SMOKER"
+    OCCASIONAL = "OCCASIONAL"
+    ACTIVE = "ACTIVE"
+
+class AlcoholUse(str, Enum):
+    NONE = "NONE"
+    OCCASIONAL = "OCCASIONAL"
+    SOCIAL = "SOCIAL"
+    FREQUENT = "FREQUENT"
+
+class PhysicalActivity(str, Enum):
+    SEDENTARY = "SEDENTARY"
+    ONE_TWO = "ONE_TWO"
+    THREE_FOUR = "THREE_FOUR"
+    FIVE_PLUS = "FIVE_PLUS"
+
+class DietType(str, Enum):
+    BALANCED = "BALANCED"
+    HIGH_CARB = "HIGH_CARB"
+    HIGH_FAT = "HIGH_FAT"
+    VEGETARIAN = "VEGETARIAN"
+    VEGAN = "VEGAN"
+    OTHER = "OTHER"
+
+class FamilyMemberType(str, Enum):
+    PADRE = "PADRE"
+    MADRE = "MADRE"
+    HERMANO_A = "HERMANO_A"
+    ABUELO_PATERNO = "ABUELO_PATERNO"
+    ABUELA_PATERNA = "ABUELA_PATERNA"
+    ABUELO_MATERNO = "ABUELO_MATERNO"
+    ABUELA_MATERNA = "ABUELA_MATERNA"
+    TIO_A = "TIO_A"
+    OTRO = "OTRO"
+
 
 # Medication
 class MedicationBase(BaseModel):
@@ -181,6 +219,50 @@ class PersonalReference(PersonalReferenceBase):
         from_attributes = True
 
 
+# Health Habits
+class HealthHabitUpsert(BaseModel):
+    tobacco_use: Optional[TobaccoUse] = None
+    cigarettes_per_day: Optional[int] = None
+    years_smoking: Optional[int] = None
+    years_since_quit: Optional[int] = None
+    alcohol_use: Optional[AlcoholUse] = None
+    drinks_per_week: Optional[int] = None
+    drug_use: Optional[bool] = None
+    drug_type: Optional[str] = None
+    drug_frequency: Optional[str] = None
+    physical_activity: Optional[PhysicalActivity] = None
+    diet: Optional[DietType] = None
+    sleep_hours: Optional[float] = None
+    sleep_problems: Optional[bool] = None
+    observations: Optional[str] = None
+
+class HealthHabit(HealthHabitUpsert):
+    id: int
+    patient_profile_id: UUID
+
+    class Config:
+        from_attributes = True
+
+
+# Family History
+class FamilyHistoryConditionCreate(BaseModel):
+    condition_name: str
+    family_members: List[str]
+    notes: Optional[str] = None
+
+class FamilyHistoryConditionUpdate(BaseModel):
+    condition_name: Optional[str] = None
+    family_members: Optional[List[str]] = None
+    notes: Optional[str] = None
+
+class FamilyHistoryConditionResponse(FamilyHistoryConditionCreate):
+    id: int
+    patient_profile_id: UUID
+
+    class Config:
+        from_attributes = True
+
+
 # Patient Profile
 class PatientProfileBase(BaseModel):
     date_of_birth: Optional[date] = None
@@ -201,7 +283,10 @@ class PatientProfile(PatientProfileBase):
     allergies: List[Allergy] = []
     conditions: List[Condition] = []
     personal_references: List[PersonalReference] = []
+    health_habit: Optional[HealthHabit] = None
+    family_history: List[FamilyHistoryConditionResponse] = []
 
     class Config:
         from_attributes = True
+
 
