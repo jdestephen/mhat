@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, use } from 'react';
+import React, { useState, useMemo, use } from 'react';
 import { usePatientRecords } from '@/hooks/queries/usePatientRecords';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
 import { useMyPatients } from '@/hooks/queries/useMyPatients';
@@ -18,10 +18,14 @@ import {
   Plus,
   Eye,
   User,
+  Paperclip,
+  Download,
 } from 'lucide-react';
 import { RecordDetailModal, RecordDetailData } from '@/components/records/RecordDetailModal';
 import { RecordCard, RecordCardData } from '@/components/records/RecordCard';
 import { HealthSidebar } from '@/components/patient/HealthSidebar';
+import { DocumentUploadModal } from './components/DocumentUploadModal';
+import { getDocumentUrl } from '@/lib/api';
 
 
 export default function PatientDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -34,6 +38,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
   const verifyRecord = useVerifyRecord();
   const [selectedRecord, setSelectedRecord] = useState<RecordDetailData | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
 
   // Find current patient from doctor's patient list
   const patient = patients.find((p) => p.patient_id === patientId);
@@ -88,6 +93,22 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
   // Collect all prescriptions and orders from records
   const allPrescriptions = records.flatMap((r) => r.prescriptions || []);
   const allOrders = records.flatMap((r) => r.clinical_orders || []);
+
+  const allDocuments = useMemo(
+    () =>
+      records
+        .flatMap((r) =>
+          (r.documents || []).map((doc) => ({
+            ...doc,
+            recordId: r.id,
+            recordMotive: r.motive,
+            recordCategory: r.category?.name,
+            recordDate: r.created_at,
+          })),
+        )
+        .sort((a, b) => new Date(b.recordDate).getTime() - new Date(a.recordDate).getTime()),
+    [records],
+  );
 
   const handleViewDetail = (cardData: RecordCardData) => {
     const fullRecord = records.find((r) => r.id === cardData.id);
@@ -145,6 +166,15 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                   <FileText className="h-4 w-4" />
                   Registros
                 </TabsTrigger>
+                <TabsTrigger value="documents" className="flex items-center gap-2">
+                  <Paperclip className="h-4 w-4" />
+                  Documentos
+                  {allDocuments.length > 0 && (
+                    <span className="ml-1 text-xs bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-full">
+                      {allDocuments.length}
+                    </span>
+                  )}
+                </TabsTrigger>
                 <TabsTrigger value="prescriptions" className="flex items-center gap-2">
                   <Pill className="h-4 w-4" />
                   Recetas
@@ -154,19 +184,29 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                   Órdenes
                 </TabsTrigger>
 
-                <div className="flex-1 flex justify-end">
+                <div className="flex-1 flex justify-end gap-1">
                   {isReadOnly ? (
                     <span className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 text-sm font-medium">
                       <Eye className="h-4 w-4" />
                       Solo lectura
                     </span>
                   ) : (
-                    <Link className="self-end" href={`/doctor/patients/${patientId}/records/new`}>
-                      <Button className="flex items-center gap-2" variant='ghost'>
-                        <Plus className="h-4 w-4" />
-                        Nuevo
+                    <>
+                      <Button
+                        className="flex items-center gap-2"
+                        variant="ghost"
+                        onClick={() => setUploadModalOpen(true)}
+                      >
+                        <Paperclip className="h-4 w-4" />
+                        Adjuntar Doc
                       </Button>
-                    </Link>
+                      <Link className="self-end" href={`/doctor/patients/${patientId}/records/new`}>
+                        <Button className="flex items-center gap-2" variant='ghost'>
+                          <Plus className="h-4 w-4" />
+                          Nuevo Registro
+                        </Button>
+                      </Link>
+                    </>
                   )}
                 </div>
               </TabsList>
@@ -191,6 +231,60 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                         index={index}
                         onViewDetail={handleViewDetail}
                       />
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              {/* Documents Tab */}
+              <TabsContent value="documents" className="p-0">
+                {allDocuments.length === 0 ? (
+                  <div className="p-12 text-center">
+                    <Paperclip className="h-12 w-12 mx-auto text-gray-300 mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">Sin documentos</h3>
+                    <p className="text-gray-500 mb-6">Este paciente no tiene documentos adjuntos</p>
+                    {!isReadOnly && (
+                      <Button onClick={() => setUploadModalOpen(true)}>
+                        <Paperclip className="h-4 w-4 mr-2" />
+                        Adjuntar Documento
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex flex-col p-2 gap-2">
+                    {allDocuments.map((doc) => (
+                      <div
+                        key={doc.id}
+                        className="flex items-center justify-between p-4 rounded-lg border border-gray-200 hover:bg-slate-50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <FileText className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-slate-900 truncate">
+                              {doc.filename}
+                            </p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              {doc.recordCategory && (
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                                  {doc.recordCategory}
+                                </span>
+                              )}
+                              <span className="text-xs text-slate-500">
+                                {formatDate(doc.recordDate)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <Button
+                          onClick={() => window.open(getDocumentUrl(doc.url), '_blank')}
+                          variant="ghost"
+                          size="sm"
+                          className="text-blue-600 hover:text-blue-700 flex-shrink-0"
+                        >
+                          <Download className="w-4 h-4 mr-1" />
+                          Abrir
+                        </Button>
+                      </div>
                     ))}
                   </div>
                 )}
@@ -291,6 +385,14 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
         open={modalOpen}
         onOpenChange={setModalOpen}
         record={selectedRecord}
+      />
+
+      {/* Document Upload Modal */}
+      <DocumentUploadModal
+        open={uploadModalOpen}
+        onOpenChange={setUploadModalOpen}
+        patientId={patientId}
+        onSuccess={() => refetch()}
       />
     </div>
   );

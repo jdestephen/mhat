@@ -84,6 +84,7 @@ class Category(BaseModel):
     id: int
     name: str
     has_diagnosis: bool
+    documents: bool = False
     order: int
 
     class Config:

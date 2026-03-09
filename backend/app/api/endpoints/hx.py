@@ -197,7 +197,8 @@ async def upload_document_to_record(
     # Update record status if it's currently unverified
     if record.status == RecordStatus.UNVERIFIED:
         record.status = RecordStatus.BACKED_BY_DOCUMENT
-        await db.commit()
+
+    await db.commit()
     await db.refresh(doc)
     return doc
 

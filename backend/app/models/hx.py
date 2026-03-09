@@ -42,6 +42,7 @@ class Category(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
     has_diagnosis: Mapped[bool] = mapped_column(Boolean, nullable=True, default=False)
+    documents: Mapped[bool] = mapped_column(Boolean, nullable=True, default=False)
     order: Mapped[int] = mapped_column(Integer, nullable=True, default=0)
 
     medical_records: Mapped[List["MedicalRecord"]] = relationship("MedicalRecord", back_populates="category")
