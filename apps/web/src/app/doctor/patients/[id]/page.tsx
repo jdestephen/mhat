@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, use } from 'react';
+import React, { useState, useMemo, use, useRef, useEffect } from 'react';
 import { usePatientRecords } from '@/hooks/queries/usePatientRecords';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
 import { useMyPatients } from '@/hooks/queries/useMyPatients';
@@ -20,6 +20,7 @@ import {
   User,
   Paperclip,
   Download,
+  ChevronDown,
 } from 'lucide-react';
 import { RecordDetailModal, RecordDetailData } from '@/components/records/RecordDetailModal';
 import { RecordCard, RecordCardData } from '@/components/records/RecordCard';
@@ -39,6 +40,20 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
   const [selectedRecord, setSelectedRecord] = useState<RecordDetailData | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [actionMenuOpen, setActionMenuOpen] = useState(false);
+  const actionMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (actionMenuRef.current && !actionMenuRef.current.contains(e.target as Node)) {
+        setActionMenuOpen(false);
+      }
+    };
+    if (actionMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [actionMenuOpen]);
 
   // Find current patient from doctor's patient list
   const patient = patients.find((p) => p.patient_id === patientId);
@@ -191,22 +206,41 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                       Solo lectura
                     </span>
                   ) : (
-                    <>
-                      <Button
-                        className="flex items-center gap-2"
-                        variant="ghost"
-                        onClick={() => setUploadModalOpen(true)}
-                      >
-                        <Paperclip className="h-4 w-4" />
-                        Adjuntar Doc
-                      </Button>
-                      <Link className="self-end" href={`/doctor/patients/${patientId}/records/new`}>
-                        <Button className="flex items-center gap-2" variant='ghost'>
-                          <Plus className="h-4 w-4" />
-                          Nuevo Registro
+                    <div className="relative" ref={actionMenuRef}>
+                      <div className="flex items-center">
+                        <Link href={`/doctor/patients/${patientId}/records/new`}>
+                          <Button
+                            className="flex items-center gap-2 rounded-r-none border-r border-emerald-700/30"
+                            variant="default"
+                          >
+                            <Plus className="h-4 w-4" />
+                            Nuevo Registro
+                          </Button>
+                        </Link>
+                        <Button
+                          variant="default"
+                          className="px-2 rounded-l-none"
+                          onClick={() => setActionMenuOpen((prev) => !prev)}
+                        >
+                          <ChevronDown className={`h-4 w-4 transition-transform ${actionMenuOpen ? 'rotate-180' : ''}`} />
                         </Button>
-                      </Link>
-                    </>
+                      </div>
+                      {actionMenuOpen && (
+                        <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                          <button
+                            type="button"
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                            onClick={() => {
+                              setActionMenuOpen(false);
+                              setUploadModalOpen(true);
+                            }}
+                          >
+                            <Paperclip className="h-4 w-4" />
+                            Documento
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               </TabsList>

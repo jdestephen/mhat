@@ -140,45 +140,6 @@ export default function DoctorDashboardPage() {
         </div>
       )}
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-full bg-emerald-100">
-              <Users className="h-6 w-6 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Pacientes Activos</p>
-              <p className="text-2xl font-bold text-gray-900">{patients.length}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-full bg-blue-100">
-              <Activity className="h-6 w-6 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Encuentros Hoy</p>
-              <p className="text-2xl font-bold text-gray-900">0</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-full bg-amber-100">
-              <Clock className="h-6 w-6 text-amber-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Pendientes</p>
-              <p className="text-2xl font-bold text-gray-900">0</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Patient List */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100">
         <div className="p-6 border-b border-gray-100">
