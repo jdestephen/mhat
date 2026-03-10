@@ -11,7 +11,16 @@ import { InputWithVoice } from '@/components/ui/input-with-voice';
 import { TextareaWithVoice } from '@/components/ui/textarea-with-voice';
 import { TagInput } from '@/components/ui/tag-input';
 import { Select } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { MultiSelect } from '@/components/ui/multi-select';
+import {
+  DOSAGE_QUANTITIES,
+  DOSAGE_UNITS,
+  FREQUENCY_OPTIONS,
+  ROUTE_OPTIONS,
+  DURATION_QUANTITIES,
+  DURATION_UNITS,
+} from '@/lib/prescriptionOptions';
 import { 
   UserRole, 
   DiagnosisStatus, 
@@ -473,33 +482,77 @@ export default function NewDoctorRecordPage({ params }: { params: Promise<{ id: 
                       </div>
                       <div>
                         <label className="block text-xs font-medium mb-1">Dosis</label>
-                        <InputWithVoice
-                          value={rx.dosage}
-                          onChange={(e) => updatePrescription(idx, 'dosage', e.target.value)}
-                          placeholder="ej. 500mg"
-                          language="es-ES"
-                          mode="append"
-                        />
+                        <div className="flex gap-2">
+                          <SearchableSelect
+                            options={DOSAGE_QUANTITIES.map((q) => ({ value: q, label: q }))}
+                            value={rx.dosage.split(' ')[0] || ''}
+                            onChange={(val) => {
+                              const unit = rx.dosage.split(' ').slice(1).join(' ') || '';
+                              updatePrescription(idx, 'dosage', unit ? `${val} ${unit}` : String(val));
+                            }}
+                            placeholder="Cant."
+                            searchPlaceholder="Buscar..."
+                            className="w-[45%]"
+                          />
+                          <SearchableSelect
+                            options={DOSAGE_UNITS}
+                            value={rx.dosage.split(' ').slice(1).join(' ') || ''}
+                            onChange={(val) => {
+                              const qty = rx.dosage.split(' ')[0] || '';
+                              updatePrescription(idx, 'dosage', qty ? `${qty} ${val}` : String(val));
+                            }}
+                            placeholder="Unidad"
+                            searchPlaceholder="Buscar unidad..."
+                            className="w-[55%]"
+                          />
+                        </div>
                       </div>
                       <div>
                         <label className="block text-xs font-medium mb-1">Frecuencia</label>
-                        <InputWithVoice
+                        <SearchableSelect
+                          groups={FREQUENCY_OPTIONS}
                           value={rx.frequency}
-                          onChange={(e) => updatePrescription(idx, 'frequency', e.target.value)}
-                          placeholder="ej. cada 8 horas"
-                          language="es-ES"
-                          mode="append"
+                          onChange={(val) => updatePrescription(idx, 'frequency', String(val))}
+                          placeholder="Seleccionar frecuencia..."
+                          searchPlaceholder="Buscar frecuencia..."
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium mb-1">Vía</label>
+                        <SearchableSelect
+                          options={ROUTE_OPTIONS}
+                          value={rx.route}
+                          onChange={(val) => updatePrescription(idx, 'route', String(val))}
+                          placeholder="Seleccionar vía..."
+                          searchPlaceholder="Buscar vía..."
                         />
                       </div>
                       <div>
                         <label className="block text-xs font-medium mb-1">Duración</label>
-                        <InputWithVoice
-                          value={rx.duration}
-                          onChange={(e) => updatePrescription(idx, 'duration', e.target.value)}
-                          placeholder="ej. 7 días"
-                          language="es-ES"
-                          mode="append"
-                        />
+                        <div className="flex gap-2">
+                          <SearchableSelect
+                            options={DURATION_QUANTITIES.map((q) => ({ value: q, label: q }))}
+                            value={rx.duration.split(' ')[0] || ''}
+                            onChange={(val) => {
+                              const unit = rx.duration.split(' ').slice(1).join(' ') || '';
+                              updatePrescription(idx, 'duration', unit ? `${val} ${unit}` : String(val));
+                            }}
+                            placeholder="Cant."
+                            searchPlaceholder="Buscar..."
+                            className="w-[40%]"
+                          />
+                          <SearchableSelect
+                            options={DURATION_UNITS}
+                            value={rx.duration.split(' ').slice(1).join(' ') || ''}
+                            onChange={(val) => {
+                              const qty = rx.duration.split(' ')[0] || '';
+                              updatePrescription(idx, 'duration', qty ? `${qty} ${val}` : String(val));
+                            }}
+                            placeholder="Unidad"
+                            searchPlaceholder="Buscar..."
+                            className="w-[60%]"
+                          />
+                        </div>
                       </div>
                       <div>
                         <label className="block text-xs font-medium mb-1">Cantidad</label>
