@@ -11,7 +11,7 @@ from sqlalchemy.orm import selectinload
 from app.api import deps
 from app.core.config import settings
 from app.db.session import get_db
-from app.models.hx import MedicalRecord, Document, RecordStatus, MedicalDiagnosis, DiagnosisStatus
+from app.models.hx import MedicalRecord, Document, RecordStatus, MedicalDiagnosis, DiagnosisStatus, VitalSigns
 from app.models.user import User, UserRole
 from app.models.patient import PatientProfile
 from app.schemas import hx as hx_schema
@@ -259,6 +259,77 @@ async def read_medical_records(
     result = await db.execute(stmt)
     return result.scalars().all()
 
+
+# === VITAL SIGNS ENDPOINTS (Patient) ===
+# These must be registered BEFORE /{record_id} to avoid route collision.
+
+@router.post("/vital-signs", response_model=hx_schema.VitalSignsResponse)
+async def create_vital_signs(
+    *,
+    db: AsyncSession = Depends(get_db),
+    vital_in: hx_schema.VitalSignsCreate,
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """Create a standalone vital signs record for the current patient."""
+    result = await db.execute(select(PatientProfile).filter(PatientProfile.user_id == current_user.id))
+    patient_profile = result.scalars().first()
+    if not patient_profile:
+        raise HTTPException(status_code=400, detail="Patient profile not found")
+
+    vital_signs = VitalSigns(
+        patient_id=patient_profile.id,
+        created_by=current_user.id,
+        **vital_in.model_dump(exclude_none=True),
+    )
+    db.add(vital_signs)
+    await db.commit()
+    await db.refresh(vital_signs)
+    return vital_signs
+
+
+@router.get("/vital-signs", response_model=List[hx_schema.VitalSignsResponse])
+async def list_vital_signs(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """List all vital signs for the current patient (descending by measured_at)."""
+    result = await db.execute(select(PatientProfile).filter(PatientProfile.user_id == current_user.id))
+    patient_profile = result.scalars().first()
+    if not patient_profile:
+        raise HTTPException(status_code=400, detail="Patient profile not found")
+
+    stmt = (
+        select(VitalSigns)
+        .filter(VitalSigns.patient_id == patient_profile.id)
+        .order_by(VitalSigns.measured_at.desc())
+    )
+    result = await db.execute(stmt)
+    return result.scalars().all()
+
+
+@router.get("/vital-signs/{vital_id}", response_model=hx_schema.VitalSignsResponse)
+async def get_vital_signs(
+    vital_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """Get a single vital signs record."""
+    result = await db.execute(select(PatientProfile).filter(PatientProfile.user_id == current_user.id))
+    patient_profile = result.scalars().first()
+    if not patient_profile:
+        raise HTTPException(status_code=400, detail="Patient profile not found")
+
+    stmt = select(VitalSigns).filter(
+        VitalSigns.id == vital_id,
+        VitalSigns.patient_id == patient_profile.id,
+    )
+    result = await db.execute(stmt)
+    vital = result.scalars().first()
+    if not vital:
+        raise HTTPException(status_code=404, detail="Vital signs record not found")
+    return vital
+
+
 @router.get("/{record_id}", response_model=hx_schema.MedicalRecord)
 async def get_medical_record(
     record_id: uuid.UUID,
@@ -284,7 +355,8 @@ async def get_medical_record(
         selectinload(MedicalRecord.category),
         selectinload(MedicalRecord.diagnoses),
         selectinload(MedicalRecord.prescriptions),
-        selectinload(MedicalRecord.clinical_orders)
+        selectinload(MedicalRecord.clinical_orders),
+        selectinload(MedicalRecord.vital_signs)
     )
     
     result = await db.execute(stmt)

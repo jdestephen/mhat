@@ -225,6 +225,26 @@ export interface MedicalDiagnosis {
   created_by?: string;
 }
 
+export interface VitalSigns {
+  id: string;
+  patient_id: string;
+  medical_record_id?: string;
+  heart_rate?: number;
+  systolic_bp?: number;
+  diastolic_bp?: number;
+  temperature?: number;
+  respiratory_rate?: number;
+  oxygen_saturation?: number;
+  weight?: number;
+  height?: number;
+  blood_glucose?: number;
+  waist_circumference?: number;
+  notes?: string;
+  measured_at: string;
+  created_by: string;
+  created_at: string;
+}
+
 export interface MedicalRecord {
   id: string;
   patient_id: string;
@@ -252,6 +272,7 @@ export interface MedicalRecord {
   patient_instructions?: string;
   prescriptions?: Prescription[];
   clinical_orders?: ClinicalOrder[];
+  vital_signs?: VitalSigns;
 }
 
 export enum AllergyType {

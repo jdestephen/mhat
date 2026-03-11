@@ -8,6 +8,7 @@ from datetime import datetime
 from uuid import UUID
 from pydantic import BaseModel, Field
 from enum import Enum
+from app.schemas.hx import VitalSignsCreate as VitalSignsCreateBase
 
 
 class OrderType(str, Enum):
@@ -184,6 +185,7 @@ class DoctorMedicalRecordCreate(BaseModel):
     diagnoses: Optional[List["MedicalDiagnosisCreate"]] = Field(default_factory=list)
     prescriptions: Optional[List[PrescriptionCreate]] = Field(default_factory=list)
     orders: Optional[List[ClinicalOrderCreate]] = Field(default_factory=list)
+    vital_signs: Optional[VitalSignsCreateBase] = None
 
 
 class DoctorMedicalRecordUpdate(BaseModel):
@@ -204,6 +206,12 @@ class DoctorMedicalRecordUpdate(BaseModel):
     follow_up_interval: Optional[str] = Field(None, max_length=50)
     follow_up_with: Optional[str] = Field(None, max_length=200)
     patient_instructions: Optional[str] = Field(None, max_length=350)
+    
+    # Nested clinical data for update
+    diagnoses: Optional[List["MedicalDiagnosisCreate"]] = None
+    prescriptions: Optional[List[PrescriptionCreate]] = None
+    orders: Optional[List[ClinicalOrderCreate]] = None
+    vital_signs: Optional[VitalSignsCreateBase] = None
 
 
 class RecordVerification(BaseModel):

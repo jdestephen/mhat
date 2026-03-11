@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { DoctorMedicalRecord, OrderType, OrderUrgency, DiagnosisStatus } from '@/types';
+import { VitalSignsFormData } from '@/components/clinical/VitalSignsForm';
 
 interface PrescriptionInput {
   medication_name: string;
@@ -50,6 +51,7 @@ export interface CreateDoctorRecordPayload {
   diagnoses?: DiagnosisInput[];
   prescriptions?: PrescriptionInput[];
   orders?: OrderInput[];
+  vital_signs?: VitalSignsFormData;
 }
 
 export function useCreateDoctorRecord() {

@@ -126,6 +126,46 @@ class ClinicalOrderInline(BaseModel):
     class Config:
         from_attributes = True
 
+# Vital Signs
+class VitalSignsBase(BaseModel):
+    heart_rate: Optional[int] = None
+    systolic_bp: Optional[int] = None
+    diastolic_bp: Optional[int] = None
+    temperature: Optional[float] = None
+    respiratory_rate: Optional[int] = None
+    oxygen_saturation: Optional[int] = None
+    weight: Optional[float] = None
+    height: Optional[float] = None
+    blood_glucose: Optional[float] = None
+    waist_circumference: Optional[float] = None
+    notes: Optional[str] = None
+    measured_at: Optional[datetime] = None
+
+class VitalSignsCreate(VitalSignsBase):
+    pass
+
+class VitalSignsUpdate(VitalSignsBase):
+    pass
+
+class VitalSignsResponse(VitalSignsBase):
+    id: UUID
+    patient_id: UUID
+    medical_record_id: Optional[UUID] = None
+    created_by: UUID
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class VitalSignsInline(VitalSignsBase):
+    """Inline vital signs for MedicalRecord response."""
+    id: UUID
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 class MedicalRecord(MedicalRecordBase):
     id: UUID
     patient_id: UUID
@@ -149,6 +189,7 @@ class MedicalRecord(MedicalRecordBase):
     patient_instructions: Optional[str] = None
     prescriptions: List[PrescriptionInline] = []
     clinical_orders: List[ClinicalOrderInline] = []
+    vital_signs: Optional[VitalSignsInline] = None
 
     class Config:
         from_attributes = True

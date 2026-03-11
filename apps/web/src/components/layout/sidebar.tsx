@@ -15,6 +15,7 @@ import {
   KeyRound,
   PanelLeftClose,
   PanelLeftOpen,
+  HeartPulse,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
@@ -73,6 +74,11 @@ export function Sidebar() {
         label: 'Nuevo Registro',
         href: '/records/new',
         icon: <FilePlus2 className="w-5 h-5" />,
+      },
+      {
+        label: 'Signos Vitales',
+        href: '/dashboard/vital-signs',
+        icon: <HeartPulse className="w-5 h-5" />,
       }
     );
   }

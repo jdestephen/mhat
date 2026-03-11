@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, String, Integer, ForeignKey, DateTime, Text, ARRAY, Enum
+from sqlalchemy import Boolean, String, Integer, Float, ForeignKey, DateTime, Text, ARRAY, Enum
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -143,6 +143,7 @@ class MedicalRecord(Base):
     documents: Mapped[List["Document"]] = relationship("Document", back_populates="medical_record")
     prescriptions: Mapped[List["Prescription"]] = relationship("Prescription", back_populates="medical_record", cascade="all, delete-orphan")
     clinical_orders: Mapped[List["ClinicalOrder"]] = relationship("ClinicalOrder", back_populates="medical_record", cascade="all, delete-orphan")
+    vital_signs: Mapped[Optional["VitalSigns"]] = relationship("VitalSigns", back_populates="medical_record", uselist=False, cascade="all, delete-orphan")
     creator: Mapped["User"] = relationship("User", foreign_keys=[created_by])
     verifier: Mapped[Optional["User"]] = relationship("User", foreign_keys=[verified_by])
 
@@ -165,3 +166,36 @@ class Document(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     medical_record: Mapped["MedicalRecord"] = relationship("MedicalRecord", back_populates="documents")
+
+
+class VitalSigns(Base):
+    """Vital signs measurement session (FHIR Observation vital-signs profile)."""
+    __tablename__ = "vital_signs"
+
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    patient_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("patient_profiles.id"), nullable=False)
+    medical_record_id: Mapped[Optional[UUID]] = mapped_column(PGUUID(as_uuid=True), ForeignKey("medical_records.id", ondelete="SET NULL"), nullable=True)
+
+    # FHIR vital signs (all nullable — partial recordings allowed)
+    heart_rate: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)           # bpm (LOINC 8867-4)
+    systolic_bp: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)           # mmHg (LOINC 8480-6)
+    diastolic_bp: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)          # mmHg (LOINC 8462-4)
+    temperature: Mapped[Optional[float]] = mapped_column(Float, nullable=True)           # °C (LOINC 8310-5)
+    respiratory_rate: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)      # breaths/min (LOINC 9279-1)
+    oxygen_saturation: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)     # % (LOINC 59408-5)
+    weight: Mapped[Optional[float]] = mapped_column(Float, nullable=True)                # kg (LOINC 29463-7)
+    height: Mapped[Optional[float]] = mapped_column(Float, nullable=True)                # cm (LOINC 8302-2)
+    blood_glucose: Mapped[Optional[float]] = mapped_column(Float, nullable=True)         # mg/dL
+    waist_circumference: Mapped[Optional[float]] = mapped_column(Float, nullable=True)   # cm
+
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    measured_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    # Audit
+    created_by: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    # Relationships
+    patient: Mapped["PatientProfile"] = relationship("PatientProfile")
+    medical_record: Mapped[Optional["MedicalRecord"]] = relationship("MedicalRecord", back_populates="vital_signs")
+    creator: Mapped["User"] = relationship("User", foreign_keys=[created_by])

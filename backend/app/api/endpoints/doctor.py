@@ -17,9 +17,10 @@ from app.api import deps
 from app.api.deps import get_db
 from app.models.user import User, UserRole, DoctorPatientAccess, DoctorAccessLevel
 from app.models.patient import PatientProfile
-from app.models.hx import MedicalRecord, RecordSource, RecordStatus, MedicalDiagnosis
+from app.models.hx import MedicalRecord, RecordSource, RecordStatus, MedicalDiagnosis, VitalSigns
 from app.models.clinical import Prescription, ClinicalOrder
 from app.schemas import clinical as clinical_schema
+from app.schemas import hx as hx_schema
 
 router = APIRouter()
 
@@ -473,6 +474,16 @@ async def create_patient_record(
         )
         db.add(order)
     
+    # Add vital signs if provided
+    if record_in.vital_signs:
+        vital = VitalSigns(
+            patient_id=patient_profile_id,
+            medical_record_id=record.id,
+            created_by=current_user.id,
+            **record_in.vital_signs.model_dump(exclude_none=True),
+        )
+        db.add(vital)
+    
     await db.commit()
     await db.refresh(record)
     
@@ -484,7 +495,8 @@ async def create_patient_record(
             selectinload(MedicalRecord.diagnoses),
             selectinload(MedicalRecord.prescriptions),
             selectinload(MedicalRecord.clinical_orders),
-            selectinload(MedicalRecord.category)
+            selectinload(MedicalRecord.category),
+            selectinload(MedicalRecord.vital_signs),
         )
     )
     return result.scalar_one()
@@ -713,3 +725,189 @@ async def delete_clinical_order(
     await db.commit()
     
     return {"message": "Order deleted"}
+
+
+# === VITAL SIGNS ENDPOINTS (Doctor) ===
+
+@router.get("/patients/{patient_profile_id}/vital-signs", response_model=List[hx_schema.VitalSignsResponse])
+async def list_patient_vital_signs(
+    patient_profile_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+):
+    """List all vital signs for a patient (descending)."""
+    await get_doctor_patient_access(patient_profile_id, db, current_user)
+    
+    stmt = (
+        select(VitalSigns)
+        .filter(VitalSigns.patient_id == patient_profile_id)
+        .order_by(VitalSigns.measured_at.desc())
+    )
+    result = await db.execute(stmt)
+    return result.scalars().all()
+
+
+@router.post("/patients/{patient_profile_id}/records/{record_id}/vital-signs", response_model=hx_schema.VitalSignsResponse)
+async def create_record_vital_signs(
+    patient_profile_id: uuid.UUID,
+    record_id: uuid.UUID,
+    vital_in: hx_schema.VitalSignsCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+):
+    """Create vital signs linked to a medical record."""
+    await get_doctor_patient_access(patient_profile_id, db, current_user, require_write=True)
+    
+    # Verify record exists and belongs to patient
+    result = await db.execute(
+        select(MedicalRecord).where(
+            and_(MedicalRecord.id == record_id, MedicalRecord.patient_id == patient_profile_id)
+        )
+    )
+    record = result.scalar_one_or_none()
+    if not record:
+        raise HTTPException(status_code=404, detail="Medical record not found")
+    
+    vital = VitalSigns(
+        patient_id=patient_profile_id,
+        medical_record_id=record_id,
+        created_by=current_user.id,
+        **vital_in.model_dump(exclude_none=True),
+    )
+    db.add(vital)
+    await db.commit()
+    await db.refresh(vital)
+    return vital
+
+
+# === RECORD UPDATE ENDPOINT ===
+
+@router.put("/records/{record_id}")
+async def update_medical_record(
+    record_id: uuid.UUID,
+    record_in: clinical_schema.DoctorMedicalRecordUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+):
+    """
+    Update a medical record.
+    Allowed if: doctor created it, OR it's a patient-created record not yet verified by another doctor.
+    """
+    result = await db.execute(
+        select(MedicalRecord)
+        .where(MedicalRecord.id == record_id)
+        .options(
+            selectinload(MedicalRecord.diagnoses),
+            selectinload(MedicalRecord.prescriptions),
+            selectinload(MedicalRecord.clinical_orders),
+            selectinload(MedicalRecord.vital_signs),
+        )
+    )
+    record = result.scalar_one_or_none()
+    if not record:
+        raise HTTPException(status_code=404, detail="Medical record not found")
+    
+    # Check access to patient
+    await get_doctor_patient_access(record.patient_id, db, current_user, require_write=True)
+    
+    # Permission check: can this doctor edit this record?
+    can_edit = False
+    if record.created_by == current_user.id:
+        can_edit = True
+    elif record.record_source == RecordSource.PATIENT and (
+        record.verified_by is None or record.verified_by == current_user.id
+    ):
+        can_edit = True
+    
+    if not can_edit:
+        raise HTTPException(status_code=403, detail="No permission to edit this record")
+    
+    # Update scalar fields
+    update_fields = record_in.model_dump(
+        exclude_none=True,
+        exclude={'diagnoses', 'prescriptions', 'orders', 'vital_signs'},
+    )
+    for field, value in update_fields.items():
+        setattr(record, field, value)
+    
+    # Replace diagnoses if provided
+    if record_in.diagnoses is not None:
+        # Delete existing diagnoses
+        for diag in list(record.diagnoses):
+            await db.delete(diag)
+        # Add new ones
+        for diag_in in record_in.diagnoses:
+            diagnosis = MedicalDiagnosis(
+                medical_record_id=record.id,
+                created_by=current_user.id,
+                diagnosis=diag_in.diagnosis,
+                diagnosis_code=diag_in.diagnosis_code,
+                diagnosis_code_system=diag_in.diagnosis_code_system,
+                rank=diag_in.rank,
+                status=diag_in.status,
+                notes=diag_in.notes,
+            )
+            db.add(diagnosis)
+    
+    # Replace prescriptions if provided
+    if record_in.prescriptions is not None:
+        for rx in list(record.prescriptions):
+            await db.delete(rx)
+        for rx_in in record_in.prescriptions:
+            prescription = Prescription(
+                medical_record_id=record.id,
+                created_by=current_user.id,
+                medication_name=rx_in.medication_name,
+                dosage=rx_in.dosage,
+                frequency=rx_in.frequency,
+                duration=rx_in.duration,
+                route=rx_in.route,
+                quantity=rx_in.quantity,
+                instructions=rx_in.instructions,
+            )
+            db.add(prescription)
+    
+    # Replace orders if provided
+    if record_in.orders is not None:
+        for order in list(record.clinical_orders):
+            await db.delete(order)
+        for order_in in record_in.orders:
+            clinical_order = ClinicalOrder(
+                medical_record_id=record.id,
+                created_by=current_user.id,
+                order_type=order_in.order_type,
+                description=order_in.description,
+                urgency=order_in.urgency,
+                reason=order_in.reason,
+                notes=order_in.notes,
+                referral_to=order_in.referral_to,
+            )
+            db.add(clinical_order)
+    
+    # Replace vital signs if provided
+    if record_in.vital_signs is not None:
+        if record.vital_signs:
+            await db.delete(record.vital_signs)
+        vital = VitalSigns(
+            patient_id=record.patient_id,
+            medical_record_id=record.id,
+            created_by=current_user.id,
+            **record_in.vital_signs.model_dump(exclude_none=True),
+        )
+        db.add(vital)
+    
+    await db.commit()
+    
+    # Reload with relationships
+    result = await db.execute(
+        select(MedicalRecord)
+        .where(MedicalRecord.id == record.id)
+        .options(
+            selectinload(MedicalRecord.diagnoses),
+            selectinload(MedicalRecord.prescriptions),
+            selectinload(MedicalRecord.clinical_orders),
+            selectinload(MedicalRecord.category),
+            selectinload(MedicalRecord.vital_signs),
+        )
+    )
+    return result.scalar_one()

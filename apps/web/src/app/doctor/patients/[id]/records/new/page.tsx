@@ -13,6 +13,7 @@ import { TagInput } from '@/components/ui/tag-input';
 import { Select } from '@/components/ui/select';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { CatalogSearchSelect } from '@/components/ui/catalog-search-select';
+import { VitalSignsForm, VitalSignsFormData } from '@/components/clinical/VitalSignsForm';
 import {
   DOSAGE_QUANTITIES,
   DOSAGE_UNITS,
@@ -37,6 +38,7 @@ import {
   ClipboardList,
   ChevronDown,
   ChevronRight,
+  HeartPulse,
 } from 'lucide-react';
 
 interface PrescriptionForm {
@@ -113,6 +115,10 @@ export default function NewDoctorRecordPage({ params }: { params: Promise<{ id: 
   const [showPlan, setShowPlan] = useState(true);
   const [showPrescriptions, setShowPrescriptions] = useState(false);
   const [showOrders, setShowOrders] = useState(false);
+  const [showVitalSigns, setShowVitalSigns] = useState(false);
+  
+  // Vital Signs
+  const [vitalSignsData, setVitalSignsData] = useState<VitalSignsFormData>({});
 
   // Derived state
   const hasRedFlags = redFlags.length > 0;
@@ -208,6 +214,9 @@ export default function NewDoctorRecordPage({ params }: { params: Promise<{ id: 
           reason: o.reason || undefined,
           referral_to: o.referral_to || undefined,
         })),
+        vital_signs: Object.values(vitalSignsData).some(v => v !== undefined && v !== '') 
+          ? vitalSignsData 
+          : undefined,
       });
 
       router.push(`/doctor/patients/${patientId}`);
@@ -430,6 +439,27 @@ export default function NewDoctorRecordPage({ params }: { params: Promise<{ id: 
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Vital Signs Card */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-100">
+            <button
+              type="button"
+              onClick={() => setShowVitalSigns(!showVitalSigns)}
+              className="w-full p-4 flex items-center justify-between hover:bg-gray-50 rounded-t-lg"
+            >
+              <span className="flex items-center gap-2 text-lg font-semibold text-emerald-900">
+                <HeartPulse className="h-5 w-5 text-rose-500" />
+                Signos Vitales
+              </span>
+              {showVitalSigns ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
+            </button>
+
+            {showVitalSigns && (
+              <div className="p-6 border-t border-gray-100">
+                <VitalSignsForm data={vitalSignsData} onChange={setVitalSignsData} compact />
+              </div>
+            )}
           </div>
 
           {/* Plan Card */}
