@@ -12,7 +12,7 @@ import { TextareaWithVoice } from '@/components/ui/textarea-with-voice';
 import { TagInput } from '@/components/ui/tag-input';
 import { Select } from '@/components/ui/select';
 import { SearchableSelect } from '@/components/ui/searchable-select';
-import { MultiSelect } from '@/components/ui/multi-select';
+import { CatalogSearchSelect } from '@/components/ui/catalog-search-select';
 import {
   DOSAGE_QUANTITIES,
   DOSAGE_UNITS,
@@ -311,29 +311,86 @@ export default function NewDoctorRecordPage({ params }: { params: Promise<{ id: 
 
               {/* Diagnoses (if category has diagnosis) */}
               <div className="col-span-2 mb-1">
-                <label className="block text-sm font-medium mb-1">Diagnósticos</label>
-                <MultiSelect
-                  endpoint="/catalog/conditions"
-                  placeholder="Buscar y seleccionar diagnósticos..."
-                  selectedItems={diagnoses.map(d => ({
-                    id: d.diagnosis_code || d.diagnosis,
-                    display: d.diagnosis,
-                    code: d.diagnosis_code,
-                    code_system: d.diagnosis_code_system,
-                  }))}
-                  onItemsChange={(items) => {
-                    setDiagnoses(items.map((item, idx) => ({
-                      diagnosis: item.display,
-                      rank: idx + 1,
-                      status: DiagnosisStatus.PROVISIONAL,
-                      diagnosis_code: item.code || null,
-                      diagnosis_code_system: item.code_system || null,
-                      notes: null,
-                    })));
-                  }}
-                  disabled={!showDiagnosis}
-                  maxItems={5}
-                />
+                <label className="block text-sm font-medium mb-2">Diagnósticos</label>
+                <div className="space-y-3">
+                  {diagnoses.map((d, idx) => (
+                    <div key={idx} className="flex items-start gap-2">
+                      <div className="flex-1">
+                        <CatalogSearchSelect
+                          endpoint="/catalog/conditions"
+                          value={d.diagnosis ? { id: d.diagnosis_code || d.diagnosis, display: d.diagnosis, code: d.diagnosis_code ?? undefined, code_system: d.diagnosis_code_system ?? undefined } : null}
+                          onChange={(item) => {
+                            setDiagnoses((prev) =>
+                              prev.map((diag, i) =>
+                                i === idx
+                                  ? {
+                                      ...diag,
+                                      diagnosis: item.display,
+                                      diagnosis_code: item.code || null,
+                                      diagnosis_code_system: item.code_system || null,
+                                    }
+                                  : diag,
+                              ),
+                            );
+                          }}
+                          placeholder="Buscar diagnóstico..."
+                          disabled={!showDiagnosis}
+                        />
+                      </div>
+                      <div className="w-[160px]">
+                        <Select
+                          options={[
+                            { value: DiagnosisStatus.PROVISIONAL, label: 'Provisional' },
+                            { value: DiagnosisStatus.CONFIRMED, label: 'Confirmado' },
+                            { value: DiagnosisStatus.DIFFERENTIAL, label: 'Diferencial' },
+                            { value: DiagnosisStatus.REFUTED, label: 'Refutado' },
+                          ]}
+                          value={d.status}
+                          onChange={(val) => {
+                            setDiagnoses((prev) =>
+                              prev.map((diag, i) =>
+                                i === idx ? { ...diag, status: val as DiagnosisStatus } : diag,
+                              ),
+                            );
+                          }}
+                          disabled={!showDiagnosis}
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setDiagnoses((prev) => prev.filter((_, i) => i !== idx))}
+                        className="mt-2.5 text-gray-400 hover:text-red-500 transition-colors"
+                        disabled={!showDiagnosis}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                  {diagnoses.length < 5 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      disabled={!showDiagnosis}
+                      onClick={() =>
+                        setDiagnoses((prev) => [
+                          ...prev,
+                          {
+                            diagnosis: '',
+                            rank: prev.length + 1,
+                            status: DiagnosisStatus.PROVISIONAL,
+                            diagnosis_code: null,
+                            diagnosis_code_system: null,
+                            notes: null,
+                          },
+                        ])
+                      }
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Agregar Diagnóstico
+                    </Button>
+                  )}
+                </div>
               </div>
 
               <div className="col-span-2">
