@@ -247,6 +247,27 @@ export default function NewDoctorRecordPage({ params }: { params: Promise<{ id: 
       </div>
       <div className="flex flex-col mt-0 ps-0 pr-30">
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Vital Signs Card */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-100">
+            <button
+              type="button"
+              onClick={() => setShowVitalSigns(!showVitalSigns)}
+              className="w-full p-4 flex items-center justify-between hover:bg-gray-50 rounded-t-lg"
+            >
+              <span className="flex items-center gap-2 text-lg font-semibold text-emerald-900">
+                <HeartPulse className="h-5 w-5 text-rose-500" />
+                Signos Vitales
+              </span>
+              {showVitalSigns ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
+            </button>
+
+            {showVitalSigns && (
+              <div className="p-6 border-t border-gray-100">
+                <VitalSignsForm data={vitalSignsData} onChange={setVitalSignsData} />
+              </div>
+            )}
+          </div>
+          
           {/* Basic Info Card */}
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
             <h2 className="text-lg font-semibold text-emerald-900 mb-4 border-b pb-2">
@@ -439,27 +460,6 @@ export default function NewDoctorRecordPage({ params }: { params: Promise<{ id: 
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Vital Signs Card */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100">
-            <button
-              type="button"
-              onClick={() => setShowVitalSigns(!showVitalSigns)}
-              className="w-full p-4 flex items-center justify-between hover:bg-gray-50 rounded-t-lg"
-            >
-              <span className="flex items-center gap-2 text-lg font-semibold text-emerald-900">
-                <HeartPulse className="h-5 w-5 text-rose-500" />
-                Signos Vitales
-              </span>
-              {showVitalSigns ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
-            </button>
-
-            {showVitalSigns && (
-              <div className="p-6 border-t border-gray-100">
-                <VitalSignsForm data={vitalSignsData} onChange={setVitalSignsData} compact />
-              </div>
-            )}
           </div>
 
           {/* Plan Card */}

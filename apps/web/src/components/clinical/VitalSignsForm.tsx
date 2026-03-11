@@ -73,7 +73,7 @@ export function VitalSignsForm({ data, onChange, disabled = false, compact = fal
 
   const inputClass = (key?: VitalKey, value?: number) => {
     const status = key ? getRangeStatus(key, value) : 'none';
-    return `w-full px-3 py-2 text-sm rounded-md border ${STATUS_STYLES[status]} outline-none transition-colors disabled:bg-slate-100 disabled:text-slate-400`;
+    return `w-full px-3 py-2 text-sm rounded-md border ${STATUS_STYLES[status]} outline-none placeholder-gray-300 transition-colors disabled:bg-slate-100 disabled:text-slate-400`;
   };
 
   return (
