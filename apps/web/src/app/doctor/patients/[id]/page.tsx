@@ -21,6 +21,7 @@ import {
   Paperclip,
   Download,
   ChevronDown,
+  LayoutGrid,
 } from 'lucide-react';
 import { RecordDetailModal, RecordDetailData } from '@/components/records/RecordDetailModal';
 import { RecordCard, RecordCardData } from '@/components/records/RecordCard';
@@ -227,6 +228,14 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                       </div>
                       {actionMenuOpen && (
                         <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                          <Link
+                            href={`/doctor/patients/${patientId}/records/new-tabbed`}
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                            onClick={() => setActionMenuOpen(false)}
+                          >
+                            <LayoutGrid className="h-4 w-4" />
+                            Nuevo (Tabs)
+                          </Link>
                           <button
                             type="button"
                             className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
