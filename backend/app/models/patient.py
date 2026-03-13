@@ -137,8 +137,18 @@ class PatientProfile(Base):
     user: Mapped[Optional["User"]] = relationship("User", back_populates="patient_profile")
     medications: Mapped[List["Medication"]] = relationship("Medication", back_populates="patient_profile")
     medical_records: Mapped[List["MedicalRecord"]] = relationship("MedicalRecord", back_populates="patient")
-    allergies: Mapped[List["Allergy"]] = relationship("Allergy", back_populates="patient_profile")
-    conditions: Mapped[List["Condition"]] = relationship("Condition", back_populates="patient_profile")
+    allergies: Mapped[List["Allergy"]] = relationship(
+        "Allergy",
+        back_populates="patient_profile",
+        primaryjoin="and_(PatientProfile.id==Allergy.patient_profile_id, Allergy.deleted==False)",
+        viewonly=True,
+    )
+    conditions: Mapped[List["Condition"]] = relationship(
+        "Condition",
+        back_populates="patient_profile",
+        primaryjoin="and_(PatientProfile.id==Condition.patient_profile_id, Condition.deleted==False)",
+        viewonly=True,
+    )
     share_tokens: Mapped[List["ShareToken"]] = relationship("ShareToken", back_populates="patient")
     personal_references: Mapped[List["PersonalReference"]] = relationship("PersonalReference", back_populates="patient_profile", cascade="all, delete-orphan")
     health_habit: Mapped[Optional["HealthHabit"]] = relationship("HealthHabit", back_populates="patient_profile", uselist=False, cascade="all, delete-orphan")
