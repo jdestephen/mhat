@@ -1131,7 +1131,7 @@ async def doctor_add_medication(
     """Doctor adds a medication to a patient's profile."""
     await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
     from app.models.patient import Medication as MedicationModel
-    med = MedicationModel(patient_profile_id=patient_id, **med_in.model_dump())
+    med = MedicationModel(patient_profile_id=patient_id, created_by_id=current_user.id, **med_in.model_dump())
     db.add(med)
     await db.commit()
     await db.refresh(med)
@@ -1153,7 +1153,6 @@ async def doctor_update_medication(
         select(MedicationModel).filter(
             MedicationModel.id == med_id,
             MedicationModel.patient_profile_id == patient_id,
-            MedicationModel.deleted == False,
         )
     )
     med = result.scalars().first()
@@ -1173,22 +1172,19 @@ async def doctor_delete_medication(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_doctor_role),
 ) -> None:
-    """Doctor soft-deletes a medication from patient's profile."""
+    """Doctor deletes a medication from patient's profile."""
     await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
     from app.models.patient import Medication as MedicationModel
-    from datetime import datetime as dt
     result = await db.execute(
         select(MedicationModel).filter(
             MedicationModel.id == med_id,
             MedicationModel.patient_profile_id == patient_id,
-            MedicationModel.deleted == False,
         )
     )
     med = result.scalars().first()
     if not med:
         raise HTTPException(status_code=404, detail="Medication not found")
-    med.deleted = True
-    med.deleted_at = dt.utcnow()
+    await db.delete(med)
     await db.commit()
 
 

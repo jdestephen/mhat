@@ -21,10 +21,11 @@ export default function DoctorHealthHistoryPage() {
   const [profile, setProfile] = useState<PatientProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('history');
 
-  const fetchProfile = async () => {
+  const fetchProfile = async (isInitial = false) => {
     try {
-      setLoading(true);
+      if (isInitial) setLoading(true);
       // Fetch the patient's profile data via the doctor endpoint
       const res = await api.get(`/doctor/patients/${patientId}/health`);
       // Build a PatientProfile-like object from the health data
@@ -54,12 +55,12 @@ export default function DoctorHealthHistoryPage() {
       console.error('Error loading patient health data', err);
       setError('No se pudo cargar el historial de salud del paciente.');
     } finally {
-      setLoading(false);
+      if (isInitial) setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (patientId) fetchProfile();
+    if (patientId) fetchProfile(true);
   }, [patientId]);
 
   if (loading) {
@@ -93,7 +94,7 @@ export default function DoctorHealthHistoryPage() {
         <h1 className="text-3xl font-bold text-emerald-950">Historial de Salud del Paciente</h1>
       </div>
 
-      <Tabs defaultValue="history" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-0 w-full flex-wrap">
           <TabsTrigger value="history" className="flex-1 rounded-tl-lg">Condiciones y Alergías</TabsTrigger>
           <TabsTrigger value="medications" className="flex-1">Medicamentos</TabsTrigger>
