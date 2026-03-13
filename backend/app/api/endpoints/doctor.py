@@ -4,7 +4,7 @@ Doctor API Endpoints
 Endpoints for doctor workflow: patient access, medical records, prescriptions, orders.
 """
 import uuid
-from typing import List, Optional
+from typing import Any, List, Optional
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -21,6 +21,7 @@ from app.models.hx import MedicalRecord, RecordSource, RecordStatus, MedicalDiag
 from app.models.clinical import Prescription, ClinicalOrder
 from app.schemas import clinical as clinical_schema
 from app.schemas import hx as hx_schema
+from app.schemas import patient as patient_schema
 
 router = APIRouter()
 
@@ -183,6 +184,7 @@ async def list_my_patients(
             last_name=user.last_name if user else profile.last_name or "Patient",
             date_of_birth=profile.date_of_birth,
             sex=user.sex.value if user and user.sex else None,
+            blood_type=profile.blood_type,
             access_level=access.access_level,
             granted_at=access.created_at
         ))
@@ -352,8 +354,13 @@ async def get_patient_health_profile(
             {
                 "id": a.id,
                 "allergen": a.allergen,
+                "code": a.code,
+                "code_system": a.code_system,
+                "type": a.type.value if a.type else None,
                 "reaction": a.reaction,
                 "severity": a.severity.value if a.severity else None,
+                "source": a.source.value if a.source else None,
+                "status": a.status.value if a.status else None,
             }
             for a in allergies
         ],
@@ -361,8 +368,12 @@ async def get_patient_health_profile(
             {
                 "id": c.id,
                 "name": c.name,
+                "code": c.code,
+                "code_system": c.code_system,
                 "status": c.status.value if c.status else None,
+                "source": c.source.value if c.source else None,
                 "since_year": c.since_year,
+                "notes": c.notes,
             }
             for c in conditions
         ],
@@ -956,3 +967,363 @@ async def update_medical_record(
         )
     )
     return result.scalar_one()
+
+
+# ============================================
+# Doctor Health History CRUD for Patients
+# ============================================
+
+# --- Conditions ---
+
+@router.post("/patients/{patient_id}/conditions", response_model=patient_schema.Condition)
+async def doctor_add_condition(
+    patient_id: uuid.UUID,
+    condition_in: patient_schema.ConditionCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> Any:
+    """Doctor adds a condition to a patient's profile."""
+    await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
+    from app.models.patient import Condition as ConditionModel
+    condition = ConditionModel(patient_profile_id=patient_id, **condition_in.model_dump())
+    db.add(condition)
+    await db.commit()
+    await db.refresh(condition)
+    return condition
+
+
+@router.patch("/patients/{patient_id}/conditions/{condition_id}", response_model=patient_schema.Condition)
+async def doctor_update_condition(
+    patient_id: uuid.UUID,
+    condition_id: int,
+    condition_in: patient_schema.ConditionUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> Any:
+    """Doctor updates a condition on a patient's profile."""
+    await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
+    from app.models.patient import Condition as ConditionModel
+    result = await db.execute(
+        select(ConditionModel).filter(
+            ConditionModel.id == condition_id,
+            ConditionModel.patient_profile_id == patient_id,
+            ConditionModel.deleted == False,
+        )
+    )
+    condition = result.scalars().first()
+    if not condition:
+        raise HTTPException(status_code=404, detail="Condition not found")
+    for field, value in condition_in.model_dump(exclude_unset=True).items():
+        setattr(condition, field, value)
+    await db.commit()
+    await db.refresh(condition)
+    return condition
+
+
+@router.delete("/patients/{patient_id}/conditions/{condition_id}", status_code=204)
+async def doctor_delete_condition(
+    patient_id: uuid.UUID,
+    condition_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> None:
+    """Doctor soft-deletes a condition from patient's profile."""
+    await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
+    from app.models.patient import Condition as ConditionModel
+    from datetime import datetime as dt
+    result = await db.execute(
+        select(ConditionModel).filter(
+            ConditionModel.id == condition_id,
+            ConditionModel.patient_profile_id == patient_id,
+            ConditionModel.deleted == False,
+        )
+    )
+    condition = result.scalars().first()
+    if not condition:
+        raise HTTPException(status_code=404, detail="Condition not found")
+    condition.deleted = True
+    condition.deleted_at = dt.utcnow()
+    await db.commit()
+
+
+# --- Allergies ---
+
+@router.post("/patients/{patient_id}/allergies", response_model=patient_schema.Allergy)
+async def doctor_add_allergy(
+    patient_id: uuid.UUID,
+    allergy_in: patient_schema.AllergyCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> Any:
+    """Doctor adds an allergy to a patient's profile."""
+    await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
+    from app.models.patient import Allergy as AllergyModel
+    allergy = AllergyModel(patient_profile_id=patient_id, **allergy_in.model_dump())
+    db.add(allergy)
+    await db.commit()
+    await db.refresh(allergy)
+    return allergy
+
+
+@router.patch("/patients/{patient_id}/allergies/{allergy_id}", response_model=patient_schema.Allergy)
+async def doctor_update_allergy(
+    patient_id: uuid.UUID,
+    allergy_id: int,
+    allergy_in: patient_schema.AllergyUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> Any:
+    """Doctor updates an allergy on a patient's profile."""
+    await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
+    from app.models.patient import Allergy as AllergyModel
+    result = await db.execute(
+        select(AllergyModel).filter(
+            AllergyModel.id == allergy_id,
+            AllergyModel.patient_profile_id == patient_id,
+            AllergyModel.deleted == False,
+        )
+    )
+    allergy = result.scalars().first()
+    if not allergy:
+        raise HTTPException(status_code=404, detail="Allergy not found")
+    for field, value in allergy_in.model_dump(exclude_unset=True).items():
+        setattr(allergy, field, value)
+    await db.commit()
+    await db.refresh(allergy)
+    return allergy
+
+
+@router.delete("/patients/{patient_id}/allergies/{allergy_id}", status_code=204)
+async def doctor_delete_allergy(
+    patient_id: uuid.UUID,
+    allergy_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> None:
+    """Doctor soft-deletes an allergy from patient's profile."""
+    await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
+    from app.models.patient import Allergy as AllergyModel
+    from datetime import datetime as dt
+    result = await db.execute(
+        select(AllergyModel).filter(
+            AllergyModel.id == allergy_id,
+            AllergyModel.patient_profile_id == patient_id,
+            AllergyModel.deleted == False,
+        )
+    )
+    allergy = result.scalars().first()
+    if not allergy:
+        raise HTTPException(status_code=404, detail="Allergy not found")
+    allergy.deleted = True
+    allergy.deleted_at = dt.utcnow()
+    await db.commit()
+
+
+# --- Medications ---
+
+@router.post("/patients/{patient_id}/medications", response_model=patient_schema.Medication)
+async def doctor_add_medication(
+    patient_id: uuid.UUID,
+    med_in: patient_schema.MedicationCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> Any:
+    """Doctor adds a medication to a patient's profile."""
+    await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
+    from app.models.patient import Medication as MedicationModel
+    med = MedicationModel(patient_profile_id=patient_id, **med_in.model_dump())
+    db.add(med)
+    await db.commit()
+    await db.refresh(med)
+    return med
+
+
+@router.patch("/patients/{patient_id}/medications/{med_id}", response_model=patient_schema.Medication)
+async def doctor_update_medication(
+    patient_id: uuid.UUID,
+    med_id: int,
+    med_in: patient_schema.MedicationUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> Any:
+    """Doctor updates a medication on patient's profile."""
+    await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
+    from app.models.patient import Medication as MedicationModel
+    result = await db.execute(
+        select(MedicationModel).filter(
+            MedicationModel.id == med_id,
+            MedicationModel.patient_profile_id == patient_id,
+            MedicationModel.deleted == False,
+        )
+    )
+    med = result.scalars().first()
+    if not med:
+        raise HTTPException(status_code=404, detail="Medication not found")
+    for field, value in med_in.model_dump(exclude_unset=True).items():
+        setattr(med, field, value)
+    await db.commit()
+    await db.refresh(med)
+    return med
+
+
+@router.delete("/patients/{patient_id}/medications/{med_id}", status_code=204)
+async def doctor_delete_medication(
+    patient_id: uuid.UUID,
+    med_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> None:
+    """Doctor soft-deletes a medication from patient's profile."""
+    await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
+    from app.models.patient import Medication as MedicationModel
+    from datetime import datetime as dt
+    result = await db.execute(
+        select(MedicationModel).filter(
+            MedicationModel.id == med_id,
+            MedicationModel.patient_profile_id == patient_id,
+            MedicationModel.deleted == False,
+        )
+    )
+    med = result.scalars().first()
+    if not med:
+        raise HTTPException(status_code=404, detail="Medication not found")
+    med.deleted = True
+    med.deleted_at = dt.utcnow()
+    await db.commit()
+
+
+# --- Health Habits ---
+
+@router.get("/patients/{patient_id}/habits", response_model=patient_schema.HealthHabit | None)
+async def doctor_get_habits(
+    patient_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> Any:
+    """Doctor gets a patient's health habits."""
+    await get_doctor_patient_access(patient_id, db, current_user)
+    from app.models.patient import HealthHabit
+    result = await db.execute(
+        select(HealthHabit).filter(HealthHabit.patient_profile_id == patient_id)
+    )
+    return result.scalars().first()
+
+
+@router.put("/patients/{patient_id}/habits", response_model=patient_schema.HealthHabit)
+async def doctor_upsert_habits(
+    patient_id: uuid.UUID,
+    habits_in: patient_schema.HealthHabitUpsert,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> Any:
+    """Doctor creates/updates a patient's health habits."""
+    await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
+    from app.models.patient import HealthHabit
+    result = await db.execute(
+        select(HealthHabit).filter(HealthHabit.patient_profile_id == patient_id)
+    )
+    existing = result.scalars().first()
+    update_data = habits_in.model_dump(exclude_unset=True)
+    if existing:
+        for field, value in update_data.items():
+            setattr(existing, field, value)
+        await db.commit()
+        await db.refresh(existing)
+        return existing
+    else:
+        habit = HealthHabit(patient_profile_id=patient_id, **update_data)
+        db.add(habit)
+        await db.commit()
+        await db.refresh(habit)
+        return habit
+
+
+# --- Family History ---
+
+@router.get("/patients/{patient_id}/family-history", response_model=list[patient_schema.FamilyHistoryConditionResponse])
+async def doctor_get_family_history(
+    patient_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> Any:
+    """Doctor gets a patient's family history conditions."""
+    await get_doctor_patient_access(patient_id, db, current_user)
+    from app.models.patient import FamilyHistoryCondition
+    result = await db.execute(
+        select(FamilyHistoryCondition).filter(
+            FamilyHistoryCondition.patient_profile_id == patient_id
+        )
+    )
+    return result.scalars().all()
+
+
+@router.post("/patients/{patient_id}/family-history", response_model=patient_schema.FamilyHistoryConditionResponse)
+async def doctor_add_family_history(
+    patient_id: uuid.UUID,
+    fh_in: patient_schema.FamilyHistoryConditionCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> Any:
+    """Doctor adds a family history condition."""
+    await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
+    from app.models.patient import FamilyHistoryCondition
+    condition = FamilyHistoryCondition(
+        patient_profile_id=patient_id,
+        condition_name=fh_in.condition_name,
+        family_members=fh_in.family_members,
+        notes=fh_in.notes,
+    )
+    db.add(condition)
+    await db.commit()
+    await db.refresh(condition)
+    return condition
+
+
+@router.put("/patients/{patient_id}/family-history/{condition_id}", response_model=patient_schema.FamilyHistoryConditionResponse)
+async def doctor_update_family_history(
+    patient_id: uuid.UUID,
+    condition_id: int,
+    fh_in: patient_schema.FamilyHistoryConditionUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> Any:
+    """Doctor updates a family history condition."""
+    await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
+    from app.models.patient import FamilyHistoryCondition
+    result = await db.execute(
+        select(FamilyHistoryCondition).filter(
+            FamilyHistoryCondition.id == condition_id,
+            FamilyHistoryCondition.patient_profile_id == patient_id,
+        )
+    )
+    condition = result.scalars().first()
+    if not condition:
+        raise HTTPException(status_code=404, detail="Family history condition not found")
+    for field, value in fh_in.model_dump(exclude_unset=True).items():
+        setattr(condition, field, value)
+    await db.commit()
+    await db.refresh(condition)
+    return condition
+
+
+@router.delete("/patients/{patient_id}/family-history/{condition_id}", status_code=204)
+async def doctor_delete_family_history(
+    patient_id: uuid.UUID,
+    condition_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> None:
+    """Doctor deletes a family history condition."""
+    await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
+    from app.models.patient import FamilyHistoryCondition
+    result = await db.execute(
+        select(FamilyHistoryCondition).filter(
+            FamilyHistoryCondition.id == condition_id,
+            FamilyHistoryCondition.patient_profile_id == patient_id,
+        )
+    )
+    condition = result.scalars().first()
+    if not condition:
+        raise HTTPException(status_code=404, detail="Family history condition not found")
+    await db.delete(condition)
+    await db.commit()

@@ -381,6 +381,7 @@ export interface PatientAccess {
   last_name: string;
   date_of_birth?: string;
   sex?: string;
+  blood_type?: string;
   access_level: AccessLevel;
   granted_at: string;
 }

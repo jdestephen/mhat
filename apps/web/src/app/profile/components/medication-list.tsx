@@ -17,11 +17,12 @@ import { X, Plus, Pill, Pencil } from 'lucide-react';
 interface MedicationListProps {
   profile: PatientProfile;
   onRefresh: () => void;
+  apiPrefix?: string;
 }
 
 type FormMode = 'view' | 'add' | 'edit';
 
-export function MedicationList({ profile, onRefresh }: MedicationListProps) {
+export function MedicationList({ profile, onRefresh, apiPrefix = '/profiles/patient' }: MedicationListProps) {
   const [formMode, setFormMode] = useState<FormMode>('view');
   const [editingMedication, setEditingMedication] = useState<Medication | null>(null);
   const [formData, setFormData] = useState<Partial<Medication>>({
@@ -65,9 +66,9 @@ export function MedicationList({ profile, onRefresh }: MedicationListProps) {
     setSaving(true);
     try {
       if (formMode === 'add') {
-        await api.post('/profiles/patient/medications', formData);
+        await api.post(`${apiPrefix}/medications`, formData);
       } else if (formMode === 'edit' && editingMedication) {
-        await api.patch(`/profiles/patient/medications/${editingMedication.id}`, formData);
+        await api.patch(`${apiPrefix}/medications/${editingMedication.id}`, formData);
       }
       
       setFormMode('view');
@@ -91,7 +92,7 @@ export function MedicationList({ profile, onRefresh }: MedicationListProps) {
     }
 
     try {
-      await api.delete(`/profiles/patient/medications/${medicationId}`);
+      await api.delete(`${apiPrefix}/medications/${medicationId}`);
       onRefresh();
     } catch (error) {
       console.error(error);

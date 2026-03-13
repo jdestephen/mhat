@@ -159,6 +159,16 @@ class AllergyBase(BaseModel):
 class AllergyCreate(AllergyBase):
     pass
 
+class AllergyUpdate(BaseModel):
+    allergen: Optional[str] = None
+    code: Optional[str] = None
+    code_system: Optional[str] = None
+    type: Optional[AllergyType] = None
+    reaction: Optional[str] = None
+    severity: Optional[AllergySeverity] = None
+    source: Optional[AllergySource] = None
+    status: Optional[AllergyStatus] = None
+
 class Allergy(AllergyBase):
     id: int
     patient_profile_id: UUID
@@ -183,6 +193,15 @@ class ConditionBase(BaseModel):
 
 class ConditionCreate(ConditionBase):
     pass
+
+class ConditionUpdate(BaseModel):
+    name: Optional[str] = None
+    code: Optional[str] = None
+    code_system: Optional[str] = None
+    since_year: Optional[str] = None
+    status: Optional[ConditionStatus] = None
+    source: Optional[ConditionSource] = None
+    notes: Optional[str] = None
 
 class Condition(ConditionBase):
     id: int

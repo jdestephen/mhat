@@ -36,9 +36,10 @@ const FAMILY_MEMBER_OPTIONS: { value: FamilyMemberType; label: string }[] = [
 
 interface FamilyHistoryTabProps {
   onRefresh: () => void;
+  apiPrefix?: string;
 }
 
-export function FamilyHistoryTab({ onRefresh }: FamilyHistoryTabProps) {
+export function FamilyHistoryTab({ onRefresh, apiPrefix = '/profiles/patient' }: FamilyHistoryTabProps) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
   const [conditions, setConditions] = useState<FamilyHistoryCondition[]>([]);
@@ -51,7 +52,7 @@ export function FamilyHistoryTab({ onRefresh }: FamilyHistoryTabProps) {
 
   const fetchFamilyHistory = async () => {
     try {
-      const res = await api.get<FamilyHistoryCondition[]>('/profiles/patient/family-history');
+      const res = await api.get<FamilyHistoryCondition[]>(`${apiPrefix}/family-history`);
       setConditions(res.data);
     } catch (error) {
       console.error('Error fetching family history', error);
@@ -74,7 +75,7 @@ export function FamilyHistoryTab({ onRefresh }: FamilyHistoryTabProps) {
       // Remove
       setSaving(conditionName);
       try {
-        await api.delete(`/profiles/patient/family-history/${existing.id}`);
+        await api.delete(`${apiPrefix}/family-history/${existing.id}`);
         setConditions((prev) => prev.filter((c) => c.id !== existing.id));
         if (expandedCondition === conditionName) setExpandedCondition(null);
         onRefresh();
@@ -87,7 +88,7 @@ export function FamilyHistoryTab({ onRefresh }: FamilyHistoryTabProps) {
       // Add with empty members — expanded for selection
       setSaving(conditionName);
       try {
-        const res = await api.post<FamilyHistoryCondition>('/profiles/patient/family-history', {
+        const res = await api.post<FamilyHistoryCondition>(`${apiPrefix}/family-history`, {
           condition_name: conditionName,
           family_members: [],
         });
@@ -109,7 +110,7 @@ export function FamilyHistoryTab({ onRefresh }: FamilyHistoryTabProps) {
 
     setSaving(name);
     try {
-      const res = await api.post<FamilyHistoryCondition>('/profiles/patient/family-history', {
+      const res = await api.post<FamilyHistoryCondition>(`${apiPrefix}/family-history`, {
         condition_name: name,
         family_members: [],
       });
@@ -135,7 +136,7 @@ export function FamilyHistoryTab({ onRefresh }: FamilyHistoryTabProps) {
 
     try {
       const res = await api.put<FamilyHistoryCondition>(
-        `/profiles/patient/family-history/${condition.id}`,
+        `${apiPrefix}/family-history/${condition.id}`,
         { family_members: newMembers }
       );
       setConditions((prev) => prev.map((c) => (c.id === condition.id ? res.data : c)));
@@ -150,7 +151,7 @@ export function FamilyHistoryTab({ onRefresh }: FamilyHistoryTabProps) {
 
     try {
       const res = await api.put<FamilyHistoryCondition>(
-        `/profiles/patient/family-history/${condition.id}`,
+        `${apiPrefix}/family-history/${condition.id}`,
         { notes: notes || null }
       );
       setConditions((prev) => prev.map((c) => (c.id === condition.id ? res.data : c)));

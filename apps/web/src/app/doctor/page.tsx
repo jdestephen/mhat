@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useMyPatients } from '@/hooks/queries/useMyPatients';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
 import { useClaimInvitation } from '@/hooks/mutations/useClaimInvitation';
@@ -13,15 +13,17 @@ import {
   Users, 
   Search, 
   Calendar, 
-  Clock, 
-  ChevronRight,
   UserPlus,
-  Shield,
-  Activity,
   KeyRound,
   Check,
   X,
   AlertCircle,
+  Eye,
+  Settings,
+  FileText,
+  Paperclip,
+  ClipboardList,
+  Droplets,
 } from 'lucide-react';
 
 export default function DoctorDashboardPage() {
@@ -33,6 +35,20 @@ export default function DoctorDashboardPage() {
   const [showClaimForm, setShowClaimForm] = useState(false);
   const [claimCode, setClaimCode] = useState('');
   const [claimResult, setClaimResult] = useState<{ success: boolean; message: string; patientName?: string } | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpenMenuId(null);
+      }
+    };
+    if (openMenuId) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [openMenuId]);
 
   // Redirect non-doctors
   if (!userLoading && user?.role !== UserRole.DOCTOR) {
@@ -182,33 +198,40 @@ export default function DoctorDashboardPage() {
         ) : (
           <div className="divide-y divide-gray-100">
             {filteredPatients.map((patient) => (
-              <Link
+              <div
                 key={patient.patient_id}
-                href={`/doctor/patients/${patient.patient_id}`}
-                className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                className="flex items-center justify-between p-4 hover:bg-gray-50/50 transition-colors"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center">
+                {/* Left: Avatar + Info */}
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
                     <span className="text-lg font-semibold text-emerald-700">
                       {patient.first_name[0]}{patient.last_name[0]}
                     </span>
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="font-medium text-gray-900">
                       {patient.first_name} {patient.last_name}
                     </p>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <div className="flex items-center gap-3 text-sm text-gray-500 mt-0.5">
                       {patient.date_of_birth && (
-                        <>
+                        <span className="flex items-center gap-1">
                           <Calendar className="h-3.5 w-3.5" />
-                          <span>{formatDate(patient.date_of_birth)}</span>
-                        </>
+                          {formatDate(patient.date_of_birth)}
+                        </span>
+                      )}
+                      {patient.blood_type && (
+                        <span className="flex items-center gap-1 text-red-600">
+                          <Droplets className="h-3.5 w-3.5" />
+                          {patient.blood_type}
+                        </span>
                       )}
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4">
+                {/* Right: Access Badge + Actions */}
+                <div className="flex items-center gap-3 flex-shrink-0">
                   <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
                     patient.access_level === AccessLevel.WRITE
                       ? 'bg-emerald-100 text-emerald-700'
@@ -216,9 +239,56 @@ export default function DoctorDashboardPage() {
                   }`}>
                     {patient.access_level === AccessLevel.WRITE ? 'Escritura' : 'Lectura'}
                   </span>
-                  <ChevronRight className="h-5 w-5 text-gray-400" />
+
+                  <Link href={`/doctor/patients/${patient.patient_id}`}>
+                    <Button variant="outline" size="sm" className="flex items-center gap-1.5">
+                      <Eye className="h-4 w-4" />
+                      Ver Resumen
+                    </Button>
+                  </Link>
+
+                  {/* Gear Dropdown */}
+                  <div className="relative" ref={openMenuId === patient.patient_id ? menuRef : undefined}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="px-2"
+                      onClick={() => setOpenMenuId(openMenuId === patient.patient_id ? null : patient.patient_id)}
+                    >
+                      <Settings className="h-4 w-4 text-gray-500" />
+                    </Button>
+                    {openMenuId === patient.patient_id && (
+                      <div className="absolute right-0 top-full mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                        <Link
+                          href={`/doctor/patients/${patient.patient_id}/records/new`}
+                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                          onClick={() => setOpenMenuId(null)}
+                        >
+                          <FileText className="h-4 w-4 text-emerald-600" />
+                          Nuevo Registro Médico
+                        </Link>
+                        <Link
+                          href={`/doctor/patients/${patient.patient_id}`}
+                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                          onClick={() => setOpenMenuId(null)}
+                        >
+                          <Paperclip className="h-4 w-4 text-blue-600" />
+                          Adjuntar Examen
+                        </Link>
+                        <div className="border-t border-gray-100 my-1" />
+                        <Link
+                          href={`/doctor/patients/${patient.patient_id}/health-history`}
+                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                          onClick={() => setOpenMenuId(null)}
+                        >
+                          <ClipboardList className="h-4 w-4 text-purple-600" />
+                          Historial de Salud
+                        </Link>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         )}

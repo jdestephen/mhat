@@ -270,6 +270,151 @@ async def add_patient_condition(
     )
     return result.scalars().first()
 
+
+@router.patch("/patient/conditions/{condition_id}", response_model=patient_schema.Condition)
+async def update_patient_condition(
+    *,
+    condition_id: int,
+    condition_in: patient_schema.ConditionUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """Update a condition on the patient profile."""
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Not a patient")
+
+    result = await db.execute(select(PatientProfile).filter(PatientProfile.user_id == current_user.id))
+    profile = result.scalars().first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+
+    from app.models.patient import Condition as ConditionModel
+    result = await db.execute(
+        select(ConditionModel).filter(
+            ConditionModel.id == condition_id,
+            ConditionModel.patient_profile_id == profile.id,
+            ConditionModel.deleted == False,
+        )
+    )
+    condition = result.scalars().first()
+    if not condition:
+        raise HTTPException(status_code=404, detail="Condition not found")
+
+    update_data = condition_in.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(condition, field, value)
+
+    await db.commit()
+    await db.refresh(condition)
+    return condition
+
+
+@router.delete("/patient/conditions/{condition_id}", status_code=204)
+async def delete_patient_condition(
+    *,
+    condition_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> None:
+    """Soft-delete a condition from the patient profile."""
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Not a patient")
+
+    result = await db.execute(select(PatientProfile).filter(PatientProfile.user_id == current_user.id))
+    profile = result.scalars().first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+
+    from app.models.patient import Condition as ConditionModel
+    result = await db.execute(
+        select(ConditionModel).filter(
+            ConditionModel.id == condition_id,
+            ConditionModel.patient_profile_id == profile.id,
+            ConditionModel.deleted == False,
+        )
+    )
+    condition = result.scalars().first()
+    if not condition:
+        raise HTTPException(status_code=404, detail="Condition not found")
+
+    from datetime import datetime as dt
+    condition.deleted = True
+    condition.deleted_at = dt.utcnow()
+    await db.commit()
+
+
+@router.patch("/patient/allergies/{allergy_id}", response_model=patient_schema.Allergy)
+async def update_patient_allergy(
+    *,
+    allergy_id: int,
+    allergy_in: patient_schema.AllergyUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """Update an allergy on the patient profile."""
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Not a patient")
+
+    result = await db.execute(select(PatientProfile).filter(PatientProfile.user_id == current_user.id))
+    profile = result.scalars().first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+
+    from app.models.patient import Allergy as AllergyModel
+    result = await db.execute(
+        select(AllergyModel).filter(
+            AllergyModel.id == allergy_id,
+            AllergyModel.patient_profile_id == profile.id,
+            AllergyModel.deleted == False,
+        )
+    )
+    allergy = result.scalars().first()
+    if not allergy:
+        raise HTTPException(status_code=404, detail="Allergy not found")
+
+    update_data = allergy_in.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(allergy, field, value)
+
+    await db.commit()
+    await db.refresh(allergy)
+    return allergy
+
+
+@router.delete("/patient/allergies/{allergy_id}", status_code=204)
+async def delete_patient_allergy(
+    *,
+    allergy_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> None:
+    """Soft-delete an allergy from the patient profile."""
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Not a patient")
+
+    result = await db.execute(select(PatientProfile).filter(PatientProfile.user_id == current_user.id))
+    profile = result.scalars().first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+
+    from app.models.patient import Allergy as AllergyModel
+    result = await db.execute(
+        select(AllergyModel).filter(
+            AllergyModel.id == allergy_id,
+            AllergyModel.patient_profile_id == profile.id,
+            AllergyModel.deleted == False,
+        )
+    )
+    allergy = result.scalars().first()
+    if not allergy:
+        raise HTTPException(status_code=404, detail="Allergy not found")
+
+    from datetime import datetime as dt
+    allergy.deleted = True
+    allergy.deleted_at = dt.utcnow()
+    await db.commit()
+
+
 @router.put("/doctor", response_model=doctor_schema.DoctorProfile)
 async def update_doctor_profile(
     *,

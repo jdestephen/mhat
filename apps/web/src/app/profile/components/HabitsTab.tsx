@@ -61,9 +61,10 @@ const SLEEP_PROBLEM_OPTIONS = [
 
 interface HabitsTabProps {
   onRefresh: () => void;
+  apiPrefix?: string;
 }
 
-export function HabitsTab({ onRefresh }: HabitsTabProps) {
+export function HabitsTab({ onRefresh, apiPrefix = '/profiles/patient' }: HabitsTabProps) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -90,7 +91,7 @@ export function HabitsTab({ onRefresh }: HabitsTabProps) {
 
   const fetchHabits = async () => {
     try {
-      const res = await api.get<HealthHabit | null>('/profiles/patient/habits');
+      const res = await api.get<HealthHabit | null>(`${apiPrefix}/habits`);
       if (res.data) {
         const h = res.data;
         setTobaccoUse(h.tobacco_use || '');
@@ -119,7 +120,7 @@ export function HabitsTab({ onRefresh }: HabitsTabProps) {
     setSaving(true);
     setSaved(false);
     try {
-      await api.put('/profiles/patient/habits', {
+      await api.put(`${apiPrefix}/habits`, {
         tobacco_use: tobaccoUse || null,
         cigarettes_per_day: cigarettesPerDay ? parseInt(cigarettesPerDay) : null,
         years_smoking: yearsSmoking ? parseInt(yearsSmoking) : null,
