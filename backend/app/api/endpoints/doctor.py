@@ -287,7 +287,10 @@ async def get_patient_health_profile(
     Get patient health profile: active medications, allergies, and conditions.
     Requires doctor access to the patient.
     """
-    from app.models.patient import Medication, Allergy, Condition, MedicationStatus
+    from app.models.patient import (
+        Medication, Allergy, Condition, MedicationStatus,
+        HealthHabit, FamilyHistoryCondition,
+    )
 
     await get_doctor_patient_access(patient_profile_id, db, current_user)
 
@@ -318,6 +321,22 @@ async def get_patient_health_profile(
     )
     conditions = conditions_result.scalars().all()
 
+    # Fetch health habit (one-to-one)
+    habit_result = await db.execute(
+        select(HealthHabit).where(
+            HealthHabit.patient_profile_id == patient_profile_id
+        )
+    )
+    habit = habit_result.scalar_one_or_none()
+
+    # Fetch family history conditions
+    fh_result = await db.execute(
+        select(FamilyHistoryCondition).where(
+            FamilyHistoryCondition.patient_profile_id == patient_profile_id
+        )
+    )
+    family_history = fh_result.scalars().all()
+
     return {
         "medications": [
             {
@@ -346,6 +365,32 @@ async def get_patient_health_profile(
                 "since_year": c.since_year,
             }
             for c in conditions
+        ],
+        "health_habit": {
+            "id": habit.id,
+            "tobacco_use": habit.tobacco_use.value if habit.tobacco_use else None,
+            "cigarettes_per_day": habit.cigarettes_per_day,
+            "years_smoking": habit.years_smoking,
+            "years_since_quit": habit.years_since_quit,
+            "alcohol_use": habit.alcohol_use.value if habit.alcohol_use else None,
+            "drinks_per_week": habit.drinks_per_week,
+            "drug_use": habit.drug_use,
+            "drug_type": habit.drug_type,
+            "drug_frequency": habit.drug_frequency,
+            "physical_activity": habit.physical_activity.value if habit.physical_activity else None,
+            "diet": habit.diet.value if habit.diet else None,
+            "sleep_hours": habit.sleep_hours,
+            "sleep_problems": habit.sleep_problems,
+            "observations": habit.observations,
+        } if habit else None,
+        "family_history": [
+            {
+                "id": fh.id,
+                "condition_name": fh.condition_name,
+                "family_members": fh.family_members,
+                "notes": fh.notes,
+            }
+            for fh in family_history
         ],
     }
 

@@ -123,8 +123,7 @@ export default function NewTabbedRecordPage({ params }: { params: Promise<{ id: 
           </button>
         </div>
         <div className="mb-5">
-          <h1 className="text-3xl font-bold text-emerald-950">Nuevo Registro Clínico</h1>
-          <p className="text-sm text-gray-500 mt-1">Vista por secciones</p>
+          <h1 className="text-2xl font-bold text-emerald-950">Nuevo Registro Clínico</h1>
         </div>
       </div>
 

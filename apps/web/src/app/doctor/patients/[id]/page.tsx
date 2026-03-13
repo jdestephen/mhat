@@ -167,6 +167,8 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
           medications={health?.medications ?? []}
           conditions={health?.conditions ?? []}
           allergies={health?.allergies ?? []}
+          healthHabit={health?.health_habit ?? null}
+          familyHistory={health?.family_history ?? []}
         />
       </div>
 
@@ -184,7 +186,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                 </TabsTrigger>
                 <TabsTrigger value="documents" className="flex items-center gap-2">
                   <Paperclip className="h-4 w-4" />
-                  Documentos
+                  Exámenes
                   {allDocuments.length > 0 && (
                     <span className="ml-1 text-xs bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-full">
                       {allDocuments.length}
@@ -245,7 +247,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                             }}
                           >
                             <Paperclip className="h-4 w-4" />
-                            Documento
+                            Examenes
                           </button>
                         </div>
                       )}
