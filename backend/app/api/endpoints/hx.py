@@ -11,7 +11,7 @@ from sqlalchemy.orm import selectinload
 from app.api import deps
 from app.core.config import settings
 from app.db.session import get_db
-from app.models.hx import MedicalRecord, Document, RecordStatus, RecordSource, MedicalDiagnosis, DiagnosisStatus, VitalSigns
+from app.models.hx import MedicalRecord, Document, RecordStatus, RecordSource, MedicalDiagnosis, DiagnosisStatus, VitalSigns, RecordViewLog
 from app.models.user import User, UserRole
 from app.models.patient import PatientProfile
 from app.schemas import hx as hx_schema
@@ -468,3 +468,48 @@ async def update_medical_record(
         )
     )
     return result.scalar_one()
+
+
+@router.get("/{record_id}/view-log", response_model=List[hx_schema.RecordViewLogResponse])
+async def get_record_view_log(
+    record_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+):
+    """
+    Get the view log for a medical record (who viewed it and when).
+    Only the patient who owns the record can access this.
+    """
+    # Verify record exists and belongs to the current user
+    result = await db.execute(
+        select(MedicalRecord).where(MedicalRecord.id == record_id)
+    )
+    record = result.scalar_one_or_none()
+    if not record:
+        raise HTTPException(status_code=404, detail="Record not found")
+
+    # Get the patient profile for the current user
+    profile_result = await db.execute(
+        select(PatientProfile).where(PatientProfile.user_id == current_user.id)
+    )
+    patient_profile = profile_result.scalar_one_or_none()
+    if not patient_profile or record.patient_id != patient_profile.id:
+        raise HTTPException(status_code=403, detail="No permission to view this log")
+
+    # Fetch view logs with doctor info, descending by viewed_at
+    logs_result = await db.execute(
+        select(RecordViewLog, User)
+        .join(User, RecordViewLog.doctor_id == User.id)
+        .where(RecordViewLog.medical_record_id == record_id)
+        .order_by(RecordViewLog.viewed_at.desc())
+    )
+    rows = logs_result.all()
+
+    return [
+        hx_schema.RecordViewLogResponse(
+            id=log.id,
+            doctor_name=f"Dr. {user.first_name or ''} {user.last_name or ''}".strip(),
+            viewed_at=log.viewed_at,
+        )
+        for log, user in rows
+    ]

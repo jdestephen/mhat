@@ -17,7 +17,7 @@ from app.api import deps
 from app.api.deps import get_db
 from app.models.user import User, UserRole, DoctorPatientAccess, DoctorAccessLevel
 from app.models.patient import PatientProfile
-from app.models.hx import MedicalRecord, RecordSource, RecordStatus, MedicalDiagnosis, VitalSigns
+from app.models.hx import MedicalRecord, RecordSource, RecordStatus, MedicalDiagnosis, VitalSigns, RecordViewLog
 from app.models.clinical import Prescription, ClinicalOrder
 from app.schemas import clinical as clinical_schema
 from app.schemas import hx as hx_schema
@@ -586,6 +586,24 @@ async def get_medical_record(
     
     # Validate access
     await get_doctor_patient_access(record.patient_id, db, current_user)
+    
+    # Log the view (15-min de-duplication)
+    from datetime import datetime, timezone, timedelta
+    fifteen_min_ago = datetime.now(timezone.utc) - timedelta(minutes=15)
+    existing_log = await db.execute(
+        select(RecordViewLog).where(
+            RecordViewLog.medical_record_id == record_id,
+            RecordViewLog.doctor_id == current_user.id,
+            RecordViewLog.viewed_at > fifteen_min_ago,
+        )
+    )
+    if not existing_log.scalar_one_or_none():
+        log_entry = RecordViewLog(
+            medical_record_id=record_id,
+            doctor_id=current_user.id,
+        )
+        db.add(log_entry)
+        await db.commit()
     
     return record
 

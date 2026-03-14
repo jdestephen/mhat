@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { MedicalRecord, RecordStatus, UserRole } from '@/types';
 import { ShareRecordDialog } from '@/components/share/ShareRecordDialog';
+import { RecordViewLogModal } from '@/components/records/RecordViewLogModal';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
 
 export default function DashboardPage() {
@@ -25,6 +26,8 @@ export default function DashboardPage() {
   
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [viewLogOpen, setViewLogOpen] = useState(false);
+  const [viewLogRecordId, setViewLogRecordId] = useState<string | null>(null);
   const [selectedRecords, setSelectedRecords] = useState<{ ids: string[], titles: string[] }>({ ids: [], titles: [] });
   
   const [searchFilters, setSearchFilters] = useState({
@@ -266,6 +269,16 @@ export default function DashboardPage() {
                                       >
                                         Compartir
                                       </button>
+                                      <button
+                                        className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                                        onClick={() => {
+                                          setOpenDropdown(null);
+                                          setViewLogRecordId(String(record.id));
+                                          setViewLogOpen(true);
+                                        }}
+                                      >
+                                        Historial de Acceso
+                                      </button>
                                     </div>
                                   </div>
                                 </>
@@ -374,6 +387,13 @@ export default function DashboardPage() {
         onOpenChange={setShareDialogOpen}
         recordIds={selectedRecords.ids}
         recordTitles={selectedRecords.titles}
+      />
+
+      {/* View Log Modal */}
+      <RecordViewLogModal
+        open={viewLogOpen}
+        onOpenChange={setViewLogOpen}
+        recordId={viewLogRecordId}
       />
     </div>
   );

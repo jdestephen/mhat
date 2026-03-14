@@ -197,3 +197,13 @@ class MedicalRecord(MedicalRecordBase):
 
     class Config:
         from_attributes = True
+
+
+class RecordViewLogResponse(BaseModel):
+    """Response schema for record view log entries."""
+    id: UUID
+    doctor_name: str
+    viewed_at: datetime
+
+    class Config:
+        from_attributes = True

@@ -146,6 +146,21 @@ class MedicalRecord(Base):
     vital_signs: Mapped[Optional["VitalSigns"]] = relationship("VitalSigns", back_populates="medical_record", uselist=False, cascade="all, delete-orphan")
     creator: Mapped["User"] = relationship("User", foreign_keys=[created_by])
     verifier: Mapped[Optional["User"]] = relationship("User", foreign_keys=[verified_by])
+    view_logs: Mapped[List["RecordViewLog"]] = relationship("RecordViewLog", back_populates="medical_record", cascade="all, delete-orphan")
+
+
+class RecordViewLog(Base):
+    """Tracks when a doctor views a patient's medical record."""
+    __tablename__ = "record_view_logs"
+
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    medical_record_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("medical_records.id", ondelete="CASCADE"), nullable=False, index=True)
+    doctor_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    viewed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    # Relationships
+    medical_record: Mapped["MedicalRecord"] = relationship("MedicalRecord", back_populates="view_logs")
+    doctor: Mapped["User"] = relationship("User", foreign_keys=[doctor_id])
 
 
 
