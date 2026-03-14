@@ -27,7 +27,7 @@ import { RecordDetailModal, RecordDetailData } from '@/components/records/Record
 import { RecordCard, RecordCardData } from '@/components/records/RecordCard';
 import { HealthSidebar } from '@/components/patient/HealthSidebar';
 import { DocumentUploadModal } from './components/DocumentUploadModal';
-import { getDocumentUrl } from '@/lib/api';
+import api, { getDocumentUrl } from '@/lib/api';
 
 
 export default function PatientDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -140,6 +140,8 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
     if (fullRecord) {
       setSelectedRecord(fullRecord as RecordDetailData);
       setModalOpen(true);
+      // Fire background request to trigger view logging on the server
+      api.get(`/doctor/records/${fullRecord.id}`).catch(() => {});
     }
   };
 
