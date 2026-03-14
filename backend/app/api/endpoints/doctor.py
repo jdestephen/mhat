@@ -839,7 +839,7 @@ async def create_record_vital_signs(
 
 # === RECORD UPDATE ENDPOINT ===
 
-@router.put("/records/{record_id}")
+@router.put("/records/{record_id}", response_model=hx_schema.MedicalRecord)
 async def update_medical_record(
     record_id: uuid.UUID,
     record_in: clinical_schema.DoctorMedicalRecordUpdate,
@@ -878,6 +878,13 @@ async def update_medical_record(
     
     if not can_edit:
         raise HTTPException(status_code=403, detail="No permission to edit this record")
+    
+    # If a doctor is editing a patient-created record, mark it as verified
+    if record.record_source == RecordSource.PATIENT and record.created_by != current_user.id:
+        from datetime import datetime, timezone
+        record.status = RecordStatus.VERIFIED
+        record.verified_by = current_user.id
+        record.verified_at = datetime.now(timezone.utc)
     
     # Update scalar fields
     update_fields = record_in.model_dump(
@@ -961,6 +968,7 @@ async def update_medical_record(
         .where(MedicalRecord.id == record.id)
         .options(
             selectinload(MedicalRecord.diagnoses),
+            selectinload(MedicalRecord.documents),
             selectinload(MedicalRecord.prescriptions),
             selectinload(MedicalRecord.clinical_orders),
             selectinload(MedicalRecord.category),

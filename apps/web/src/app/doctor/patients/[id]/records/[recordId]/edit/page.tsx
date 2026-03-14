@@ -5,14 +5,8 @@ import { useRouter } from 'next/navigation';
 import { MedicalRecord } from '@/types';
 import api from '@/lib/api';
 
-/**
- * Doctor Edit Record page — fetches the existing record and dynamically imports
- * the shared tabbed form (new-tabbed) with the record data passed as initialData.
- * This avoids duplicating the 800+ line tabbed form component.
- */
-
-// Dynamically import the tabbed form content
-import TabbedRecordForm from '../../new-tabbed/page';
+// Import the non-tabbed form
+import NewDoctorRecordPage from '../../new/page';
 
 export default function EditRecordPage({ params }: { params: Promise<{ id: string; recordId: string }> }) {
   const { id: patientId, recordId } = use(params);
@@ -57,6 +51,6 @@ export default function EditRecordPage({ params }: { params: Promise<{ id: strin
     );
   }
 
-  // Render the tabbed form with initialData for edit mode
-  return <TabbedRecordForm params={params} initialData={record} />;
+  // Render the non-tabbed form with initialData for edit mode
+  return <NewDoctorRecordPage params={params} initialData={record} />;
 }

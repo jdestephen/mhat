@@ -3,6 +3,7 @@
 import React, { useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCreateDoctorRecord } from '@/hooks/mutations/useCreateDoctorRecord';
+import { useUpdateDoctorRecord } from '@/hooks/mutations/useUpdateDoctorRecord';
 import { useCategories } from '@/hooks/queries/useCategories';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
 import { Button } from '@/components/ui/button';
@@ -27,7 +28,8 @@ import {
   DiagnosisStatus, 
   OrderType, 
   OrderUrgency,
-  MedicalDiagnosis 
+  MedicalDiagnosis,
+  MedicalRecord,
 } from '@/types';
 import { 
   ArrowLeft, 
@@ -80,45 +82,103 @@ const FOLLOW_UP_OPTIONS = [
   { value: 'PRN', label: 'Según necesidad' },
 ];
 
-export default function NewDoctorRecordPage({ params }: { params: Promise<{ id: string }> }) {
+export default function NewDoctorRecordPage({
+  params,
+  initialData,
+}: {
+  params: Promise<{ id: string }>;
+  initialData?: MedicalRecord;
+}) {
   const { id: patientId } = use(params);
   const router = useRouter();
   const { data: categories = [] } = useCategories();
   const { data: user, isLoading: userLoading } = useCurrentUser();
   const createRecord = useCreateDoctorRecord();
+  const updateRecord = useUpdateDoctorRecord();
+  const isEditMode = !!initialData;
 
-  // Core fields
-  const [motive, setMotive] = useState('');
-  const [notes, setNotes] = useState('');
-  const [categoryId, setCategoryId] = useState('');
-  const [diagnoses, setDiagnoses] = useState<MedicalDiagnosis[]>([]);
+  // Core fields — pre-populated if editing
+  const [motive, setMotive] = useState(initialData?.motive || '');
+  const [notes, setNotes] = useState(initialData?.notes || '');
+  const [categoryId, setCategoryId] = useState(
+    initialData?.category_id?.toString() || initialData?.category?.id?.toString() || ''
+  );
+  const [diagnoses, setDiagnoses] = useState<MedicalDiagnosis[]>(
+    initialData?.diagnoses?.map(d => ({
+      diagnosis: d.diagnosis,
+      rank: d.rank,
+      status: d.status,
+      diagnosis_code: d.diagnosis_code ?? null,
+      diagnosis_code_system: d.diagnosis_code_system ?? null,
+      notes: d.notes ?? null,
+    })) || []
+  );
 
   // Doctor-specific fields
-  const [briefHistory, setBriefHistory] = useState('');
+  const [briefHistory, setBriefHistory] = useState(initialData?.brief_history || '');
+  const [redFlags, setRedFlags] = useState<string[]>(initialData?.red_flags || []);
+  const [keyFinding, setKeyFinding] = useState(initialData?.key_finding || '');
+  const [clinicalImpression, setClinicalImpression] = useState(initialData?.clinical_impression || '');
+  const [actionsToday, setActionsToday] = useState<string[]>(initialData?.actions_today || []);
+  const [planBullets, setPlanBullets] = useState<string[]>(
+    initialData?.plan_bullets?.length ? initialData.plan_bullets : ['', '', '']
+  );
+  const [followUpInterval, setFollowUpInterval] = useState(initialData?.follow_up_interval || '');
+  const [followUpWith, setFollowUpWith] = useState(initialData?.follow_up_with || '');
+  const [patientInstructions, setPatientInstructions] = useState(initialData?.patient_instructions || '');
 
-  const [redFlags, setRedFlags] = useState<string[]>([]);
-  const [keyFinding, setKeyFinding] = useState('');
-  const [clinicalImpression, setClinicalImpression] = useState('');
-  const [actionsToday, setActionsToday] = useState<string[]>([]);
-  const [planBullets, setPlanBullets] = useState<string[]>(['', '', '']);
-  const [followUpInterval, setFollowUpInterval] = useState('');
-  const [followUpWith, setFollowUpWith] = useState('');
-  const [patientInstructions, setPatientInstructions] = useState('');
-
-  // Prescriptions & Orders
-  const [prescriptions, setPrescriptions] = useState<PrescriptionForm[]>([]);
-  const [orders, setOrders] = useState<OrderForm[]>([]);
+  // Prescriptions & Orders — pre-populated if editing
+  const [prescriptions, setPrescriptions] = useState<PrescriptionForm[]>(
+    initialData?.prescriptions?.map(p => ({
+      medication_name: p.medication_name,
+      dosage: p.dosage || '',
+      frequency: p.frequency || '',
+      duration: p.duration || '',
+      route: p.route || '',
+      quantity: p.quantity || '',
+      instructions: p.instructions || '',
+    })) || []
+  );
+  const [orders, setOrders] = useState<OrderForm[]>(
+    initialData?.clinical_orders?.map(o => ({
+      order_type: o.order_type,
+      description: o.description,
+      urgency: o.urgency,
+      reason: o.reason || '',
+      referral_to: o.referral_to || '',
+    })) || []
+  );
   
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showClinicalAssessment, setShowClinicalAssessment] = useState(true);
   const [showPlan, setShowPlan] = useState(true);
-  const [showPrescriptions, setShowPrescriptions] = useState(false);
-  const [showOrders, setShowOrders] = useState(false);
+  const [showPrescriptions, setShowPrescriptions] = useState(
+    initialData?.prescriptions ? initialData.prescriptions.length > 0 : false
+  );
+  const [showOrders, setShowOrders] = useState(
+    initialData?.clinical_orders ? initialData.clinical_orders.length > 0 : false
+  );
   const [showVitalSigns, setShowVitalSigns] = useState(false);
   
-  // Vital Signs
-  const [vitalSignsData, setVitalSignsData] = useState<VitalSignsFormData>({});
+  // Vital Signs — pre-populated if editing
+  const [vitalSignsData, setVitalSignsData] = useState<VitalSignsFormData>(
+    initialData?.vital_signs
+      ? {
+          heart_rate: initialData.vital_signs.heart_rate ?? undefined,
+          systolic_bp: initialData.vital_signs.systolic_bp ?? undefined,
+          diastolic_bp: initialData.vital_signs.diastolic_bp ?? undefined,
+          temperature: initialData.vital_signs.temperature ?? undefined,
+          respiratory_rate: initialData.vital_signs.respiratory_rate ?? undefined,
+          oxygen_saturation: initialData.vital_signs.oxygen_saturation ?? undefined,
+          weight: initialData.vital_signs.weight ?? undefined,
+          height: initialData.vital_signs.height ?? undefined,
+          blood_glucose: initialData.vital_signs.blood_glucose ?? undefined,
+          waist_circumference: initialData.vital_signs.waist_circumference ?? undefined,
+          notes: initialData.vital_signs.notes ?? undefined,
+        }
+      : {}
+  );
 
   // Derived state
   const hasRedFlags = redFlags.length > 0;
@@ -170,59 +230,69 @@ export default function NewDoctorRecordPage({ params }: { params: Promise<{ id: 
     setOrders(prev => prev.filter((_, i) => i !== idx));
   };
 
+  const buildPayload = () => ({
+    patientId,
+    motive,
+    notes,
+    category_id: categoryId ? parseInt(categoryId) : undefined,
+    brief_history: briefHistory || undefined,
+    has_red_flags: hasRedFlags,
+    red_flags: redFlags.length > 0 ? redFlags : undefined,
+    key_finding: keyFinding || undefined,
+    clinical_impression: clinicalImpression || undefined,
+    actions_today: actionsToday.length > 0 ? actionsToday : undefined,
+    plan_bullets: planBullets.filter(b => b.trim()) || undefined,
+    follow_up_interval: followUpInterval || undefined,
+    follow_up_with: followUpWith || undefined,
+    patient_instructions: patientInstructions || undefined,
+    diagnoses: diagnoses.filter(d => d.diagnosis.trim()).map(d => ({
+      diagnosis: d.diagnosis,
+      diagnosis_code: d.diagnosis_code || undefined,
+      diagnosis_code_system: d.diagnosis_code_system || undefined,
+      rank: d.rank,
+      status: d.status,
+      notes: d.notes || undefined,
+    })),
+    prescriptions: prescriptions.filter(p => p.medication_name.trim()).map(p => ({
+      medication_name: p.medication_name,
+      dosage: p.dosage || undefined,
+      frequency: p.frequency || undefined,
+      duration: p.duration || undefined,
+      route: p.route || undefined,
+      quantity: p.quantity || undefined,
+      instructions: p.instructions || undefined,
+    })),
+    orders: orders.filter(o => o.description.trim()).map(o => ({
+      order_type: o.order_type,
+      description: o.description,
+      urgency: o.urgency,
+      reason: o.reason || undefined,
+      referral_to: o.referral_to || undefined,
+    })),
+    vital_signs: Object.values(vitalSignsData).some(v => v !== undefined && v !== '') 
+      ? vitalSignsData 
+      : undefined,
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      await createRecord.mutateAsync({
-        patientId,
-        motive,
-        notes,
-        category_id: categoryId ? parseInt(categoryId) : undefined,
-        brief_history: briefHistory || undefined,
-        has_red_flags: hasRedFlags,
-        red_flags: redFlags.length > 0 ? redFlags : undefined,
-        key_finding: keyFinding || undefined,
-        clinical_impression: clinicalImpression || undefined,
-        actions_today: actionsToday.length > 0 ? actionsToday : undefined,
-        plan_bullets: planBullets.filter(b => b.trim()) || undefined,
-        follow_up_interval: followUpInterval || undefined,
-        follow_up_with: followUpWith || undefined,
-        patient_instructions: patientInstructions || undefined,
-        diagnoses: diagnoses.filter(d => d.diagnosis.trim()).map(d => ({
-          diagnosis: d.diagnosis,
-          diagnosis_code: d.diagnosis_code || undefined,
-          diagnosis_code_system: d.diagnosis_code_system || undefined,
-          rank: d.rank,
-          status: d.status,
-          notes: d.notes || undefined,
-        })),
-        prescriptions: prescriptions.filter(p => p.medication_name.trim()).map(p => ({
-          medication_name: p.medication_name,
-          dosage: p.dosage || undefined,
-          frequency: p.frequency || undefined,
-          duration: p.duration || undefined,
-          route: p.route || undefined,
-          quantity: p.quantity || undefined,
-          instructions: p.instructions || undefined,
-        })),
-        orders: orders.filter(o => o.description.trim()).map(o => ({
-          order_type: o.order_type,
-          description: o.description,
-          urgency: o.urgency,
-          reason: o.reason || undefined,
-          referral_to: o.referral_to || undefined,
-        })),
-        vital_signs: Object.values(vitalSignsData).some(v => v !== undefined && v !== '') 
-          ? vitalSignsData 
-          : undefined,
-      });
+      const payload = buildPayload();
+      if (isEditMode && initialData) {
+        await updateRecord.mutateAsync({
+          recordId: initialData.id,
+          ...payload,
+        });
+      } else {
+        await createRecord.mutateAsync(payload);
+      }
 
       router.push(`/doctor/patients/${patientId}`);
     } catch (error) {
-      console.error('Error creating record:', error);
-      alert('Error al crear registro');
+      console.error(isEditMode ? 'Error updating record:' : 'Error creating record:', error);
+      alert(isEditMode ? 'Error al actualizar registro' : 'Error al crear registro');
     } finally {
       setIsSubmitting(false);
     }
@@ -242,11 +312,21 @@ export default function NewDoctorRecordPage({ params }: { params: Promise<{ id: 
           </button>
         </div>
         <div className="mb-5">
-          <h1 className="text-3xl font-bold text-emerald-950">Nuevo Registro Clínico</h1>
+          <h1 className="text-3xl font-bold text-emerald-950">
+            {isEditMode ? 'Editar Registro Clínico' : 'Nuevo Registro Clínico'}
+          </h1>
         </div>
       </div>
       <div className="flex flex-col mt-0 ps-0 pr-30">
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form
+          onSubmit={handleSubmit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && (e.target as HTMLElement).tagName !== 'TEXTAREA') {
+              e.preventDefault();
+            }
+          }}
+          className="space-y-6"
+        >
           {/* Vital Signs Card */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-100">
             <button
@@ -790,7 +870,7 @@ export default function NewDoctorRecordPage({ params }: { params: Promise<{ id: 
               Cancelar
             </Button>
             <Button type="submit" disabled={isSubmitting} className="min-w-[150px]">
-              {isSubmitting ? 'Guardando...' : 'Guardar Registro'}
+              {isSubmitting ? 'Guardando...' : isEditMode ? 'Guardar Cambios' : 'Guardar Registro'}
             </Button>
           </div>
         </form>
