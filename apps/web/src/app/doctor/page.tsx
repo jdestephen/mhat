@@ -268,7 +268,7 @@ export default function DoctorDashboardPage() {
                           Nuevo Registro Médico
                         </Link>
                         <Link
-                          href={`/doctor/patients/${patient.patient_id}`}
+                          href={`/doctor/patients/${patient.patient_id}?action=upload`}
                           className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
                           onClick={() => setOpenMenuId(null)}
                         >

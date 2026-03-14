@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { UserRole, RecordStatus, AccessLevel } from '@/types';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   FileText,
   Pill,
@@ -55,6 +55,15 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [actionMenuOpen]);
+
+  // Auto-open upload modal via query param
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    if (searchParams.get('action') === 'upload') {
+      setUploadModalOpen(true);
+      router.replace(`/doctor/patients/${patientId}`, { scroll: false });
+    }
+  }, [searchParams, patientId, router]);
 
   // Find current patient from doctor's patient list
   const patient = patients.find((p) => p.patient_id === patientId);
