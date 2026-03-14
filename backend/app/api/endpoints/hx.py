@@ -11,7 +11,7 @@ from sqlalchemy.orm import selectinload
 from app.api import deps
 from app.core.config import settings
 from app.db.session import get_db
-from app.models.hx import MedicalRecord, Document, RecordStatus, MedicalDiagnosis, DiagnosisStatus, VitalSigns
+from app.models.hx import MedicalRecord, Document, RecordStatus, RecordSource, MedicalDiagnosis, DiagnosisStatus, VitalSigns
 from app.models.user import User, UserRole
 from app.models.patient import PatientProfile
 from app.schemas import hx as hx_schema
@@ -129,7 +129,8 @@ async def create_medical_record(
             selectinload(MedicalRecord.category),
             selectinload(MedicalRecord.diagnoses),
             selectinload(MedicalRecord.prescriptions),
-            selectinload(MedicalRecord.clinical_orders)
+            selectinload(MedicalRecord.clinical_orders),
+            selectinload(MedicalRecord.vital_signs)
         )
     )
     return result.scalars().first()
@@ -253,7 +254,8 @@ async def read_medical_records(
         selectinload(MedicalRecord.category),
         selectinload(MedicalRecord.diagnoses),
         selectinload(MedicalRecord.prescriptions),
-        selectinload(MedicalRecord.clinical_orders)
+        selectinload(MedicalRecord.clinical_orders),
+        selectinload(MedicalRecord.vital_signs)
     ).offset(skip).limit(limit).order_by(MedicalRecord.created_at.desc())
     
     result = await db.execute(stmt)
@@ -366,3 +368,103 @@ async def get_medical_record(
         raise HTTPException(status_code=404, detail="Medical record not found")
     
     return record
+
+
+@router.put("/{record_id}", response_model=hx_schema.MedicalRecord)
+async def update_medical_record(
+    record_id: uuid.UUID,
+    record_in: hx_schema.MedicalRecordUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """
+    Patient updates their own medical record.
+    Allowed only if:
+      - The patient owns this record
+      - The record was created by the patient (record_source == PATIENT)
+      - No doctor has verified/edited it yet (verified_by is None)
+    """
+    # Resolve Patient Profile
+    result = await db.execute(select(PatientProfile).filter(PatientProfile.user_id == current_user.id))
+    patient_profile = result.scalars().first()
+    if not patient_profile:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+
+    # Load the record with relationships
+    result = await db.execute(
+        select(MedicalRecord)
+        .filter(
+            MedicalRecord.id == record_id,
+            MedicalRecord.patient_id == patient_profile.id,
+        )
+        .options(
+            selectinload(MedicalRecord.diagnoses),
+            selectinload(MedicalRecord.documents),
+            selectinload(MedicalRecord.category),
+            selectinload(MedicalRecord.prescriptions),
+            selectinload(MedicalRecord.clinical_orders),
+            selectinload(MedicalRecord.vital_signs),
+        )
+    )
+    record = result.scalars().first()
+    if not record:
+        raise HTTPException(status_code=404, detail="Medical record not found")
+
+    # Permission check
+    if record.record_source != RecordSource.PATIENT or record.created_by != current_user.id:
+        raise HTTPException(status_code=403, detail="Solo puedes editar registros creados por ti")
+    if record.verified_by is not None:
+        raise HTTPException(status_code=403, detail="Este registro ya fue verificado por un médico y no puede ser editado")
+
+    # Update scalar fields
+    update_data = record_in.model_dump(exclude_none=True, exclude={"diagnoses"})
+    for field, value in update_data.items():
+        setattr(record, field, value)
+
+    # Replace diagnoses if provided
+    if record_in.diagnoses is not None:
+        for diag in list(record.diagnoses):
+            await db.delete(diag)
+        for idx, diag_in in enumerate(record_in.diagnoses):
+            diagnosis = MedicalDiagnosis(
+                medical_record_id=record.id,
+                created_by=current_user.id,
+                diagnosis=diag_in.diagnosis,
+                diagnosis_code=diag_in.diagnosis_code,
+                diagnosis_code_system=diag_in.diagnosis_code_system,
+                rank=idx + 1,
+                status=DiagnosisStatus.PROVISIONAL,
+                notes=diag_in.notes,
+            )
+            db.add(diagnosis)
+
+    # Rebuild search_text
+    search_parts = []
+    if record.motive:
+        search_parts.append(record.motive.lower())
+    if record_in.diagnoses:
+        for d in record_in.diagnoses:
+            search_parts.append(d.diagnosis.lower())
+    if record.tags:
+        search_parts.extend([t.lower() for t in record.tags])
+    if record.notes:
+        search_parts.append(record.notes.lower())
+    search_parts.append(record.status.value.lower())
+    record.search_text = " ".join(search_parts)
+
+    await db.commit()
+
+    # Reload with relationships
+    result = await db.execute(
+        select(MedicalRecord)
+        .filter(MedicalRecord.id == record.id)
+        .options(
+            selectinload(MedicalRecord.documents),
+            selectinload(MedicalRecord.category),
+            selectinload(MedicalRecord.diagnoses),
+            selectinload(MedicalRecord.prescriptions),
+            selectinload(MedicalRecord.clinical_orders),
+            selectinload(MedicalRecord.vital_signs),
+        )
+    )
+    return result.scalar_one()

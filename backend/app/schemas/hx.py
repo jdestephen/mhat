@@ -93,8 +93,12 @@ class Category(BaseModel):
 class MedicalRecordCreate(MedicalRecordBase):
     diagnoses: Optional[List[MedicalDiagnosisCreate]] = Field(default_factory=list)
 
-class MedicalRecordUpdate(MedicalRecordBase):
-    pass
+class MedicalRecordUpdate(BaseModel):
+    motive: Optional[str] = None
+    notes: Optional[str] = None
+    category_id: Optional[int] = None
+    tags: Optional[List[str]] = None
+    diagnoses: Optional[List[MedicalDiagnosisCreate]] = None
 
 # Inline response schemas for prescriptions/orders to avoid circular imports
 class PrescriptionInline(BaseModel):

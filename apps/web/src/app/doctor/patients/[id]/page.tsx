@@ -439,6 +439,10 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
         open={modalOpen}
         onOpenChange={setModalOpen}
         record={selectedRecord}
+        onEdit={selectedRecord ? () => {
+          setModalOpen(false);
+          router.push(`/doctor/patients/${patientId}/records/${selectedRecord.id}/edit`);
+        } : undefined}
       />
 
       {/* Document Upload Modal */}

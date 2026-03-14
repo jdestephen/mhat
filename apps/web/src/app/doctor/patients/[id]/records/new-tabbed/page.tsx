@@ -29,7 +29,9 @@ import {
   DiagnosisStatus,
   OrderType,
   OrderUrgency,
+  MedicalRecord,
 } from '@/types';
+
 import {
   ArrowLeft,
   Plus,
@@ -55,10 +57,16 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]['id'];
 
-export default function NewTabbedRecordPage({ params }: { params: Promise<{ id: string }> }) {
+export default function NewTabbedRecordPage({
+  params,
+  initialData,
+}: {
+  params: Promise<{ id: string }>;
+  initialData?: MedicalRecord;
+}) {
   const { id: patientId } = use(params);
   const router = useRouter();
-  const form = useMedicalRecordForm(patientId);
+  const form = useMedicalRecordForm(patientId, { initialData });
   const [activeTab, setActiveTab] = useState<TabId>('vitals');
 
   // Redirect non-doctors
@@ -123,7 +131,9 @@ export default function NewTabbedRecordPage({ params }: { params: Promise<{ id: 
           </button>
         </div>
         <div className="mb-5">
-          <h1 className="text-2xl font-bold text-emerald-950">Nuevo Registro Clínico</h1>
+          <h1 className="text-2xl font-bold text-emerald-950">
+            {form.isEditMode ? 'Editar Registro Clínico' : 'Nuevo Registro Clínico'}
+          </h1>
         </div>
       </div>
 
@@ -823,7 +833,7 @@ export default function NewTabbedRecordPage({ params }: { params: Promise<{ id: 
               </Button>
             )}
             <Button type="submit" disabled={form.isSubmitting} className="min-w-[150px]">
-              {form.isSubmitting ? 'Guardando...' : 'Guardar Registro'}
+              {form.isSubmitting ? 'Guardando...' : form.isEditMode ? 'Guardar Cambios' : 'Guardar Registro'}
             </Button>
           </div>
         </div>

@@ -241,9 +241,8 @@ export default function DoctorDashboardPage() {
                   </span>
 
                   <Link href={`/doctor/patients/${patient.patient_id}`}>
-                    <Button variant="outline" size="sm" className="flex items-center gap-1.5">
+                    <Button variant="ghost" size="sm" className="flex items-center gap-1.5">
                       <Eye className="h-4 w-4" />
-                      Ver Resumen
                     </Button>
                   </Link>
 

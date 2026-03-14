@@ -10,6 +10,7 @@ import {
   Pill,
   ClipboardList,
   Tag,
+  Pencil,
 } from 'lucide-react';
 import { RecordStatus } from '@/types';
 import { getDocumentUrl } from '@/lib/api';
@@ -74,9 +75,10 @@ interface RecordDetailModalProps {
   onOpenChange: (open: boolean) => void;
   record: RecordDetailData | null;
   readOnly?: boolean;
+  onEdit?: () => void;
 }
 
-export function RecordDetailModal({ open, onOpenChange, record, readOnly = false }: RecordDetailModalProps) {
+export function RecordDetailModal({ open, onOpenChange, record, readOnly = false, onEdit }: RecordDetailModalProps) {
   if (!record) return null;
 
   const formatDate = (dateString: string) => {
@@ -362,7 +364,13 @@ export function RecordDetailModal({ open, onOpenChange, record, readOnly = false
           )}
         </div>
 
-        <div className="flex justify-end pt-4 border-t border-slate-200">
+        <div className="flex justify-end gap-2 pt-4 border-t border-slate-200">
+          {onEdit && (
+            <Button onClick={onEdit} variant="outline" className="mr-auto">
+              <Pencil className="w-4 h-4 mr-1" />
+              Editar
+            </Button>
+          )}
           <Button onClick={() => onOpenChange(false)} variant="outline">
             Cerrar
           </Button>

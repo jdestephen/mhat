@@ -242,6 +242,17 @@ export default function DashboardPage() {
                                       >
                                         Ver Detalles
                                       </button>
+                                      {!record.verified_by && (
+                                        <button
+                                          className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                                          onClick={() => {
+                                            setOpenDropdown(null);
+                                            router.push(`/records/${record.id}/edit`);
+                                          }}
+                                        >
+                                          Editar
+                                        </button>
+                                      )}
                                       <button
                                         className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
                                         onClick={() => {

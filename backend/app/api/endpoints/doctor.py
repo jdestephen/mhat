@@ -575,7 +575,8 @@ async def get_medical_record(
             selectinload(MedicalRecord.documents),
             selectinload(MedicalRecord.prescriptions),
             selectinload(MedicalRecord.clinical_orders),
-            selectinload(MedicalRecord.category)
+            selectinload(MedicalRecord.category),
+            selectinload(MedicalRecord.vital_signs)
         )
     )
     record = result.scalar_one_or_none()
