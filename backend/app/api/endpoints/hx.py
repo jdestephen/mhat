@@ -11,7 +11,7 @@ from sqlalchemy.orm import selectinload
 from app.api import deps
 from app.core.config import settings
 from app.db.session import get_db
-from app.models.hx import MedicalRecord, Document, RecordStatus, RecordSource, MedicalDiagnosis, DiagnosisStatus, VitalSigns, RecordViewLog
+from app.models.hx import MedicalRecord, Document, RecordStatus, RecordSource, MedicalDiagnosis, DiagnosisStatus, VitalSigns, RecordViewLog, VitalSignsStatus
 from app.models.user import User, UserRole
 from app.models.patient import PatientProfile
 from app.schemas import hx as hx_schema
@@ -329,6 +329,46 @@ async def get_vital_signs(
     vital = result.scalars().first()
     if not vital:
         raise HTTPException(status_code=404, detail="Vital signs record not found")
+    return vital
+
+
+@router.put("/vital-signs/{vital_id}", response_model=hx_schema.VitalSignsResponse)
+async def update_patient_vital_signs(
+    vital_id: uuid.UUID,
+    vital_in: hx_schema.VitalSignsUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """Update vital signs as patient. Only allowed if patient created it and status is UNVERIFIED."""
+    result = await db.execute(select(PatientProfile).filter(PatientProfile.user_id == current_user.id))
+    patient_profile = result.scalars().first()
+    if not patient_profile:
+        raise HTTPException(status_code=400, detail="Patient profile not found")
+
+    result = await db.execute(
+        select(VitalSigns).filter(
+            VitalSigns.id == vital_id,
+            VitalSigns.patient_id == patient_profile.id,
+        )
+    )
+    vital = result.scalars().first()
+    if not vital:
+        raise HTTPException(status_code=404, detail="Vital signs not found")
+
+    # Patient can only edit if they created it and it's still unverified
+    if vital.created_by != current_user.id:
+        raise HTTPException(status_code=403, detail="You can only edit vital signs you created")
+    if vital.status == VitalSignsStatus.VERIFIED:
+        raise HTTPException(status_code=403, detail="Cannot edit verified vital signs")
+
+    update_data = vital_in.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(vital, key, value)
+    vital.updated_by = current_user.id
+    vital.updated_at = datetime.now()
+
+    await db.commit()
+    await db.refresh(vital)
     return vital
 
 

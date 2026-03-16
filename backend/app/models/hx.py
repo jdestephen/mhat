@@ -163,7 +163,6 @@ class RecordViewLog(Base):
     doctor: Mapped["User"] = relationship("User", foreign_keys=[doctor_id])
 
 
-
 class Document(Base):
     __tablename__ = "documents"
 
@@ -181,6 +180,11 @@ class Document(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     medical_record: Mapped["MedicalRecord"] = relationship("MedicalRecord", back_populates="documents")
+
+
+class VitalSignsStatus(str, enum.Enum):
+    UNVERIFIED = "UNVERIFIED"
+    VERIFIED = "VERIFIED"
 
 
 class VitalSigns(Base):
@@ -206,11 +210,21 @@ class VitalSigns(Base):
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     measured_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
+    # Status tracking
+    status: Mapped[VitalSignsStatus] = mapped_column(
+        Enum(VitalSignsStatus), default=VitalSignsStatus.UNVERIFIED, nullable=False,
+        server_default="UNVERIFIED"
+    )
+
     # Audit
     created_by: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_by: Mapped[Optional[UUID]] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Relationships
     patient: Mapped["PatientProfile"] = relationship("PatientProfile")
     medical_record: Mapped[Optional["MedicalRecord"]] = relationship("MedicalRecord", back_populates="vital_signs")
     creator: Mapped["User"] = relationship("User", foreign_keys=[created_by])
+    updater: Mapped[Optional["User"]] = relationship("User", foreign_keys=[updated_by])
+

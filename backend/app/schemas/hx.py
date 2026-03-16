@@ -10,6 +10,10 @@ class RecordStatus(str, Enum):
     BACKED_BY_DOCUMENT = "BACKED_BY_DOCUMENT"
     VERIFIED = "VERIFIED"
 
+class VitalSignsStatus(str, Enum):
+    UNVERIFIED = "UNVERIFIED"
+    VERIFIED = "VERIFIED"
+
 class DiagnosisRank(int, Enum):
     PRIMARY = 1
     SECONDARY = 2
@@ -155,8 +159,11 @@ class VitalSignsResponse(VitalSignsBase):
     id: UUID
     patient_id: UUID
     medical_record_id: Optional[UUID] = None
+    status: VitalSignsStatus = VitalSignsStatus.UNVERIFIED
     created_by: UUID
     created_at: datetime
+    updated_by: Optional[UUID] = None
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -164,6 +171,8 @@ class VitalSignsResponse(VitalSignsBase):
 class VitalSignsInline(VitalSignsBase):
     """Inline vital signs for MedicalRecord response."""
     id: UUID
+    status: VitalSignsStatus = VitalSignsStatus.UNVERIFIED
+    created_by: UUID
     created_at: datetime
 
     class Config:

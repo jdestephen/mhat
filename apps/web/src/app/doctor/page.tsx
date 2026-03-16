@@ -24,7 +24,9 @@ import {
   Paperclip,
   ClipboardList,
   Droplets,
+  Activity,
 } from 'lucide-react';
+import { VitalSignsModal } from '@/components/clinical/VitalSignsModal';
 
 export default function DoctorDashboardPage() {
   const router = useRouter();
@@ -36,6 +38,9 @@ export default function DoctorDashboardPage() {
   const [claimCode, setClaimCode] = useState('');
   const [claimResult, setClaimResult] = useState<{ success: boolean; message: string; patientName?: string } | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [vitalModalOpen, setVitalModalOpen] = useState(false);
+  const [vitalModalPatientId, setVitalModalPatientId] = useState<string>('');
+  const [vitalModalPatientName, setVitalModalPatientName] = useState<string>('');
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -78,6 +83,7 @@ export default function DoctorDashboardPage() {
   }
 
   return (
+    <>
     <div className="max-w-6xl mx-auto">
       {/* Header */}
       <div className="mb-8">
@@ -283,6 +289,18 @@ export default function DoctorDashboardPage() {
                           <ClipboardList className="h-4 w-4 text-purple-600" />
                           Historial de Salud
                         </Link>
+                        <button
+                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                          onClick={() => {
+                            setOpenMenuId(null);
+                            setVitalModalPatientId(patient.patient_id);
+                            setVitalModalPatientName(`${patient.first_name} ${patient.last_name}`);
+                            setVitalModalOpen(true);
+                          }}
+                        >
+                          <Activity className="h-4 w-4 text-rose-600" />
+                          Signos Vitales
+                        </button>
                       </div>
                     )}
                   </div>
@@ -293,5 +311,14 @@ export default function DoctorDashboardPage() {
         )}
       </div>
     </div>
+
+    {/* Vital Signs Modal */}
+    <VitalSignsModal
+      open={vitalModalOpen}
+      onOpenChange={setVitalModalOpen}
+      patientId={vitalModalPatientId}
+      patientName={vitalModalPatientName}
+    />
+    </>
   );
 }

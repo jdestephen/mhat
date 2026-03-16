@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, use } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
+import api from '@/lib/api';
 import { useCreateDoctorRecord } from '@/hooks/mutations/useCreateDoctorRecord';
 import { useUpdateDoctorRecord } from '@/hooks/mutations/useUpdateDoctorRecord';
 import { useCategories } from '@/hooks/queries/useCategories';
@@ -179,6 +180,41 @@ export default function NewDoctorRecordPage({
         }
       : {}
   );
+  const [recentVitalsInfo, setRecentVitalsInfo] = useState<string | null>(null);
+
+  // Auto-load recent vital signs (<3h) when creating a new record
+  useEffect(() => {
+    if (isEditMode) return;
+    api.get(`/doctor/patients/${patientId}/vital-signs/recent`)
+      .then((res) => {
+        if (res.data) {
+          const v = res.data;
+          setVitalSignsData({
+            heart_rate: v.heart_rate ?? undefined,
+            systolic_bp: v.systolic_bp ?? undefined,
+            diastolic_bp: v.diastolic_bp ?? undefined,
+            temperature: v.temperature ?? undefined,
+            respiratory_rate: v.respiratory_rate ?? undefined,
+            oxygen_saturation: v.oxygen_saturation ?? undefined,
+            weight: v.weight ?? undefined,
+            height: v.height ?? undefined,
+            blood_glucose: v.blood_glucose ?? undefined,
+            waist_circumference: v.waist_circumference ?? undefined,
+            notes: v.notes ?? undefined,
+          });
+          setShowVitalSigns(true);
+          // Calculate time elapsed
+          const elapsed = Math.round(
+            (Date.now() - new Date(v.measured_at).getTime()) / 60000
+          );
+          const timeStr = elapsed < 60
+            ? `hace ${elapsed} min`
+            : `hace ${Math.round(elapsed / 60)}h ${elapsed % 60}min`;
+          setRecentVitalsInfo(`Signos vitales cargados automáticamente (${timeStr})`);
+        }
+      })
+      .catch(() => {});
+  }, [isEditMode, patientId]);
 
   // Derived state
   const hasRedFlags = redFlags.length > 0;
@@ -343,7 +379,13 @@ export default function NewDoctorRecordPage({
 
             {showVitalSigns && (
               <div className="p-6 border-t border-gray-100">
-                <VitalSignsForm data={vitalSignsData} onChange={setVitalSignsData} />
+                {recentVitalsInfo && (
+                  <div className="mb-3 px-3 py-2 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-700 flex items-center gap-2">
+                    <HeartPulse className="h-4 w-4 flex-shrink-0" />
+                    {recentVitalsInfo}
+                  </div>
+                )}
+                <VitalSignsForm data={vitalSignsData} onChange={setVitalSignsData} hideDateTimePicker />
               </div>
             )}
           </div>

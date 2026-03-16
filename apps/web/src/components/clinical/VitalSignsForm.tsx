@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Heart, Thermometer, Wind, Droplets, Weight, Ruler, Activity, CircleDot } from 'lucide-react';
+import { DateTimePicker } from '@/components/ui/DateTimePicker';
 
 /**
  * Normal ranges for vital signs (adult).
@@ -54,9 +55,13 @@ interface VitalSignsFormProps {
   onChange: (data: VitalSignsFormData) => void;
   disabled?: boolean;
   compact?: boolean;
+  /** Hide the date/time picker (e.g. when embedded inside medical record form) */
+  hideDateTimePicker?: boolean;
+  /** Initial value for DateTimePicker (edit mode) */
+  initialMeasuredAt?: string;
 }
 
-export function VitalSignsForm({ data, onChange, disabled = false, compact = false }: VitalSignsFormProps) {
+export function VitalSignsForm({ data, onChange, disabled = false, compact = false, hideDateTimePicker = false, initialMeasuredAt }: VitalSignsFormProps) {
   const updateField = <K extends keyof VitalSignsFormData>(key: K, value: VitalSignsFormData[K]) => {
     onChange({ ...data, [key]: value });
   };
@@ -78,6 +83,16 @@ export function VitalSignsForm({ data, onChange, disabled = false, compact = fal
 
   return (
     <div className="space-y-4">
+      {/* Date/Time Picker */}
+      {!hideDateTimePicker && (
+        <DateTimePicker
+          value={initialMeasuredAt || data.measured_at}
+          onChange={(iso) => updateField('measured_at', iso)}
+          disabled={disabled}
+          liveUpdate={!initialMeasuredAt}
+          label="Fecha y Hora de Medición"
+        />
+      )}
       {/* Row 1: Heart rate + Blood pressure */}
       <div className={`grid ${compact ? 'grid-cols-2' : 'grid-cols-3'} gap-3`}>
         <div>
