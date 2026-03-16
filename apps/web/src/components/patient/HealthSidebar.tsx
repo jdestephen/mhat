@@ -150,15 +150,20 @@ export function HealthSidebar({
         iconColor="text-blue-600"
         isEmpty={!medications.length}
       >
-        <ul className="space-y-2">
-          {medications.map((med) => (
-            <li key={med.id} className="text-sm">
-              <p className="font-medium text-slate-800">{med.name}</p>
-              {med.dosage && <p className="text-xs text-slate-600">{med.dosage}</p>}
-              {med.frequency && <p className="text-xs text-slate-600">{med.frequency}</p>}
-            </li>
-          ))}
-        </ul>
+        {/* Header */}
+        <div className="flex text-[10px] font-semibold uppercase tracking-wider text-slate-500 bg-slate-50 rounded-sm border-b border-slate-200 px-1 py-1.5 mb-1">
+          <div className="flex-1 text-blue-600">Nombre</div>
+          <div className="w-20 text-right text-blue-600">Dosis</div>
+          <div className="w-24 text-right text-blue-600">Frecuencia</div>
+        </div>
+        {/* Rows */}
+        {medications.map((med) => (
+          <div key={med.id} className="flex items-baseline py-1.5 border-b border-slate-50 last:border-0 gap-1 px-1 text-sm">
+            <div className="flex-1 font-medium text-slate-800 truncate pr-2">{med.name}</div>
+            <div className="w-20 text-right text-xs text-slate-600">{med.dosage || '—'}</div>
+            <div className="w-24 text-right text-xs text-slate-600 truncate">{med.frequency || '—'}</div>
+          </div>
+        ))}
       </HealthInfoCard>
 
       {/* Conditions */}
@@ -169,28 +174,33 @@ export function HealthSidebar({
         isEmpty={!conditions.length}
         emptyText="Ninguna"
       >
-        <ul className="space-y-2">
-          {conditions.map((cond) => (
-            <li key={cond.id} className="text-sm">
-              <p className="font-medium text-slate-800">{cond.name}</p>
-              <div className="flex items-center gap-2 mt-0.5">
-                {(cond.status || cond.severity) && (
-                  <span className={`text-xs px-2 py-0.5 rounded ${
-                    (cond.status === 'active' || cond.severity === 'HIGH') ? 'bg-amber-100 text-amber-700' :
-                    (cond.status === 'resolved' || cond.severity === 'LOW') ? 'bg-green-100 text-green-700' :
-                    (cond.status === 'controlled' || cond.severity === 'MEDIUM') ? 'bg-amber-100 text-amber-700' :
-                    'bg-gray-100 text-gray-600'
-                  }`}>
-                    {cond.status || cond.severity}
-                  </span>
-                )}
-                {cond.since_year && (
-                  <span className="text-xs text-slate-500">desde {cond.since_year}</span>
-                )}
-              </div>
-            </li>
-          ))}
-        </ul>
+        {/* Header */}
+        <div className="flex text-[10px] font-semibold uppercase tracking-wider text-slate-500 bg-slate-50 rounded-sm border-b border-slate-200 py-1.5 px-1 mb-1">
+          <div className="flex-1 text-purple-600">Condición</div>
+          <div className="w-24 text-center text-purple-600">Estado</div>
+          <div className="w-16 text-right text-purple-600">Desde</div>
+        </div>
+        {/* Rows */}
+        {conditions.map((cond) => (
+          <div key={cond.id} className="flex items-center py-1.5 border-b border-slate-50 last:border-0 px-1 text-sm">
+            <div className="flex-1 font-medium text-slate-800 truncate pr-2">{cond.name}</div>
+            <div className="w-24 text-center">
+              {(cond.status || cond.severity) ? (
+                <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                  (cond.status === 'active' || cond.severity === 'HIGH') ? 'bg-amber-100 text-amber-700' :
+                  (cond.status === 'resolved' || cond.severity === 'LOW') ? 'bg-green-100 text-green-700' :
+                  (cond.status === 'controlled' || cond.severity === 'MEDIUM') ? 'bg-amber-100 text-amber-700' :
+                  'bg-gray-100 text-gray-600'
+                }`}>
+                  {cond.status || cond.severity}
+                </span>
+              ) : (
+                <span className="text-xs text-slate-400">—</span>
+              )}
+            </div>
+            <div className="w-16 text-right text-xs text-slate-500">{cond.since_year || '—'}</div>
+          </div>
+        ))}
       </HealthInfoCard>
 
       {/* Allergies */}
@@ -202,23 +212,32 @@ export function HealthSidebar({
         isEmpty={!allergies.length}
         emptyText="Ninguna conocida"
       >
-        <ul className="space-y-2">
-          {allergies.map((allergy) => (
-            <li key={allergy.id} className="text-sm">
-              <p className="font-medium text-red-800">{allergy.allergen}</p>
-              {allergy.reaction && <p className="text-xs text-red-700">{allergy.reaction}</p>}
-              {allergy.severity && (
-                <span className={`text-xs px-2 py-0.5 rounded mt-0.5 inline-block ${
+        {/* Header */}
+        <div className="flex text-[10px] font-semibold uppercase tracking-wider text-slate-500 bg-slate-50 rounded-sm border-b border-slate-200 py-1.5 px-1 mb-1">
+          <div className="flex-1 text-red-600">Alérgeno</div>
+          <div className="w-28 text-center text-red-600">Reacción</div>
+          <div className="w-20 text-right text-red-600">Severidad</div>
+        </div>
+        {/* Rows */}
+        {allergies.map((allergy) => (
+          <div key={allergy.id} className="flex items-center py-1.5 border-b border-slate-50 last:border-0 px-1 text-sm">
+            <div className="flex-1 font-medium truncate pr-2">{allergy.allergen}</div>
+            <div className="w-28 text-center text-xs truncate">{allergy.reaction || '—'}</div>
+            <div className="w-20 text-right">
+              {allergy.severity ? (
+                <span className={`text-[10px] px-1.5 py-0.5 rounded ${
                   allergy.severity === 'severe' ? 'bg-red-200 text-red-800' :
                   allergy.severity === 'moderate' ? 'bg-amber-100 text-amber-700' :
                   'bg-gray-100 text-gray-600'
                 }`}>
                   {allergy.severity}
                 </span>
+              ) : (
+                <span className="text-xs text-slate-400">—</span>
               )}
-            </li>
-          ))}
-        </ul>
+            </div>
+          </div>
+        ))}
       </HealthInfoCard>
 
       {/* Family History */}
@@ -229,26 +248,32 @@ export function HealthSidebar({
         isEmpty={!familyHistory.length}
         emptyText="Sin registro"
       >
-        <ul className="space-y-3">
-          {familyHistory.map((fh) => (
-            <li key={fh.id} className="text-sm">
-              <p className="font-medium text-slate-800">{fh.condition_name}</p>
-              <div className="flex flex-wrap gap-1 mt-1">
-                {fh.family_members.map((member) => (
-                  <span
-                    key={member}
-                    className="text-xs px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700"
-                  >
-                    {FAMILY_MEMBER_LABELS[member] ?? member}
-                  </span>
-                ))}
-              </div>
+        {/* Header */}
+        <div className="flex text-[10px] font-semibold uppercase tracking-wider text-slate-500 bg-slate-50 rounded-sm border-b border-slate-200 py-1.5 px-1 mb-1">
+          <div className="flex-1 text-indigo-600">Condición</div>
+          <div className="w-32 text-right text-indigo-600">Familiares</div>
+        </div>
+        {/* Rows */}
+        {familyHistory.map((fh) => (
+          <div key={fh.id} className="flex items-start py-1.5 border-b border-slate-50 last:border-0 px-1 text-sm">
+            <div className="flex-1 pr-2">
+              <span className="font-medium text-slate-800">{fh.condition_name}</span>
               {fh.notes && (
-                <p className="text-xs text-slate-500 mt-1">{fh.notes}</p>
+                <p className="text-[10px] text-slate-500 mt-0.5">{fh.notes}</p>
               )}
-            </li>
-          ))}
-        </ul>
+            </div>
+            <div className="w-32 flex flex-wrap justify-end gap-1">
+              {fh.family_members.map((member) => (
+                <span
+                  key={member}
+                  className="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700"
+                >
+                  {FAMILY_MEMBER_LABELS[member] ?? member}
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
       </HealthInfoCard>    
 
       {/* Health Habits */}
@@ -259,11 +284,25 @@ export function HealthSidebar({
         isEmpty={!healthHabit || habitRows.length === 0}
         emptyText="Sin registro"
       >
-        <ul className="space-y-1.5">
-          {habitRows.map((row) => (
-            <HabitRow key={row.label} label={row.label} value={row.value} />
-          ))}
-        </ul>
+        {/* Header */}
+        <div className="flex text-[10px] font-semibold uppercase tracking-wider text-slate-500 bg-slate-50 rounded-sm border-b border-slate-200 py-1.5 px-1 mb-1">
+          <div className="flex-1 text-indigo-600">Hábito</div>
+          <div className="w-32 text-right text-indigo-600">Frecuencia</div>
+        </div>
+        {/* Rows */}
+        {habitRows.map((row) => (
+          <div key={row.label} className="flex items-start py-1.5 border-b border-slate-50 last:border-0 px-1 text-sm">
+            <div className="flex-1 pr-2">
+              <span className="font-medium text-slate-800">{row.label}</span>
+            </div>
+            <div className="w-32 flex flex-wrap justify-end gap-1">
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full">
+                {row.value}
+              </span>
+            </div>
+          </div>
+        ))}
+
         {healthHabit?.observations && (
           <p className="text-xs text-slate-500 mt-3 italic">
             {healthHabit.observations}
