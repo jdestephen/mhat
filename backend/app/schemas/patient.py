@@ -106,6 +106,7 @@ class MedicationBase(BaseModel):
     name: str
     dosage: Optional[str] = None
     frequency: Optional[str] = None
+    route: Optional[str] = None
     status: MedicationStatus = MedicationStatus.ACTIVE
     status_reason: Optional[str] = None
     start_date: Optional[date] = None
@@ -124,6 +125,7 @@ class MedicationUpdate(BaseModel):
     name: Optional[str] = None
     dosage: Optional[str] = None
     frequency: Optional[str] = None
+    route: Optional[str] = None
     status: Optional[MedicationStatus] = None
     status_reason: Optional[str] = None
     start_date: Optional[date] = None

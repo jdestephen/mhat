@@ -221,26 +221,6 @@ export function HealthSidebar({
         </ul>
       </HealthInfoCard>
 
-      {/* Health Habits */}
-      <HealthInfoCard
-        title="Hábitos"
-        icon={Heart}
-        iconColor="text-rose-500"
-        isEmpty={!healthHabit || habitRows.length === 0}
-        emptyText="Sin registro"
-      >
-        <ul className="space-y-1.5">
-          {habitRows.map((row) => (
-            <HabitRow key={row.label} label={row.label} value={row.value} />
-          ))}
-        </ul>
-        {healthHabit?.observations && (
-          <p className="text-xs text-slate-500 mt-3 italic">
-            {healthHabit.observations}
-          </p>
-        )}
-      </HealthInfoCard>
-
       {/* Family History */}
       <HealthInfoCard
         title="Antecedentes Familiares"
@@ -269,6 +249,26 @@ export function HealthSidebar({
             </li>
           ))}
         </ul>
+      </HealthInfoCard>    
+
+      {/* Health Habits */}
+      <HealthInfoCard
+        title="Hábitos"
+        icon={Heart}
+        iconColor="text-rose-500"
+        isEmpty={!healthHabit || habitRows.length === 0}
+        emptyText="Sin registro"
+      >
+        <ul className="space-y-1.5">
+          {habitRows.map((row) => (
+            <HabitRow key={row.label} label={row.label} value={row.value} />
+          ))}
+        </ul>
+        {healthHabit?.observations && (
+          <p className="text-xs text-slate-500 mt-3 italic">
+            {healthHabit.observations}
+          </p>
+        )}
       </HealthInfoCard>
     </div>
   );

@@ -166,6 +166,7 @@ class Medication(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     dosage: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     frequency: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    route: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)  # oral, IV, IM, topical, etc.
     
     # Status tracking (FHIR MedicationStatement)
     status: Mapped[MedicationStatus] = mapped_column(Enum(MedicationStatus), default=MedicationStatus.ACTIVE, nullable=False)

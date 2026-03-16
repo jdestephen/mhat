@@ -58,6 +58,7 @@ export interface Medication {
   name: string;
   dosage?: string;
   frequency?: string;
+  route?: string;
   status: MedicationStatus;
   status_reason?: string;
   start_date?: string;
