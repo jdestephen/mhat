@@ -5,7 +5,7 @@ Endpoints for doctor workflow: patient access, medical records, prescriptions, o
 """
 import uuid
 from typing import Any, List, Optional
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -532,14 +532,42 @@ async def create_patient_record(
     
     # Add vital signs if provided
     if record_in.vital_signs:
-        vital = VitalSigns(
-            patient_id=patient_profile_id,
-            medical_record_id=record.id,
-            created_by=current_user.id,
-            status=VitalSignsStatus.VERIFIED,
-            **record_in.vital_signs.model_dump(exclude_none=True),
-        )
-        db.add(vital)
+        if record_in.existing_vital_signs_id:
+            # Update existing vital signs and link to this record
+            result = await db.execute(
+                select(VitalSigns).where(
+                    VitalSigns.id == record_in.existing_vital_signs_id,
+                    VitalSigns.patient_id == patient_profile_id,
+                )
+            )
+            existing_vital = result.scalar_one_or_none()
+            if existing_vital:
+                update_data = record_in.vital_signs.model_dump(exclude_none=True)
+                for key, value in update_data.items():
+                    setattr(existing_vital, key, value)
+                existing_vital.medical_record_id = record.id
+                existing_vital.status = VitalSignsStatus.VERIFIED
+                existing_vital.updated_by = current_user.id
+                existing_vital.updated_at = datetime.now(timezone.utc)
+            else:
+                # Fallback: create new if existing not found
+                vital = VitalSigns(
+                    patient_id=patient_profile_id,
+                    medical_record_id=record.id,
+                    created_by=current_user.id,
+                    status=VitalSignsStatus.VERIFIED,
+                    **record_in.vital_signs.model_dump(exclude_none=True),
+                )
+                db.add(vital)
+        else:
+            vital = VitalSigns(
+                patient_id=patient_profile_id,
+                medical_record_id=record.id,
+                created_by=current_user.id,
+                status=VitalSignsStatus.VERIFIED,
+                **record_in.vital_signs.model_dump(exclude_none=True),
+            )
+            db.add(vital)
     
     await db.commit()
     await db.refresh(record)
@@ -589,7 +617,6 @@ async def get_medical_record(
     await get_doctor_patient_access(record.patient_id, db, current_user)
     
     # Log the view (15-min de-duplication)
-    from datetime import datetime, timezone, timedelta
     fifteen_min_ago = datetime.now(timezone.utc) - timedelta(minutes=15)
     existing_log = await db.execute(
         select(RecordViewLog).where(
@@ -911,7 +938,6 @@ async def update_vital_signs(
     if vital.updated_by and vital.updated_by != current_user.id:
         raise HTTPException(status_code=403, detail="Only the last updating doctor can edit these vital signs")
 
-    from datetime import datetime, timezone
     update_data = vital_in.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(vital, key, value)
@@ -933,7 +959,6 @@ async def get_recent_vital_signs(
     """Get the most recent vital signs taken within the last 3 hours."""
     await get_doctor_patient_access(patient_profile_id, db, current_user)
 
-    from datetime import datetime, timezone, timedelta
     three_hours_ago = datetime.now(timezone.utc) - timedelta(hours=3)
 
     result = await db.execute(
@@ -992,7 +1017,6 @@ async def update_medical_record(
     
     # If a doctor is editing a patient-created record, mark it as verified
     if record.record_source == RecordSource.PATIENT and record.created_by != current_user.id:
-        from datetime import datetime, timezone
         record.status = RecordStatus.VERIFIED
         record.verified_by = current_user.id
         record.verified_at = datetime.now(timezone.utc)
@@ -1151,7 +1175,6 @@ async def doctor_delete_condition(
     """Doctor soft-deletes a condition from patient's profile."""
     await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
     from app.models.patient import Condition as ConditionModel
-    from datetime import datetime as dt
     result = await db.execute(
         select(ConditionModel).filter(
             ConditionModel.id == condition_id,
@@ -1163,7 +1186,7 @@ async def doctor_delete_condition(
     if not condition:
         raise HTTPException(status_code=404, detail="Condition not found")
     condition.deleted = True
-    condition.deleted_at = dt.utcnow()
+    condition.deleted_at = datetime.utcnow()
     await db.commit()
 
 
@@ -1224,7 +1247,6 @@ async def doctor_delete_allergy(
     """Doctor soft-deletes an allergy from patient's profile."""
     await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
     from app.models.patient import Allergy as AllergyModel
-    from datetime import datetime as dt
     result = await db.execute(
         select(AllergyModel).filter(
             AllergyModel.id == allergy_id,
@@ -1236,7 +1258,7 @@ async def doctor_delete_allergy(
     if not allergy:
         raise HTTPException(status_code=404, detail="Allergy not found")
     allergy.deleted = True
-    allergy.deleted_at = dt.utcnow()
+    allergy.deleted_at = datetime.utcnow()
     await db.commit()
 
 

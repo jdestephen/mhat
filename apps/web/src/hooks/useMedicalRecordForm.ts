@@ -129,6 +129,7 @@ export function useMedicalRecordForm(patientId: string, options?: UseMedicalReco
       : {}
   );
   const [recentVitalsInfo, setRecentVitalsInfo] = useState<string | null>(null);
+  const [recentVitalSignsId, setRecentVitalSignsId] = useState<string | null>(null);
 
   // Auto-load recent vital signs (<3h) when creating a new record
   useEffect(() => {
@@ -150,6 +151,7 @@ export function useMedicalRecordForm(patientId: string, options?: UseMedicalReco
             waist_circumference: v.waist_circumference ?? undefined,
             notes: v.notes ?? undefined,
           });
+          setRecentVitalSignsId(v.id);
           const elapsed = Math.round(
             (Date.now() - new Date(v.measured_at).getTime()) / 60000
           );
@@ -253,6 +255,7 @@ export function useMedicalRecordForm(patientId: string, options?: UseMedicalReco
     vital_signs: Object.values(vitalSignsData).some(v => v !== undefined && v !== '')
       ? vitalSignsData
       : undefined,
+    existing_vital_signs_id: recentVitalSignsId || undefined,
   });
 
   const handleSubmit = async () => {

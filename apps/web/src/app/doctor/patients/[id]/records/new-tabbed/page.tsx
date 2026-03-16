@@ -51,8 +51,7 @@ const TABS = [
   { id: 'eval', label: 'Evaluación', icon: Stethoscope },
   { id: 'plan', label: 'Plan', icon: ClipboardList },
   { id: 'rx', label: 'Recetas', icon: Pill },
-  { id: 'orders', label: 'Órdenes', icon: FileText },
-  { id: 'summary', label: 'Resumen', icon: Eye },
+  { id: 'orders', label: 'Órdenes', icon: FileText }
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];
@@ -143,7 +142,6 @@ export default function NewTabbedRecordPage({
           <div className="flex items-center overflow-x-auto">
             {TABS.map((tab, idx) => {
               const isActive = activeTab === tab.id;
-              const isCompleted = tabCompletion[tab.id];
               const Icon = tab.icon;
 
               return (
@@ -159,18 +157,6 @@ export default function NewTabbedRecordPage({
                     }
                   `}
                 >
-                  {/* Step number with completion indicator */}
-                  <span className={`
-                    flex items-center justify-center h-6 w-6 rounded-full text-xs font-bold shrink-0
-                    ${isCompleted
-                      ? 'bg-emerald-100 text-emerald-700'
-                      : isActive
-                        ? 'bg-emerald-600 text-white'
-                        : 'bg-gray-100 text-gray-500'
-                    }
-                  `}>
-                    {isCompleted ? <Check className="h-3.5 w-3.5" /> : idx + 1}
-                  </span>
                   <Icon className={`h-4 w-4 ${isActive ? 'text-emerald-600' : 'text-gray-400'}`} />
                   <span className="hidden sm:inline">{tab.label}</span>
                 </button>
@@ -700,123 +686,6 @@ export default function NewTabbedRecordPage({
                 )}
               </div>
             )}
-
-            {/* === SUMMARY TAB === */}
-            {activeTab === 'summary' && (
-              <div className="space-y-6">
-                <h2 className="text-lg font-semibold text-emerald-900 mb-4 flex items-center gap-2">
-                  <Eye className="h-5 w-5" />
-                  Resumen del Registro
-                </h2>
-
-                {/* Completion overview */}
-                <div className="grid grid-cols-5 gap-3 mb-6">
-                  {TABS.filter(t => t.id !== 'summary').map(tab => {
-                    const isComplete = tabCompletion[tab.id];
-                    const Icon = tab.icon;
-                    return (
-                      <button
-                        key={tab.id}
-                        type="button"
-                        onClick={() => setActiveTab(tab.id)}
-                        className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border text-xs font-medium transition-colors ${
-                          isComplete
-                            ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                            : 'border-gray-200 bg-gray-50 text-gray-400'
-                        }`}
-                      >
-                        <Icon className="h-5 w-5" />
-                        {tab.label}
-                        {isComplete && <Check className="h-3.5 w-3.5" />}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Summary details */}
-                <div className="space-y-4">
-                  {/* Vitals summary */}
-                  {tabCompletion.vitals && (
-                    <SummarySection title="Signos Vitales">
-                      <div className="grid grid-cols-3 gap-2 text-sm">
-                        {form.vitalSignsData.heart_rate && <SummaryItem label="FC" value={`${form.vitalSignsData.heart_rate} lpm`} />}
-                        {form.vitalSignsData.systolic_bp && <SummaryItem label="PA" value={`${form.vitalSignsData.systolic_bp}/${form.vitalSignsData.diastolic_bp || '?'} mmHg`} />}
-                        {form.vitalSignsData.temperature && <SummaryItem label="Temp" value={`${form.vitalSignsData.temperature} °C`} />}
-                        {form.vitalSignsData.respiratory_rate && <SummaryItem label="FR" value={`${form.vitalSignsData.respiratory_rate} rpm`} />}
-                        {form.vitalSignsData.oxygen_saturation && <SummaryItem label="SpO₂" value={`${form.vitalSignsData.oxygen_saturation}%`} />}
-                        {form.vitalSignsData.weight && <SummaryItem label="Peso" value={`${form.vitalSignsData.weight} kg`} />}
-                        {form.vitalSignsData.height && <SummaryItem label="Talla" value={`${form.vitalSignsData.height} cm`} />}
-                      </div>
-                    </SummarySection>
-                  )}
-
-                  {/* Eval summary */}
-                  {tabCompletion.eval && (
-                    <SummarySection title="Evaluación Clínica">
-                      {form.motive && <SummaryItem label="Motivo" value={form.motive} />}
-                      {form.briefHistory && <SummaryItem label="Historia" value={form.briefHistory} />}
-                      {form.redFlags.length > 0 && (
-                        <div className="flex items-center gap-2 mt-1">
-                          <AlertTriangle className="h-4 w-4 text-red-500" />
-                          <span className="text-sm text-red-700">{form.redFlags.join(', ')}</span>
-                        </div>
-                      )}
-                      {form.keyFinding && <SummaryItem label="Examen Físico" value={form.keyFinding} />}
-                      {form.diagnoses.length > 0 && (
-                        <SummaryItem
-                          label="Diagnósticos"
-                          value={form.diagnoses.map(d => `${d.diagnosis} (${d.status})`).join(', ')}
-                        />
-                      )}
-                      {form.clinicalImpression && <SummaryItem label="Impresión Clínica" value={form.clinicalImpression} />}
-                    </SummarySection>
-                  )}
-
-                  {/* Plan summary */}
-                  {tabCompletion.plan && (
-                    <SummarySection title="Plan">
-                      {form.planBullets.filter(b => b.trim()).map((b, i) => (
-                        <p key={i} className="text-sm text-gray-700">• {b}</p>
-                      ))}
-                      {form.followUpInterval && <SummaryItem label="Seguimiento" value={form.followUpInterval} />}
-                      {form.patientInstructions && <SummaryItem label="Instrucciones" value={form.patientInstructions} />}
-                    </SummarySection>
-                  )}
-
-                  {/* Rx summary */}
-                  {tabCompletion.rx && (
-                    <SummarySection title={`Recetas (${form.prescriptions.length})`}>
-                      {form.prescriptions.map((rx, i) => (
-                        <p key={i} className="text-sm text-gray-700">
-                          • <span className="font-medium">{rx.medication_name}</span>
-                          {rx.dosage && ` — ${rx.dosage}`}
-                          {rx.frequency && `, ${rx.frequency}`}
-                        </p>
-                      ))}
-                    </SummarySection>
-                  )}
-
-                  {/* Orders summary */}
-                  {tabCompletion.orders && (
-                    <SummarySection title={`Órdenes (${form.orders.length})`}>
-                      {form.orders.map((o, i) => (
-                        <p key={i} className="text-sm text-gray-700">
-                          • <span className="font-medium">{o.description}</span> ({o.order_type})
-                        </p>
-                      ))}
-                    </SummarySection>
-                  )}
-
-                  {/* Empty state */}
-                  {!tabCompletion.vitals && !tabCompletion.eval && !tabCompletion.plan && !tabCompletion.rx && !tabCompletion.orders && (
-                    <div className="text-center py-12 text-gray-400">
-                      <Eye className="h-10 w-10 mx-auto mb-3 opacity-30" />
-                      <p>Completa las secciones para ver el resumen aquí</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
@@ -833,7 +702,7 @@ export default function NewTabbedRecordPage({
             )}
           </div>
           <div className="flex items-center gap-3">
-            {activeTab !== 'summary' && (
+            {activeTab !== 'orders' && (
               <Button type="button" variant="ghost" onClick={goToNextTab}>
                 Siguiente →
               </Button>

@@ -58,7 +58,7 @@ export default function PersonalInfoPage() {
         <Tabs defaultValue="personal">
           <TabsList>
             <TabsTrigger value="personal">Datos Personales</TabsTrigger>
-            <TabsTrigger value="references">Referencias Personales</TabsTrigger>
+            <TabsTrigger value="references">Contactos de Emergencia</TabsTrigger>
           </TabsList>
 
           <TabsContent value="personal">

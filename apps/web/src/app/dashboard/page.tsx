@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import { MedicalRecord, RecordStatus, UserRole } from '@/types';
 import { ShareRecordDialog } from '@/components/share/ShareRecordDialog';
 import { RecordViewLogModal } from '@/components/records/RecordViewLogModal';
+import { Pagination } from '@/components/ui/Pagination';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
 
 export default function DashboardPage() {
@@ -36,6 +37,10 @@ export default function DashboardPage() {
     dateTo: undefined as string | undefined,
   });
 
+  // Pagination
+  const PAGE_SIZE = 10;
+  const [currentPage, setCurrentPage] = useState(1);
+
   // Debounce text search
   const [debouncedQuery, setDebouncedQuery] = useState('');
   
@@ -58,6 +63,19 @@ export default function DashboardPage() {
       return res.data;
     },
   });
+
+  // Paginated records
+  const totalItems = records?.length ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+  const paginatedRecords = records?.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedQuery, searchFilters.dateFrom, searchFilters.dateTo]);
 
   const getStatusBadge = (status: RecordStatus) => {
     const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
@@ -134,7 +152,7 @@ export default function DashboardPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {records.map((record) => {
+                    {paginatedRecords?.map((record) => {
                       const diagnosis = getPrimaryDiagnosis(record);
                       return (
                         <tr key={record.id} id={`row-${record.id}`} className="hover:bg-slate-50 transition-colors">
@@ -296,7 +314,7 @@ export default function DashboardPage() {
             {/* Mobile Card View (below md) */}
             {records && records.length > 0 && (
               <div className="md:hidden space-y-4">
-                {records.map((record) => {
+                {paginatedRecords?.map((record) => {
                   const diagnosis = getPrimaryDiagnosis(record);
                   return (
                     <div key={record.id} className="bg-white p-6 rounded-lg border border-[var(--border-light)] shadow-sm">
@@ -376,6 +394,16 @@ export default function DashboardPage() {
                   );
                 })}
               </div>
+            )}
+            {records && records.length > 0 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                pageSize={PAGE_SIZE}
+                onPageChange={setCurrentPage}
+                itemLabel="registros"
+              />
             )}
           </>
         )}

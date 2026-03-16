@@ -187,6 +187,7 @@ class DoctorMedicalRecordCreate(BaseModel):
     prescriptions: Optional[List[PrescriptionCreate]] = Field(default_factory=list)
     orders: Optional[List[ClinicalOrderCreate]] = Field(default_factory=list)
     vital_signs: Optional[VitalSignsCreateBase] = None
+    existing_vital_signs_id: Optional[UUID] = None
 
 
 class DoctorMedicalRecordUpdate(BaseModel):

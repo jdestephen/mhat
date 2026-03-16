@@ -181,6 +181,7 @@ export default function NewDoctorRecordPage({
       : {}
   );
   const [recentVitalsInfo, setRecentVitalsInfo] = useState<string | null>(null);
+  const [recentVitalSignsId, setRecentVitalSignsId] = useState<string | null>(null);
 
   // Auto-load recent vital signs (<3h) when creating a new record
   useEffect(() => {
@@ -202,6 +203,7 @@ export default function NewDoctorRecordPage({
             waist_circumference: v.waist_circumference ?? undefined,
             notes: v.notes ?? undefined,
           });
+          setRecentVitalSignsId(v.id);
           setShowVitalSigns(true);
           // Calculate time elapsed
           const elapsed = Math.round(
@@ -308,6 +310,7 @@ export default function NewDoctorRecordPage({
     vital_signs: Object.values(vitalSignsData).some(v => v !== undefined && v !== '') 
       ? vitalSignsData 
       : undefined,
+    existing_vital_signs_id: recentVitalSignsId || undefined,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
