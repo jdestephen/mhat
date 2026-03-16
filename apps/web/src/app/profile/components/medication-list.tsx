@@ -216,7 +216,7 @@ export function MedicationList({ profile, onRefresh, apiPrefix = '/profiles/pati
               />
             </div>
 
-            <div className="col-span-2">
+            <div className="col-span-1">
               <label className="block text-sm font-medium mb-1">Instrucciones</label>
               <InputWithVoice
                 placeholder="ej. Tomar con comida"
