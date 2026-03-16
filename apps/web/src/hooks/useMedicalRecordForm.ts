@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import api from '@/lib/api';
 import { useCreateDoctorRecord } from '@/hooks/mutations/useCreateDoctorRecord';
 import { useUpdateDoctorRecord } from '@/hooks/mutations/useUpdateDoctorRecord';
 import { useCategories } from '@/hooks/queries/useCategories';
@@ -127,6 +128,39 @@ export function useMedicalRecordForm(patientId: string, options?: UseMedicalReco
         }
       : {}
   );
+  const [recentVitalsInfo, setRecentVitalsInfo] = useState<string | null>(null);
+
+  // Auto-load recent vital signs (<3h) when creating a new record
+  useEffect(() => {
+    if (isEditMode) return;
+    api.get(`/doctor/patients/${patientId}/vital-signs/recent`)
+      .then((res) => {
+        if (res.data) {
+          const v = res.data;
+          setVitalSignsData({
+            heart_rate: v.heart_rate ?? undefined,
+            systolic_bp: v.systolic_bp ?? undefined,
+            diastolic_bp: v.diastolic_bp ?? undefined,
+            temperature: v.temperature ?? undefined,
+            respiratory_rate: v.respiratory_rate ?? undefined,
+            oxygen_saturation: v.oxygen_saturation ?? undefined,
+            weight: v.weight ?? undefined,
+            height: v.height ?? undefined,
+            blood_glucose: v.blood_glucose ?? undefined,
+            waist_circumference: v.waist_circumference ?? undefined,
+            notes: v.notes ?? undefined,
+          });
+          const elapsed = Math.round(
+            (Date.now() - new Date(v.measured_at).getTime()) / 60000
+          );
+          const timeStr = elapsed < 60
+            ? `hace ${elapsed} min`
+            : `hace ${Math.round(elapsed / 60)}h ${elapsed % 60}min`;
+          setRecentVitalsInfo(`Signos vitales cargados automáticamente (${timeStr})`);
+        }
+      })
+      .catch(() => {});
+  }, [isEditMode, patientId]);
 
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -270,6 +304,7 @@ export function useMedicalRecordForm(patientId: string, options?: UseMedicalReco
     orders, addOrder, updateOrder, removeOrder,
     // Vital signs
     vitalSignsData, setVitalSignsData,
+    recentVitalsInfo,
     // Derived
     hasRedFlags,
     selectedCategory,

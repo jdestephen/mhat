@@ -189,7 +189,13 @@ export default function NewTabbedRecordPage({
                   <HeartPulse className="h-5 w-5 text-rose-500" />
                   Signos Vitales
                 </h2>
-                <VitalSignsForm data={form.vitalSignsData} onChange={form.setVitalSignsData} />
+                {form.recentVitalsInfo && (
+                  <div className="mb-3 px-3 py-2 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-700 flex items-center gap-2">
+                    <HeartPulse className="h-4 w-4 flex-shrink-0" />
+                    {form.recentVitalsInfo}
+                  </div>
+                )}
+                <VitalSignsForm data={form.vitalSignsData} onChange={form.setVitalSignsData} hideDateTimePicker />
               </div>
             )}
 
