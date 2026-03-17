@@ -24,6 +24,7 @@ import {
   ChevronDown,
   LayoutGrid,
   HeartPulse,
+  ArrowLeft,
 } from 'lucide-react';
 import { RecordDetailModal, RecordDetailData } from '@/components/records/RecordDetailModal';
 import { RecordCard, RecordCardData } from '@/components/records/RecordCard';
@@ -102,6 +103,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
     ? [
         patient.date_of_birth ? `${computeAge(patient.date_of_birth)} años` : null,
         patient.sex ? patient.sex : null,
+        patient.blood_type ? `🩸 ${patient.blood_type}` : null,
       ].filter(Boolean).join(' • ')
     : '';
 
@@ -172,7 +174,12 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
     <div className="flex flex-row max-w-8xl mx-auto gap-6">
       {/* Header */}
       <div className="flex flex-col flex-1 mb-6 gap-7">
-        <div className="flex items-center justify-between">
+        <div>
+          <Link href="/doctor" className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-emerald-600 transition-colors mb-2">
+            <ArrowLeft className="h-3 w-3" />
+            Mis Pacientes
+          </Link>
+          <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center">
               <User className="h-7 w-7 text-emerald-600" />
@@ -185,6 +192,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                 <p className="text-gray-500 text-sm">{patientSubtitle}</p>
               )}
             </div>
+          </div>
           </div>
         </div>
 
