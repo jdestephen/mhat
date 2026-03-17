@@ -49,7 +49,10 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
   const [actionMenuOpen, setActionMenuOpen] = useState(false);
   const actionMenuRef = useRef<HTMLDivElement>(null);
   const [vsPage, setVsPage] = useState(1);
+  const [rxPage, setRxPage] = useState(1);
+  const [ordersPage, setOrdersPage] = useState(1);
   const VS_PAGE_SIZE = 10;
+  const PLAN_PAGE_SIZE = 3;
 
   // Fetch vital signs history
   const { data: vitalSigns = [] } = useQuery<VitalSigns[]>({
@@ -226,13 +229,9 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                   <HeartPulse className="h-4 w-4" />
                   Signos Vitales
                 </TabsTrigger>
-                <TabsTrigger value="prescriptions" className="flex items-center gap-2">
-                  <Pill className="h-4 w-4" />
-                  Recetas
-                </TabsTrigger>
-                <TabsTrigger value="orders" className="flex items-center gap-2">
+                <TabsTrigger value="plan" className="flex items-center gap-2">
                   <ClipboardList className="h-4 w-4" />
-                  Órdenes
+                  Plan
                 </TabsTrigger>
 
                 <div className="flex-1 flex justify-end gap-1">
@@ -457,90 +456,133 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                 )}
               </TabsContent>
 
-              {/* Prescriptions Tab */}
-              <TabsContent value="prescriptions" className="p-0">
-                {allPrescriptions.length === 0 ? (
-                  <div className="p-12 text-center">
-                    <Pill className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Sin recetas</h3>
-                    <p className="text-gray-500">No hay recetas para este paciente</p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-2 divide-y divide-gray-100 p-2">
-                    {allPrescriptions.map((rx) => (
-                      <div key={rx.id} className="p-4 rounded-lg border border-gray-200">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h3 className="font-medium text-gray-900">{rx.medication_name}</h3>
-                            <div className="text-sm text-gray-500 mt-2 space-y-1">
-
-                              {rx.dosage && <p>Dosis: {rx.dosage}</p>}
-                              {rx.frequency && <p>Frecuencia: {rx.frequency}</p>}
-                              {rx.duration && <p>Duración: {rx.duration}</p>}
-                              {rx.instructions && (
-                                <p className="text-gray-600 mt-2">{rx.instructions}</p>
-                              )}
-                            </div>
-                          </div>
-                          <span className="text-sm text-blue-700">
-                            {formatDate(rx.created_at)}
-                          </span>
-                        </div>
+              {/* Plan Tab (Prescriptions + Orders) */}
+              <TabsContent value="plan" className="p-0">
+                <div className="p-4 space-y-6">
+                  {/* Prescriptions Section */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2 mb-3">
+                      <Pill className="h-4 w-4 text-blue-500" />
+                      Recetas
+                      <span className="text-xs font-normal text-slate-400">({allPrescriptions.length})</span>
+                    </h3>
+                    {allPrescriptions.length === 0 ? (
+                      <div className="py-6 text-center border border-dashed border-slate-200 rounded-lg">
+                        <Pill className="h-8 w-8 mx-auto text-gray-300 mb-2" />
+                        <p className="text-sm text-gray-500">Sin recetas</p>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-
-              {/* Orders Tab */}
-              <TabsContent value="orders" className="p-0">
-                {allOrders.length === 0 ? (
-                  <div className="p-12 text-center">
-                    <ClipboardList className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Sin órdenes</h3>
-                    <p className="text-gray-500">No hay órdenes clínicas para este paciente</p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col p-2 gap-2 divide-y divide-gray-100">
-                    {allOrders.map((order) => (
-                      <div key={order.id} className="p-4 rounded-lg border border-gray-200">
-                        <div className="flex items-start justify-between">
-                          <div className="flex flex-col gap-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                                order.order_type === 'LAB' ? 'bg-purple-100 text-purple-700' :
-                                order.order_type === 'IMAGING' ? 'bg-blue-100 text-blue-700' :
-                                order.order_type === 'REFERRAL' ? 'bg-amber-100 text-amber-700' :
-                                'bg-gray-100 text-gray-700'
-                              }`}>
-                                {order.order_type}
-                              </span>
-                              <span className={`px-2 py-0.5 rounded text-xs ${
-                                order.urgency === 'STAT' ? 'bg-red-100 text-red-700' :
-                                order.urgency === 'URGENT' ? 'bg-amber-100 text-amber-700' :
-                                'bg-gray-100 text-gray-600'
-                              }`}>
-                                {order.urgency}
-                              </span>
-                            </div>
-                            <h3 className="font-medium text-gray-900 mt-2">{order.description}</h3>
-                            {order.reason && (
-                              <p className="text-sm text-gray-500">{order.reason}</p>
-                            )}
-                            {order.referral_to && (
-                              <p className="text-sm text-gray-600 mt-1">
-                                Referir a: {order.referral_to}
-                              </p>
-                            )}
-                          </div>
-                          <span className="text-sm text-blue-600">
-                            {formatDate(order.created_at)}
-                          </span>
+                    ) : (
+                      <>
+                        <div className="flex flex-col gap-2">
+                          {allPrescriptions
+                            .slice((rxPage - 1) * PLAN_PAGE_SIZE, rxPage * PLAN_PAGE_SIZE)
+                            .map((rx) => (
+                              <div key={rx.id} className="p-4 rounded-lg border border-gray-200">
+                                <div className="flex items-start justify-between">
+                                  <div>
+                                    <h3 className="font-medium text-gray-900">{rx.medication_name}</h3>
+                                    <div className="text-sm text-gray-500 mt-2 space-y-1">
+                                      {rx.dosage && <p>Dosis: {rx.dosage}</p>}
+                                      {rx.frequency && <p>Frecuencia: {rx.frequency}</p>}
+                                      {rx.duration && <p>Duración: {rx.duration}</p>}
+                                      {rx.instructions && (
+                                        <p className="text-gray-600 mt-2">{rx.instructions}</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <span className="text-sm text-blue-700">
+                                    {formatDate(rx.created_at)}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
                         </div>
-                      </div>
-                    ))}
+                        {allPrescriptions.length > PLAN_PAGE_SIZE && (
+                          <Pagination
+                            currentPage={rxPage}
+                            totalPages={Math.ceil(allPrescriptions.length / PLAN_PAGE_SIZE)}
+                            totalItems={allPrescriptions.length}
+                            pageSize={PLAN_PAGE_SIZE}
+                            onPageChange={setRxPage}
+                            itemLabel="recetas"
+                          />
+                        )}
+                      </>
+                    )}
                   </div>
-                )}
+
+                  {/* Divider */}
+                  <hr className="border-slate-200" />
+
+                  {/* Orders Section */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2 mb-3">
+                      <ClipboardList className="h-4 w-4 text-amber-500" />
+                      Órdenes
+                      <span className="text-xs font-normal text-slate-400">({allOrders.length})</span>
+                    </h3>
+                    {allOrders.length === 0 ? (
+                      <div className="py-6 text-center border border-dashed border-slate-200 rounded-lg">
+                        <ClipboardList className="h-8 w-8 mx-auto text-gray-300 mb-2" />
+                        <p className="text-sm text-gray-500">Sin órdenes</p>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex flex-col gap-2">
+                          {allOrders
+                            .slice((ordersPage - 1) * PLAN_PAGE_SIZE, ordersPage * PLAN_PAGE_SIZE)
+                            .map((order) => (
+                              <div key={order.id} className="p-4 rounded-lg border border-gray-200">
+                                <div className="flex items-start justify-between">
+                                  <div className="flex flex-col gap-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                        order.order_type === 'LAB' ? 'bg-purple-100 text-purple-700' :
+                                        order.order_type === 'IMAGING' ? 'bg-blue-100 text-blue-700' :
+                                        order.order_type === 'REFERRAL' ? 'bg-amber-100 text-amber-700' :
+                                        'bg-gray-100 text-gray-700'
+                                      }`}>
+                                        {order.order_type}
+                                      </span>
+                                      <span className={`px-2 py-0.5 rounded text-xs ${
+                                        order.urgency === 'STAT' ? 'bg-red-100 text-red-700' :
+                                        order.urgency === 'URGENT' ? 'bg-amber-100 text-amber-700' :
+                                        'bg-gray-100 text-gray-600'
+                                      }`}>
+                                        {order.urgency}
+                                      </span>
+                                    </div>
+                                    <h3 className="font-medium text-gray-900 mt-2">{order.description}</h3>
+                                    {order.reason && (
+                                      <p className="text-sm text-gray-500">{order.reason}</p>
+                                    )}
+                                    {order.referral_to && (
+                                      <p className="text-sm text-gray-600 mt-1">
+                                        Referir a: {order.referral_to}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <span className="text-sm text-blue-600">
+                                    {formatDate(order.created_at)}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                        {allOrders.length > PLAN_PAGE_SIZE && (
+                          <Pagination
+                            currentPage={ordersPage}
+                            totalPages={Math.ceil(allOrders.length / PLAN_PAGE_SIZE)}
+                            totalItems={allOrders.length}
+                            pageSize={PLAN_PAGE_SIZE}
+                            onPageChange={setOrdersPage}
+                            itemLabel="órdenes"
+                          />
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
               </TabsContent>
             </Tabs>
           </div>
