@@ -41,14 +41,11 @@ import {
   ClipboardList,
   Pill,
   FileText,
-  Eye,
-  Check,
-  AlertTriangle,
 } from 'lucide-react';
 
 const TABS = [
-  { id: 'vitals', label: 'Signos Vitales', icon: HeartPulse },
   { id: 'eval', label: 'Evaluación', icon: Stethoscope },
+  { id: 'vitals', label: 'Signos Vitales', icon: HeartPulse },
   { id: 'plan', label: 'Plan', icon: ClipboardList },
   { id: 'rx', label: 'Recetas', icon: Pill },
   { id: 'orders', label: 'Órdenes', icon: FileText }
@@ -66,31 +63,13 @@ export default function NewTabbedRecordPage({
   const { id: patientId } = use(params);
   const router = useRouter();
   const form = useMedicalRecordForm(patientId, { initialData });
-  const [activeTab, setActiveTab] = useState<TabId>('vitals');
+  const [activeTab, setActiveTab] = useState<TabId>('eval');
 
   // Redirect non-doctors
   if (!form.userLoading && form.user?.role !== UserRole.DOCTOR) {
     router.push('/dashboard');
     return null;
   }
-
-  // Tab completion indicators
-  const tabCompletion = useMemo(() => {
-    const hasVitals = Object.values(form.vitalSignsData).some(v => v !== undefined && v !== '');
-    const hasEval = !!(form.motive || form.briefHistory || form.keyFinding || form.clinicalImpression || form.redFlags.length > 0 || form.diagnoses.length > 0);
-    const hasPlan = !!(form.planBullets.some(b => b.trim()) || form.followUpInterval || form.patientInstructions || form.actionsToday.length > 0);
-    const hasRx = form.prescriptions.length > 0;
-    const hasOrders = form.orders.length > 0;
-
-    return {
-      vitals: hasVitals,
-      eval: hasEval,
-      plan: hasPlan,
-      rx: hasRx,
-      orders: hasOrders,
-      summary: false, // never shows completed
-    };
-  }, [form.vitalSignsData, form.motive, form.briefHistory, form.keyFinding, form.clinicalImpression, form.redFlags, form.diagnoses, form.planBullets, form.followUpInterval, form.patientInstructions, form.actionsToday, form.prescriptions, form.orders]);
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -168,23 +147,6 @@ export default function NewTabbedRecordPage({
         {/* Tab Content */}
         <div className="bg-white rounded-b-lg border border-gray-200 min-h-[500px]">
           <div className="p-6">
-            {/* === VITAL SIGNS TAB === */}
-            {activeTab === 'vitals' && (
-              <div>
-                <h2 className="text-lg font-semibold text-emerald-900 mb-4 flex items-center gap-2">
-                  <HeartPulse className="h-5 w-5 text-rose-500" />
-                  Signos Vitales
-                </h2>
-                {form.recentVitalsInfo && (
-                  <div className="mb-3 px-3 py-2 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-700 flex items-center gap-2">
-                    <HeartPulse className="h-4 w-4 flex-shrink-0" />
-                    {form.recentVitalsInfo}
-                  </div>
-                )}
-                <VitalSignsForm data={form.vitalSignsData} onChange={form.setVitalSignsData} hideDateTimePicker />
-              </div>
-            )}
-
             {/* === EVALUATION TAB === */}
             {activeTab === 'eval' && (
               <div className="space-y-5">
@@ -368,6 +330,23 @@ export default function NewTabbedRecordPage({
                     </div>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* === VITAL SIGNS TAB === */}
+            {activeTab === 'vitals' && (
+              <div>
+                <h2 className="text-lg font-semibold text-emerald-900 mb-4 flex items-center gap-2">
+                  <HeartPulse className="h-5 w-5 text-rose-500" />
+                  Signos Vitales
+                </h2>
+                {form.recentVitalsInfo && (
+                  <div className="mb-3 px-3 py-2 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-700 flex items-center gap-2">
+                    <HeartPulse className="h-4 w-4 flex-shrink-0" />
+                    {form.recentVitalsInfo}
+                  </div>
+                )}
+                <VitalSignsForm data={form.vitalSignsData} onChange={form.setVitalSignsData} hideDateTimePicker />
               </div>
             )}
 

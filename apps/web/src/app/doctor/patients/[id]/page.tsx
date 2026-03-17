@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, use, useRef, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { usePatientRecords } from '@/hooks/queries/usePatientRecords';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
 import { useMyPatients } from '@/hooks/queries/useMyPatients';
@@ -8,7 +9,7 @@ import { usePatientHealth } from '@/hooks/queries/usePatientHealth';
 import { useVerifyRecord } from '@/hooks/mutations/useVerifyRecord';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { UserRole, RecordStatus, AccessLevel } from '@/types';
+import { UserRole, RecordStatus, AccessLevel, VitalSigns } from '@/types';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -22,11 +23,13 @@ import {
   Download,
   ChevronDown,
   LayoutGrid,
+  HeartPulse,
 } from 'lucide-react';
 import { RecordDetailModal, RecordDetailData } from '@/components/records/RecordDetailModal';
 import { RecordCard, RecordCardData } from '@/components/records/RecordCard';
 import { HealthSidebar } from '@/components/patient/HealthSidebar';
 import { DocumentUploadModal } from './components/DocumentUploadModal';
+import { Pagination } from '@/components/ui/Pagination';
 import api, { getDocumentUrl } from '@/lib/api';
 
 
@@ -43,6 +46,17 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [actionMenuOpen, setActionMenuOpen] = useState(false);
   const actionMenuRef = useRef<HTMLDivElement>(null);
+  const [vsPage, setVsPage] = useState(1);
+  const VS_PAGE_SIZE = 10;
+
+  // Fetch vital signs history
+  const { data: vitalSigns = [] } = useQuery<VitalSigns[]>({
+    queryKey: ['patient-vital-signs', patientId],
+    queryFn: async () => {
+      const res = await api.get(`/doctor/patients/${patientId}/vital-signs`);
+      return res.data;
+    },
+  });
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -204,6 +218,15 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                     </span>
                   )}
                 </TabsTrigger>
+                <TabsTrigger value="vitals" className="flex items-center gap-2">
+                  <HeartPulse className="h-4 w-4" />
+                  Signos Vitales
+                  {vitalSigns.length > 0 && (
+                    <span className="ml-1 text-xs bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-full">
+                      {vitalSigns.length}
+                    </span>
+                  )}
+                </TabsTrigger>
                 <TabsTrigger value="prescriptions" className="flex items-center gap-2">
                   <Pill className="h-4 w-4" />
                   Recetas
@@ -342,6 +365,95 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                         </Button>
                       </div>
                     ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              {/* Vital Signs History Tab */}
+              <TabsContent value="vitals" className="p-0">
+                {vitalSigns.length === 0 ? (
+                  <div className="p-12 text-center">
+                    <HeartPulse className="h-12 w-12 mx-auto text-gray-300 mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">Sin signos vitales</h3>
+                    <p className="text-gray-500">No hay registros de signos vitales para este paciente</p>
+                  </div>
+                ) : (
+                  <div className="p-4 overflow-x-auto">
+                    {/* Table header */}
+                    <div className="flex min-w-[900px] text-[10px] font-semibold uppercase tracking-wider text-slate-500 bg-slate-50 rounded-t border border-slate-200 px-3 py-2">
+                      <div className="w-28 flex-shrink-0">Fecha</div>
+                      <div className="flex-1 text-center">FC</div>
+                      <div className="flex-1 text-center">PA</div>
+                      <div className="flex-1 text-center">Temp</div>
+                      <div className="flex-1 text-center">FR</div>
+                      <div className="flex-1 text-center">SpO₂</div>
+                      <div className="flex-1 text-center">Peso</div>
+                      <div className="flex-1 text-center">Talla</div>
+                      <div className="flex-1 text-center">Gluc.</div>
+                      <div className="flex-1 text-center">C. Abd.</div>
+                    </div>
+                    {/* Table rows */}
+                    {vitalSigns
+                      .slice((vsPage - 1) * VS_PAGE_SIZE, vsPage * VS_PAGE_SIZE)
+                      .map((vs) => (
+                        <div
+                          key={vs.id}
+                          className="flex min-w-[900px] items-center px-3 py-2.5 border-x border-b border-slate-200 hover:bg-slate-50 transition-colors text-sm"
+                        >
+                          <div className="w-28 flex-shrink-0 text-xs text-slate-600 font-medium">
+                            {new Date(vs.measured_at).toLocaleDateString('es-ES', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric',
+                            })}
+                            <div className="text-[10px] text-slate-400">
+                              {new Date(vs.measured_at).toLocaleTimeString('es-ES', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </div>
+                          </div>
+                          <div className="flex-1 text-center text-slate-700">
+                            {vs.heart_rate != null ? <span>{vs.heart_rate} <span className="text-[10px] text-slate-400">bpm</span></span> : '—'}
+                          </div>
+                          <div className="flex-1 text-center text-slate-700">
+                            {vs.systolic_bp != null && vs.diastolic_bp != null
+                              ? <span>{vs.systolic_bp}/{vs.diastolic_bp}</span>
+                              : vs.systolic_bp != null ? `${vs.systolic_bp}/—`
+                              : vs.diastolic_bp != null ? `—/${vs.diastolic_bp}`
+                              : '—'}
+                          </div>
+                          <div className="flex-1 text-center text-slate-700">
+                            {vs.temperature != null ? <span>{vs.temperature} <span className="text-[10px] text-slate-400">°C</span></span> : '—'}
+                          </div>
+                          <div className="flex-1 text-center text-slate-700">
+                            {vs.respiratory_rate != null ? <span>{vs.respiratory_rate} <span className="text-[10px] text-slate-400">rpm</span></span> : '—'}
+                          </div>
+                          <div className="flex-1 text-center text-slate-700">
+                            {vs.oxygen_saturation != null ? <span>{vs.oxygen_saturation}<span className="text-[10px] text-slate-400">%</span></span> : '—'}
+                          </div>
+                          <div className="flex-1 text-center text-slate-700">
+                            {vs.weight != null ? <span>{vs.weight} <span className="text-[10px] text-slate-400">kg</span></span> : '—'}
+                          </div>
+                          <div className="flex-1 text-center text-slate-700">
+                            {vs.height != null ? <span>{vs.height} <span className="text-[10px] text-slate-400">cm</span></span> : '—'}
+                          </div>
+                          <div className="flex-1 text-center text-slate-700">
+                            {vs.blood_glucose != null ? <span>{vs.blood_glucose} <span className="text-[10px] text-slate-400">mg/dL</span></span> : '—'}
+                          </div>
+                          <div className="flex-1 text-center text-slate-700">
+                            {vs.waist_circumference != null ? <span>{vs.waist_circumference} <span className="text-[10px] text-slate-400">cm</span></span> : '—'}
+                          </div>
+                        </div>
+                      ))}
+                    <Pagination
+                      currentPage={vsPage}
+                      totalPages={Math.max(1, Math.ceil(vitalSigns.length / VS_PAGE_SIZE))}
+                      totalItems={vitalSigns.length}
+                      pageSize={VS_PAGE_SIZE}
+                      onPageChange={setVsPage}
+                      itemLabel="registros"
+                    />
                   </div>
                 )}
               </TabsContent>
