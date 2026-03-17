@@ -30,6 +30,7 @@ import { RecordCard, RecordCardData } from '@/components/records/RecordCard';
 import { HealthSidebar } from '@/components/patient/HealthSidebar';
 import { DocumentUploadModal } from './components/DocumentUploadModal';
 import { Pagination } from '@/components/ui/Pagination';
+import { getVitalColor, getBpColor } from '@/lib/vitalSignsRanges';
 import api, { getDocumentUrl } from '@/lib/api';
 
 
@@ -212,20 +213,10 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                 <TabsTrigger value="documents" className="flex items-center gap-2">
                   <Paperclip className="h-4 w-4" />
                   Exámenes
-                  {allDocuments.length > 0 && (
-                    <span className="ml-1 text-xs bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-full">
-                      {allDocuments.length}
-                    </span>
-                  )}
                 </TabsTrigger>
                 <TabsTrigger value="vitals" className="flex items-center gap-2">
                   <HeartPulse className="h-4 w-4" />
                   Signos Vitales
-                  {vitalSigns.length > 0 && (
-                    <span className="ml-1 text-xs bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-full">
-                      {vitalSigns.length}
-                    </span>
-                  )}
                 </TabsTrigger>
                 <TabsTrigger value="prescriptions" className="flex items-center gap-2">
                   <Pill className="h-4 w-4" />
@@ -406,30 +397,30 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                               month: 'short',
                               year: 'numeric',
                             })}
-                            <div className="text-[10px] text-slate-400">
+                            <div className="text-[10px] text-blue-600">
                               {new Date(vs.measured_at).toLocaleTimeString('es-ES', {
                                 hour: '2-digit',
                                 minute: '2-digit',
                               })}
                             </div>
                           </div>
-                          <div className="flex-1 text-center text-slate-700">
+                          <div className={`flex-1 text-center ${getVitalColor('heart_rate', vs.heart_rate)}`}>
                             {vs.heart_rate != null ? <span>{vs.heart_rate} <span className="text-[10px] text-slate-400">bpm</span></span> : '—'}
                           </div>
-                          <div className="flex-1 text-center text-slate-700">
+                          <div className={`flex-1 text-center ${getBpColor(vs.systolic_bp, vs.diastolic_bp)}`}>
                             {vs.systolic_bp != null && vs.diastolic_bp != null
                               ? <span>{vs.systolic_bp}/{vs.diastolic_bp}</span>
                               : vs.systolic_bp != null ? `${vs.systolic_bp}/—`
                               : vs.diastolic_bp != null ? `—/${vs.diastolic_bp}`
                               : '—'}
                           </div>
-                          <div className="flex-1 text-center text-slate-700">
+                          <div className={`flex-1 text-center ${getVitalColor('temperature', vs.temperature)}`}>
                             {vs.temperature != null ? <span>{vs.temperature} <span className="text-[10px] text-slate-400">°C</span></span> : '—'}
                           </div>
-                          <div className="flex-1 text-center text-slate-700">
+                          <div className={`flex-1 text-center ${getVitalColor('respiratory_rate', vs.respiratory_rate)}`}>
                             {vs.respiratory_rate != null ? <span>{vs.respiratory_rate} <span className="text-[10px] text-slate-400">rpm</span></span> : '—'}
                           </div>
-                          <div className="flex-1 text-center text-slate-700">
+                          <div className={`flex-1 text-center ${getVitalColor('oxygen_saturation', vs.oxygen_saturation)}`}>
                             {vs.oxygen_saturation != null ? <span>{vs.oxygen_saturation}<span className="text-[10px] text-slate-400">%</span></span> : '—'}
                           </div>
                           <div className="flex-1 text-center text-slate-700">
@@ -438,7 +429,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                           <div className="flex-1 text-center text-slate-700">
                             {vs.height != null ? <span>{vs.height} <span className="text-[10px] text-slate-400">cm</span></span> : '—'}
                           </div>
-                          <div className="flex-1 text-center text-slate-700">
+                          <div className={`flex-1 text-center ${getVitalColor('blood_glucose', vs.blood_glucose)}`}>
                             {vs.blood_glucose != null ? <span>{vs.blood_glucose} <span className="text-[10px] text-slate-400">mg/dL</span></span> : '—'}
                           </div>
                           <div className="flex-1 text-center text-slate-700">

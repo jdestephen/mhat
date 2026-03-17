@@ -6,6 +6,7 @@ import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { VitalSignsForm, VitalSignsFormData } from '@/components/clinical/VitalSignsForm';
 import { VitalSigns } from '@/types';
+import { getVitalColor, getBpColor } from '@/lib/vitalSignsRanges';
 import {
   HeartPulse,
   Plus,
@@ -149,7 +150,7 @@ export default function VitalSignsPage() {
                     <Heart className="h-4 w-4 text-red-400 flex-shrink-0" />
                     <div>
                       <div className="text-xs text-slate-400">FC</div>
-                      <div className="text-sm font-semibold text-slate-800">{formatValue(vs.heart_rate, 'lpm')}</div>
+                      <div className={`text-sm font-semibold ${getVitalColor('heart_rate', vs.heart_rate)}`}>{formatValue(vs.heart_rate, 'lpm')}</div>
                     </div>
                   </div>
                 )}
@@ -158,7 +159,7 @@ export default function VitalSignsPage() {
                     <Activity className="h-4 w-4 text-blue-400 flex-shrink-0" />
                     <div>
                       <div className="text-xs text-slate-400">PA</div>
-                      <div className="text-sm font-semibold text-slate-800">
+                      <div className={`text-sm font-semibold ${getBpColor(vs.systolic_bp, vs.diastolic_bp)}`}>
                         {vs.systolic_bp}/{vs.diastolic_bp ?? '—'} mmHg
                       </div>
                     </div>
@@ -169,7 +170,7 @@ export default function VitalSignsPage() {
                     <Thermometer className="h-4 w-4 text-orange-400 flex-shrink-0" />
                     <div>
                       <div className="text-xs text-slate-400">Temp</div>
-                      <div className="text-sm font-semibold text-slate-800">{formatValue(vs.temperature, '°C', 1)}</div>
+                      <div className={`text-sm font-semibold ${getVitalColor('temperature', vs.temperature)}`}>{formatValue(vs.temperature, '°C', 1)}</div>
                     </div>
                   </div>
                 )}
@@ -178,7 +179,7 @@ export default function VitalSignsPage() {
                     <Droplets className="h-4 w-4 text-sky-400 flex-shrink-0" />
                     <div>
                       <div className="text-xs text-slate-400">SpO₂</div>
-                      <div className="text-sm font-semibold text-slate-800">{formatValue(vs.oxygen_saturation, '%')}</div>
+                      <div className={`text-sm font-semibold ${getVitalColor('oxygen_saturation', vs.oxygen_saturation)}`}>{formatValue(vs.oxygen_saturation, '%')}</div>
                     </div>
                   </div>
                 )}
@@ -189,7 +190,7 @@ export default function VitalSignsPage() {
                     </div>
                     <div>
                       <div className="text-xs text-slate-400">Glicemia</div>
-                      <div className="text-sm font-semibold text-slate-800">{formatValue(vs.blood_glucose, 'mg/dL', 1)}</div>
+                      <div className={`text-sm font-semibold ${getVitalColor('blood_glucose', vs.blood_glucose)}`}>{formatValue(vs.blood_glucose, 'mg/dL', 1)}</div>
                     </div>
                   </div>
                 )}
