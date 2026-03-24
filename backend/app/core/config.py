@@ -22,6 +22,13 @@ class Settings(BaseSettings):
 
     # STORAGE
     UPLOAD_DIR: str = "/app/uploads"
+    STORAGE_LOCAL_MODE: bool = True
+    STORAGE_ENDPOINT: Optional[str] = None
+    STORAGE_ACCESS_KEY: Optional[str] = None
+    STORAGE_SECRET_KEY: Optional[str] = None
+    STORAGE_BUCKET: str = "mhat-documents"
+    STORAGE_REGION: str = "auto"
+    STORAGE_PRESIGNED_EXPIRY: int = 3600  # 1 hour
 
     # EMAIL
     EMAIL_ENABLED: bool = False

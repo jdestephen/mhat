@@ -603,5 +603,7 @@ async def view_shared_document(
             detail="Document not found or does not belong to this patient"
         )
     
-    # Return redirect to the S3 URL
-    return RedirectResponse(url=document.url)
+    # Generate a fresh presigned URL via storage service
+    from app.services import storage as storage_service
+    url = storage_service.get_presigned_url(document.s3_key)
+    return RedirectResponse(url=url)

@@ -1,5 +1,3 @@
-import os
-import shutil
 import uuid
 from typing import List, Any, Optional
 from datetime import datetime, timedelta
@@ -16,6 +14,7 @@ from app.models.user import User, UserRole
 from app.models.patient import PatientProfile
 from app.schemas import hx as hx_schema
 from app.services import ocr
+from app.services import storage as storage_service
 from datetime import datetime
 
 router = APIRouter()
@@ -164,34 +163,29 @@ async def upload_document_to_record(
     if not record:
         raise HTTPException(status_code=404, detail="Medical Record not found")
     
-    # Ensure upload directory exists
-    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-    
-    # Save file
-    file_extension = file.filename.split(".")[-1]
-    file_name = f"{uuid.uuid4()}.{file_extension}"
-    file_path = os.path.join(settings.UPLOAD_DIR, file_name)
-    s3_key = file_name # using local path as key for prototype
-    
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-        
+    # Upload file via storage service
+    file_extension = file.filename.split('.')[-1] if file.filename else 'bin'
+    result = await storage_service.upload_file(file, folder='documents')
+
     # Create DB Entry
     doc = Document(
         medical_record_id=record.id,
-        s3_key=s3_key,
+        s3_key=result.s3_key,
         filename=file.filename,
         media_type=file_extension,
-        url=f"/static/uploads/{file_name}" # Placeholder URL
+        url=result.url,
     )
     
-    # Optional: Basic OCR Trigger
-    if file_extension.lower() in ["jpg", "jpeg", "png"]:
+    # Optional: Basic OCR Trigger (only for local mode, needs file path)
+    if settings.STORAGE_LOCAL_MODE and file_extension.lower() in ['jpg', 'jpeg', 'png']:
+        import os
+        file_name = result.s3_key.split('/')[-1]
+        file_path = os.path.join(settings.UPLOAD_DIR, file_name)
         try:
             extracted_text = ocr.process_image(file_path)
             doc.ocr_text = extracted_text
         except Exception as e:
-            print(f"OCR Failed: {e}")
+            print(f'OCR Failed: {e}')
         
     db.add(doc)
     
@@ -202,6 +196,61 @@ async def upload_document_to_record(
     await db.commit()
     await db.refresh(doc)
     return doc
+
+
+@router.get('/{record_id}/documents/{document_id}/url')
+async def get_document_presigned_url(
+    record_id: uuid.UUID,
+    document_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """
+    Generate a fresh presigned URL for a document.
+    Verifies the user owns or has access to the record.
+    """
+    # Verify record exists
+    result = await db.execute(
+        select(MedicalRecord).filter(MedicalRecord.id == record_id)
+    )
+    record = result.scalars().first()
+    if not record:
+        raise HTTPException(status_code=404, detail='Medical Record not found')
+
+    # Verify access: patient owns the record, or doctor has access
+    if current_user.role == UserRole.PATIENT:
+        patient_result = await db.execute(
+            select(PatientProfile).filter(PatientProfile.user_id == current_user.id)
+        )
+        patient_profile = patient_result.scalars().first()
+        if not patient_profile or record.patient_id != patient_profile.id:
+            raise HTTPException(status_code=403, detail='No tienes acceso a este registro')
+    elif current_user.role == UserRole.DOCTOR:
+        # Doctors can access records of patients they have access to
+        from app.models.family import DoctorAccess
+        access_result = await db.execute(
+            select(DoctorAccess).filter(
+                DoctorAccess.doctor_id == current_user.id,
+                DoctorAccess.patient_id == record.patient_id,
+                DoctorAccess.is_active == True,
+            )
+        )
+        if not access_result.scalars().first():
+            raise HTTPException(status_code=403, detail='No tienes acceso a este paciente')
+
+    # Verify document belongs to this record
+    doc_result = await db.execute(
+        select(Document).filter(
+            Document.id == document_id,
+            Document.medical_record_id == record_id,
+        )
+    )
+    doc = doc_result.scalars().first()
+    if not doc:
+        raise HTTPException(status_code=404, detail='Documento no encontrado')
+
+    url = storage_service.get_presigned_url(doc.s3_key)
+    return {'url': url}
 
 @router.get("/", response_model=List[hx_schema.MedicalRecord])
 async def read_medical_records(

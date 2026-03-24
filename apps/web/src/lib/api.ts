@@ -24,8 +24,8 @@ api.interceptors.request.use((config) => {
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1';
 export const BACKEND_ORIGIN = new URL(apiUrl).origin;
 
-/** Builds a full URL for a document served by the backend. */
-export const getDocumentUrl = (relativePath: string): string =>
-  `${BACKEND_ORIGIN}${relativePath}`;
+/** Builds a full URL for a document served by the backend or cloud storage. */
+export const getDocumentUrl = (path: string): string =>
+  path.startsWith('http') ? path : `${BACKEND_ORIGIN}${path}`;
 
 export default api;

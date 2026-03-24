@@ -15,3 +15,4 @@ pytesseract
 pypdf2
 pillow
 resend
+boto3
