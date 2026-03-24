@@ -14,3 +14,4 @@ bcrypt==3.2.2
 pytesseract
 pypdf2
 pillow
+resend

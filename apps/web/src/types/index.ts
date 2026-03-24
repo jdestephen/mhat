@@ -17,6 +17,7 @@ export interface User {
   city?: string;
   country?: string;
   is_active: boolean;
+  is_email_verified: boolean;
   role: UserRole;
 }
 

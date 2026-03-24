@@ -7,6 +7,7 @@ import api from '@/lib/api';
 import { PatientProfileForm } from './PatientProfileForm';
 import { DoctorProfileForm } from './DoctorProfileForm';
 import { PersonalReferencesTab } from './PersonalReferencesTab';
+import { ChangePasswordForm } from './ChangePasswordForm';
 
 export default function PersonalInfoPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -59,6 +60,7 @@ export default function PersonalInfoPage() {
           <TabsList>
             <TabsTrigger value="personal">Datos Personales</TabsTrigger>
             <TabsTrigger value="references">Contactos de Emergencia</TabsTrigger>
+            <TabsTrigger value="security">Seguridad</TabsTrigger>
           </TabsList>
 
           <TabsContent value="personal">
@@ -79,15 +81,36 @@ export default function PersonalInfoPage() {
               />
             </div>
           </TabsContent>
+
+          <TabsContent value="security">
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-[var(--border-light)]">
+              <ChangePasswordForm />
+            </div>
+          </TabsContent>
         </Tabs>
       ) : (
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-[var(--border-light)]">
-          <DoctorProfileForm
-            user={user}
-            profile={profile as DoctorProfile}
-            onSaved={fetchData}
-          />
-        </div>
+        <Tabs defaultValue="personal">
+          <TabsList>
+            <TabsTrigger value="personal">Datos Personales</TabsTrigger>
+            <TabsTrigger value="security">Seguridad</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="personal">
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-[var(--border-light)]">
+              <DoctorProfileForm
+                user={user}
+                profile={profile as DoctorProfile}
+                onSaved={fetchData}
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="security">
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-[var(--border-light)]">
+              <ChangePasswordForm />
+            </div>
+          </TabsContent>
+        </Tabs>
       )}
     </div>
   );

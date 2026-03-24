@@ -23,6 +23,16 @@ class Settings(BaseSettings):
     # STORAGE
     UPLOAD_DIR: str = "/app/uploads"
 
+    # EMAIL
+    EMAIL_ENABLED: bool = False
+    RESEND_API_KEY: Optional[str] = None
+    EMAIL_FROM_ADDRESS: str = "noreply@mhat.app"
+    EMAIL_FROM_NAME: str = "MHAT - Historial Médico"
+
+    # TOKEN EXPIRY
+    EMAIL_VERIFY_TOKEN_EXPIRE_HOURS: int = 24
+    PASSWORD_RESET_TOKEN_EXPIRE_HOURS: int = 1
+
     # FRONTEND
     FRONTEND_URL: str = "http://localhost:3000"
     

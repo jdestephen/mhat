@@ -25,6 +25,7 @@ services:
       - POSTGRES_SERVER=db
       - POSTGRES_DB=mhat_db
       - SECRET_KEY=${SECRET_KEY}
+      - EMAIL_ENABLED=false
     depends_on:
       - db
 

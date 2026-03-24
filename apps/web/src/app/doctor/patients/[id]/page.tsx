@@ -25,12 +25,14 @@ import {
   LayoutGrid,
   HeartPulse,
   ArrowLeft,
+  Activity,
 } from 'lucide-react';
 import { RecordDetailModal, RecordDetailData } from '@/components/records/RecordDetailModal';
 import { RecordCard, RecordCardData } from '@/components/records/RecordCard';
 import { HealthSidebar } from '@/components/patient/HealthSidebar';
 import { DocumentUploadModal } from './components/DocumentUploadModal';
 import { Pagination } from '@/components/ui/Pagination';
+import { VitalSignsModal } from '@/components/clinical/VitalSignsModal';
 import { getVitalColor, getBpColor } from '@/lib/vitalSignsRanges';
 import api, { getDocumentUrl } from '@/lib/api';
 
@@ -47,6 +49,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
   const [modalOpen, setModalOpen] = useState(false);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [actionMenuOpen, setActionMenuOpen] = useState(false);
+  const [vitalModalOpen, setVitalModalOpen] = useState(false);
   const actionMenuRef = useRef<HTMLDivElement>(null);
   const [vsPage, setVsPage] = useState(1);
   const [rxPage, setRxPage] = useState(1);
@@ -280,6 +283,26 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                           >
                             <Paperclip className="h-4 w-4" />
                             Examenes
+                          </button>
+                          <div className="border-t border-gray-100 my-1" />
+                          <Link
+                            href={`/doctor/patients/${patientId}/health-history`}
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                            onClick={() => setActionMenuOpen(false)}
+                          >
+                            <ClipboardList className="h-4 w-4 text-purple-600" />
+                            Historial de Salud
+                          </Link>
+                          <button
+                            type="button"
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                            onClick={() => {
+                              setActionMenuOpen(false);
+                              setVitalModalOpen(true);
+                            }}
+                          >
+                            <Activity className="h-4 w-4 text-rose-600" />
+                            Signos Vitales
                           </button>
                         </div>
                       )}
@@ -606,6 +629,14 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
         onOpenChange={setUploadModalOpen}
         patientId={patientId}
         onSuccess={() => refetch()}
+      />
+
+      {/* Vital Signs Modal */}
+      <VitalSignsModal
+        open={vitalModalOpen}
+        onOpenChange={setVitalModalOpen}
+        patientId={patientId}
+        patientName={patientName}
       />
     </div>
   );
