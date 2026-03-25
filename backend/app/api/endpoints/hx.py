@@ -12,6 +12,7 @@ from app.db.session import get_db
 from app.models.hx import MedicalRecord, Document, RecordStatus, RecordSource, MedicalDiagnosis, DiagnosisStatus, VitalSigns, RecordViewLog, VitalSignsStatus
 from app.models.user import User, UserRole
 from app.models.patient import PatientProfile
+from app.models.family import FamilyMembership, RelationshipType
 from app.schemas import hx as hx_schema
 from app.services import ocr
 from app.services import storage as storage_service
@@ -19,32 +20,61 @@ from datetime import datetime
 
 router = APIRouter()
 
+
+async def resolve_patient_profile(
+    db: AsyncSession,
+    user: User,
+    profile_id: Optional[str] = None,
+) -> PatientProfile:
+    """
+    Resolve the patient profile to use.
+    If profile_id is given, verify the user has access via FamilyMembership.
+    Otherwise, use the user's default (SELF) profile.
+    """
+    if profile_id:
+        from uuid import UUID as UUIDType
+        pid = UUIDType(profile_id)
+        # Verify access via FamilyMembership
+        result = await db.execute(
+            select(FamilyMembership, PatientProfile)
+            .join(PatientProfile, FamilyMembership.patient_profile_id == PatientProfile.id)
+            .where(
+                FamilyMembership.user_id == user.id,
+                FamilyMembership.patient_profile_id == pid,
+                FamilyMembership.is_active == True,
+            )
+        )
+        row = result.first()
+        if not row:
+            raise HTTPException(status_code=403, detail="No tienes acceso a este perfil")
+        _, profile = row
+        return profile
+
+    # Default: use SELF profile
+    result = await db.execute(
+        select(PatientProfile).filter(PatientProfile.user_id == user.id)
+    )
+    profile = result.scalars().first()
+    if not profile:
+        raise HTTPException(status_code=400, detail="Patient profile not found for this user")
+    return profile
+
+
 @router.post("/", response_model=hx_schema.MedicalRecord)
 async def create_medical_record(
     *,
     db: AsyncSession = Depends(get_db),
     record_in: hx_schema.MedicalRecordCreate,
-    current_user: User = Depends(deps.get_current_user)
+    current_user: User = Depends(deps.get_current_user),
+    profile_id: Optional[str] = Query(None, description="Profile ID to create record for"),
 ) -> Any:
     """
-    Create a new Medical Record. 
-    If user is Patient, creates for self.
-    If user is Doctor, must specify patient_id (TODO: Permission check).
-    For now, assuming Patient creates their own records.
+    Create a new Medical Record.
+    If profile_id is specified, creates for that profile (with access check).
+    Otherwise, creates for the user's default profile.
     """
-    print(f"DEBUG: Received request to create medical record")
-    print(f"DEBUG: record_in = {record_in}")
-    print(f"DEBUG: record_in.diagnoses = {record_in.diagnoses}")
-    
     # Resolve Patient Profile
-    # Simplified logic: Assumes current user is the patient
-    # TODO: Add logic for Doctor creating record for a specific patient
-    
-    result = await db.execute(select(PatientProfile).filter(PatientProfile.user_id == current_user.id))
-    patient_profile = result.scalars().first()
-    
-    if not patient_profile:
-        raise HTTPException(status_code=400, detail="Patient profile not found for this user")
+    patient_profile = await resolve_patient_profile(db, current_user, profile_id)
 
     # Build search_text field by concatenating searchable content
     search_parts = []
@@ -263,14 +293,14 @@ async def read_medical_records(
     category_id: Optional[int] = Query(None, description="Filter by category ID"),
     date_from: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
     date_to: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
+    profile_id: Optional[str] = Query(None, description="Profile ID to view records for"),
 ) -> Any:
     """
-    Retrieve Medical Records for the current user (Patient) with optional search filters.
+    Retrieve Medical Records with optional search filters.
+    Supports multi-profile via profile_id parameter.
     """
     # Resolve Patient Profile
-    result = await db.execute(select(PatientProfile).filter(PatientProfile.user_id == current_user.id))
-    patient_profile = result.scalars().first()
-    
+    patient_profile = await resolve_patient_profile(db, current_user, profile_id)
     if not patient_profile:
         return []
 
@@ -320,12 +350,10 @@ async def create_vital_signs(
     db: AsyncSession = Depends(get_db),
     vital_in: hx_schema.VitalSignsCreate,
     current_user: User = Depends(deps.get_current_user),
+    profile_id: Optional[str] = Query(None, description="Profile ID"),
 ) -> Any:
-    """Create a standalone vital signs record for the current patient."""
-    result = await db.execute(select(PatientProfile).filter(PatientProfile.user_id == current_user.id))
-    patient_profile = result.scalars().first()
-    if not patient_profile:
-        raise HTTPException(status_code=400, detail="Patient profile not found")
+    """Create a standalone vital signs record."""
+    patient_profile = await resolve_patient_profile(db, current_user, profile_id)
 
     vital_signs = VitalSigns(
         patient_id=patient_profile.id,
@@ -342,12 +370,10 @@ async def create_vital_signs(
 async def list_vital_signs(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(deps.get_current_user),
+    profile_id: Optional[str] = Query(None, description="Profile ID"),
 ) -> Any:
-    """List all vital signs for the current patient (descending by measured_at)."""
-    result = await db.execute(select(PatientProfile).filter(PatientProfile.user_id == current_user.id))
-    patient_profile = result.scalars().first()
-    if not patient_profile:
-        raise HTTPException(status_code=400, detail="Patient profile not found")
+    """List all vital signs (descending by measured_at)."""
+    patient_profile = await resolve_patient_profile(db, current_user, profile_id)
 
     stmt = (
         select(VitalSigns)

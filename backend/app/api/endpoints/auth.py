@@ -129,6 +129,7 @@ async def register_user(
 
     # Create Profile based on Role
     if user.role == UserRole.PATIENT:
+        # Always create a fresh profile for the new user
         profile = PatientProfile(
             user_id=user.id,
             first_name=user_in.first_name,
@@ -149,6 +150,25 @@ async def register_user(
             is_active=True,
         )
         db.add(membership)
+
+        # Check for doctor-created profiles matching this email → create claim requests
+        existing_profile_result = await db.execute(
+            select(PatientProfile).filter(
+                PatientProfile.email == user_in.email,
+                PatientProfile.user_id.is_(None),
+            )
+        )
+        existing_profiles = existing_profile_result.scalars().all()
+
+        if existing_profiles:
+            from app.models.profile_claim import ProfileClaimRequest, ClaimStatus
+            for ep in existing_profiles:
+                claim = ProfileClaimRequest(
+                    user_id=user.id,
+                    patient_profile_id=ep.id,
+                    status=ClaimStatus.PENDING,
+                )
+                db.add(claim)
     elif user.role == UserRole.DOCTOR:
         profile = DoctorProfile(user_id=user.id)
         db.add(profile)

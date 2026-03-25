@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { VitalSignsModal } from '@/components/clinical/VitalSignsModal';
 import { CreatePatientModal } from '@/components/doctor/CreatePatientModal';
+import { ClaimRequestsPanel } from '@/components/doctor/ClaimRequestsPanel';
 
 export default function DoctorDashboardPage() {
   const router = useRouter();
@@ -93,6 +94,9 @@ export default function DoctorDashboardPage() {
         <h1 className="text-3xl font-bold text-emerald-950">Panel Médico</h1>
         <p className="text-gray-600 mt-1">Gestiona tus pacientes y registros clínicos</p>
       </div>
+
+      {/* Claim Requests (pending patient link requests) */}
+      <ClaimRequestsPanel />
 
       {/* Claim Invitation */}
       {showClaimForm && (

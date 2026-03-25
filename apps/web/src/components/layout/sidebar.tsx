@@ -22,6 +22,7 @@ import clsx from 'clsx';
 import { useState } from 'react';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
 import { UserRole } from '@/types';
+import { ProfileSwitcher } from '@/components/patient/ProfileSwitcher';
 
 
 interface MenuItem {
@@ -260,6 +261,9 @@ export function Sidebar() {
           </>
         )}
       </div>
+
+      {/* Profile Switcher (patients only, multi-profile) */}
+      {!collapsed && isPatient && <ProfileSwitcher />}
 
       {/* Nav */}
       <div className="flex-1 overflow-auto py-6 px-2">

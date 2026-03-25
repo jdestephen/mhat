@@ -292,6 +292,45 @@ class DoctorAccessInfo(BaseModel):
         from_attributes = True
 
 
+# --- Claim Request Schemas ---
+
+class ClaimRequestSummary(BaseModel):
+    """Summary of a profile claim request (for doctor and patient views)."""
+    id: UUID
+    user_id: UUID
+    patient_profile_id: UUID
+    status: str
+    requested_at: datetime
+    resolved_at: Optional[datetime] = None
+    # Extra info for display
+    patient_name: str  # Name from the doctor-created profile
+    patient_email: Optional[str] = None
+    requesting_user_name: Optional[str] = None
+    requesting_user_email: Optional[str] = None
+    doctor_name: Optional[str] = None  # Doctor who created the profile
+
+    class Config:
+        from_attributes = True
+
+
+# --- Patient Profile Schemas ---
+
+class PatientProfileSummary(BaseModel):
+    """Summary of a patient profile accessible to the current user."""
+    id: UUID
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    date_of_birth: Optional[str] = None
+    relationship_type: str  # SELF, PARENT, CHILD, etc.
+    access_level: str  # FULL_ACCESS, READ_ONLY, etc.
+    is_self: bool  # Whether this is the user's own profile
+    has_records: bool = False  # Whether this profile has any medical records
+    created_by_doctor_name: Optional[str] = None  # If doctor-created
+
+    class Config:
+        from_attributes = True
+
+
 # Import at end to avoid circular imports
 from app.schemas.hx import MedicalDiagnosisCreate
 

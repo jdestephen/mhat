@@ -136,9 +136,12 @@ async def _send_email(to: str, subject: str, html: str) -> None:
     if not settings.EMAIL_ENABLED:
         # Use print() so it's always visible in Docker compose logs
         import re
-        # Extract links from the HTML for easy copy-paste
-        links = re.findall(r'href="([^"]*(?:verify-email|reset-password)[^"]*)"', html)
-        link_str = "\n".join(f"  → {link}" for link in links) if links else "  (no links found)"
+        # Extract all links from the HTML for easy copy-paste
+        links = re.findall(r'href="([^"]+)"', html)
+        # Deduplicate while preserving order
+        seen: set[str] = set()
+        unique_links = [x for x in links if not (x in seen or seen.add(x))]
+        link_str = "\n".join(f"  → {link}" for link in unique_links) if unique_links else "  (no links found)"
         print(
             "\n" + "=" * 60 +
             f"\n📧 EMAIL (dev mode - not sent)"

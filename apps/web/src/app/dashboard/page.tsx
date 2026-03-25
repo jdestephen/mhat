@@ -13,6 +13,8 @@ import { ShareRecordDialog } from '@/components/share/ShareRecordDialog';
 import { RecordViewLogModal } from '@/components/records/RecordViewLogModal';
 import { Pagination } from '@/components/ui/Pagination';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
+import { ClaimRequestBanner } from '@/components/patient/ClaimRequestBanner';
+import { useActiveProfile } from '@/hooks/useActiveProfile';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -51,13 +53,16 @@ export default function DashboardPage() {
     return () => clearTimeout(timer);
   }, [searchFilters.query]);
 
+  const { activeProfileId } = useActiveProfile();
+
   const { data: records, isLoading } = useQuery<MedicalRecord[]>({
-    queryKey: ['medical-records', debouncedQuery, searchFilters.dateFrom, searchFilters.dateTo],
+    queryKey: ['medical-records', debouncedQuery, searchFilters.dateFrom, searchFilters.dateTo, activeProfileId],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (debouncedQuery) params.append('q', debouncedQuery);
       if (searchFilters.dateFrom) params.append('date_from', searchFilters.dateFrom);
       if (searchFilters.dateTo) params.append('date_to', searchFilters.dateTo);
+      if (activeProfileId) params.append('profile_id', activeProfileId);
       
       const res = await api.get(`/hx/${params.toString() ? '?' + params.toString() : ''}`);
       return res.data;
@@ -119,6 +124,8 @@ export default function DashboardPage() {
           dateTo: filters.dateTo,
         })}
       />
+      
+      <ClaimRequestBanner />
       
       <div className="mb-6">
         <h2 className="text-xl font-semibold text-slate-700 mb-4">Historial Clínico</h2>
