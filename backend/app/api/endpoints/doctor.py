@@ -1635,7 +1635,7 @@ async def approve_claim_request(
         )
         vitals_count = await db.execute(
             select(VitalSigns.id).where(
-                VitalSigns.patient_profile_id == self_membership.patient_profile_id
+                VitalSigns.patient_id == self_membership.patient_profile_id
             ).limit(1)
         )
         self_profile_empty = (
