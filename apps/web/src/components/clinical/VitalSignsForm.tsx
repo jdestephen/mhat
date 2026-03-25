@@ -93,8 +93,9 @@ export function VitalSignsForm({ data, onChange, disabled = false, compact = fal
           label="Fecha y Hora de Medición"
         />
       )}
-      {/* Row 1: Heart rate + Blood pressure */}
-      <div className={`grid ${compact ? 'grid-cols-2' : 'grid-cols-3'} gap-3`}>
+      {/* All vital sign inputs in a single grid — flows as 2-col on mobile, 3-col on sm+ */}
+      <div className={`grid ${compact ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-3'} gap-3`}>
+        {/* Heart Rate */}
         <div>
           <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600 mb-1">
             <Heart className="h-3.5 w-3.5 text-red-400" />
@@ -115,6 +116,7 @@ export function VitalSignsForm({ data, onChange, disabled = false, compact = fal
           </div>
         </div>
 
+        {/* Systolic BP */}
         <div>
           <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600 mb-1">
             <Activity className="h-3.5 w-3.5 text-blue-400" />
@@ -135,6 +137,7 @@ export function VitalSignsForm({ data, onChange, disabled = false, compact = fal
           </div>
         </div>
 
+        {/* Diastolic BP */}
         <div>
           <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600 mb-1">
             <Activity className="h-3.5 w-3.5 text-indigo-400" />
@@ -154,10 +157,8 @@ export function VitalSignsForm({ data, onChange, disabled = false, compact = fal
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">mmHg</span>
           </div>
         </div>
-      </div>
 
-      {/* Row 2: Temperature + SpO2 + Respiratory rate */}
-      <div className={`grid ${compact ? 'grid-cols-2' : 'grid-cols-3'} gap-3`}>
+        {/* Temperature */}
         <div>
           <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600 mb-1">
             <Thermometer className="h-3.5 w-3.5 text-orange-400" />
@@ -179,6 +180,7 @@ export function VitalSignsForm({ data, onChange, disabled = false, compact = fal
           </div>
         </div>
 
+        {/* SpO2 */}
         <div>
           <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600 mb-1">
             <Droplets className="h-3.5 w-3.5 text-sky-400" />
@@ -199,6 +201,7 @@ export function VitalSignsForm({ data, onChange, disabled = false, compact = fal
           </div>
         </div>
 
+        {/* Respiratory Rate */}
         <div>
           <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600 mb-1">
             <Wind className="h-3.5 w-3.5 text-teal-400" />
@@ -218,10 +221,8 @@ export function VitalSignsForm({ data, onChange, disabled = false, compact = fal
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">rpm</span>
           </div>
         </div>
-      </div>
 
-      {/* Row 3: Weight + Height + BMI (auto) */}
-      <div className={`grid ${compact ? 'grid-cols-2' : 'grid-cols-3'} gap-3`}>
+        {/* Weight */}
         <div>
           <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600 mb-1">
             <Weight className="h-3.5 w-3.5 text-purple-400" />
@@ -243,6 +244,7 @@ export function VitalSignsForm({ data, onChange, disabled = false, compact = fal
           </div>
         </div>
 
+        {/* Height */}
         <div>
           <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600 mb-1">
             <Ruler className="h-3.5 w-3.5 text-emerald-400" />
@@ -264,6 +266,7 @@ export function VitalSignsForm({ data, onChange, disabled = false, compact = fal
           </div>
         </div>
 
+        {/* BMI (auto-calculated) */}
         {bmi && (
           <div>
             <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600 mb-1">
@@ -274,10 +277,8 @@ export function VitalSignsForm({ data, onChange, disabled = false, compact = fal
             </div>
           </div>
         )}
-      </div>
 
-      {/* Row 4: Blood glucose + Waist circumference */}
-      <div className={`grid ${compact ? 'grid-cols-2' : 'grid-cols-3'} gap-3`}>
+        {/* Blood Glucose */}
         <div>
           <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600 mb-1">
             <CircleDot className="h-3.5 w-3.5 text-rose-400" />
@@ -299,6 +300,7 @@ export function VitalSignsForm({ data, onChange, disabled = false, compact = fal
           </div>
         </div>
 
+        {/* Waist Circumference */}
         <div>
           <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600 mb-1">
             <Ruler className="h-3.5 w-3.5 text-amber-500" />

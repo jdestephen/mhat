@@ -204,7 +204,10 @@ async def add_patient_allergy(
         .options(
              selectinload(PatientProfile.medications),
              selectinload(PatientProfile.allergies),
-             selectinload(PatientProfile.conditions)
+             selectinload(PatientProfile.conditions),
+             selectinload(PatientProfile.personal_references),
+             selectinload(PatientProfile.health_habit),
+             selectinload(PatientProfile.family_history),
         )
     )
     return result.scalars().first()
@@ -265,7 +268,10 @@ async def add_patient_condition(
         .options(
              selectinload(PatientProfile.medications),
              selectinload(PatientProfile.allergies),
-             selectinload(PatientProfile.conditions)
+             selectinload(PatientProfile.conditions),
+             selectinload(PatientProfile.personal_references),
+             selectinload(PatientProfile.health_habit),
+             selectinload(PatientProfile.family_history),
         )
     )
     return result.scalars().first()
