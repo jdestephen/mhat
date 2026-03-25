@@ -90,9 +90,9 @@ export default function DoctorDashboardPage() {
     <>
     <div className="max-w-6xl mx-auto">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-emerald-950">Panel Médico</h1>
-        <p className="text-gray-600 mt-1">Gestiona tus pacientes y registros clínicos</p>
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-emerald-950">Panel Médico</h1>
+        <p className="text-gray-600 mt-1 text-sm sm:text-base">Gestiona tus pacientes y registros clínicos</p>
       </div>
 
       {/* Claim Requests (pending patient link requests) */}
@@ -171,10 +171,10 @@ export default function DoctorDashboardPage() {
 
       {/* Patient List */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-        <div className="p-6 border-b border-gray-100">
-          <div className="flex items-center justify-between gap-4">
+        <div className="p-4 sm:p-6 border-b border-gray-100">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
             <h2 className="text-lg font-semibold text-gray-900">Mis Pacientes</h2>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
@@ -182,23 +182,28 @@ export default function DoctorDashboardPage() {
                   placeholder="Buscar paciente..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-64"
+                  className="pl-10 w-full sm:w-64"
                 />
               </div>
-              <Button
-                variant="outline"
-                onClick={() => { setShowClaimForm(true); setClaimResult(null); }}
-              >
-                <KeyRound className="w-4 h-4 mr-2" />
-                Vincular Paciente
-              </Button>
-              <Button
-                onClick={() => setShowCreateModal(true)}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white"
-              >
-                <UserPlus className="w-4 h-4 mr-2" />
-                Crear Paciente
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => { setShowClaimForm(true); setClaimResult(null); }}
+                  className="flex-1 sm:flex-none text-xs sm:text-sm"
+                >
+                  <KeyRound className="w-4 h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Vincular</span>
+                  <span className="sm:hidden">Vincular</span>
+                </Button>
+                <Button
+                  onClick={() => setShowCreateModal(true)}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white flex-1 sm:flex-none text-xs sm:text-sm"
+                >
+                  <UserPlus className="w-4 h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Crear Paciente</span>
+                  <span className="sm:hidden">Crear</span>
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -220,10 +225,10 @@ export default function DoctorDashboardPage() {
             {filteredPatients.map((patient) => (
               <div
                 key={patient.patient_id}
-                className="flex items-center justify-between p-4 hover:bg-gray-50/50 transition-colors"
+                className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 hover:bg-gray-50/50 transition-colors gap-3"
               >
                 {/* Left: Avatar + Info */}
-                <div className="flex items-center gap-4 min-w-0">
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                   <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
                     <span className="text-lg font-semibold text-emerald-700">
                       {patient.first_name[0]}{patient.last_name[0]}
@@ -270,7 +275,7 @@ export default function DoctorDashboardPage() {
                 </div>
 
                 {/* Right: Access Badge + Actions */}
-                <div className="flex items-center gap-3 flex-shrink-0">
+                <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 ml-auto sm:ml-0">
                   <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
                     patient.access_level === AccessLevel.WRITE
                       ? 'bg-emerald-100 text-emerald-700'

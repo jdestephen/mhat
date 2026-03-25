@@ -34,12 +34,20 @@ interface MenuItem {
   roles?: UserRole[];
 }
 
-export function Sidebar() {
+interface SidebarProps {
+  onClose?: () => void;
+}
+
+export function Sidebar({ onClose }: SidebarProps = {}) {
   const pathname = usePathname();
   const router = useRouter();
   const { data: user } = useCurrentUser();
   const [openMenus, setOpenMenus] = useState<string[]>(['Perfil']);
   const [collapsed, setCollapsed] = useState(false);
+
+  // In overlay (mobile) mode, never collapse — always full width
+  const isOverlay = !!onClose;
+  const effectiveCollapsed = isOverlay ? false : collapsed;
 
   const isDoctor = user?.role === UserRole.DOCTOR;
   const isPatient = user?.role === UserRole.PATIENT;
@@ -214,9 +222,22 @@ export function Sidebar() {
   };
 
   const renderCollapseToggle = () => {
+    // In overlay mode, show a close button instead of collapse
+    if (isOverlay) {
+      return (
+        <button
+          onClick={onClose}
+          title="Cerrar menú"
+          className="flex w-full items-center gap-3 rounded-xl px-0 py-0 text-sm font-medium text-slate-400 transition-all hover:cursor-pointer hover:bg-slate-100 hover:text-slate-600"
+        >
+          <PanelLeftClose className="h-7 w-7 flex-shrink-0" />
+        </button>
+      );
+    }
+
     return (
       <button
-        onClick={() => setCollapsed((prev) => !prev)}
+        onClick={() => setCollapsed(!collapsed)}
         title={collapsed ? 'Expandir menú' : 'Colapsar menú'}
         className={clsx(
           'flex w-full items-center gap-3 rounded-xl px-0 py-0 text-sm font-medium text-slate-400 transition-all hover:cursor-pointer hover:bg-slate-100 hover:text-slate-600',
@@ -238,12 +259,12 @@ export function Sidebar() {
     <div
       className={clsx(
         'flex h-screen flex-col bg-white border-r border-[0.5px] border-emerald-900/10 shadow-sm transition-all duration-300',
-        collapsed ? 'w-16' : 'w-72'
+        effectiveCollapsed ? 'w-16' : 'w-72'
       )}
     >
       {/* Logo + Collapse Toggle */}
       <div className={`flex h-20 items-center justify-between px-4 border-b border-[0.5px] border-emerald-900/10`}>
-        {!collapsed ? (
+        {!effectiveCollapsed ? (
           <>
             <Link href={isDoctor ? '/doctor' : '/dashboard'} className="flex items-center gap-3 font-bold tracking-tight">
               <div className="bg-emerald-900 p-2 rounded-lg flex-shrink-0">
@@ -263,7 +284,7 @@ export function Sidebar() {
       </div>
 
       {/* Profile Switcher (patients only, multi-profile) */}
-      {!collapsed && isPatient && <ProfileSwitcher />}
+      {!effectiveCollapsed && isPatient && <ProfileSwitcher />}
 
       {/* Nav */}
       <div className="flex-1 overflow-auto py-6 px-2">
@@ -276,14 +297,14 @@ export function Sidebar() {
       <div className="p-2 border-t border-[0.5px] border-emerald-900/10 bg-slate-50/50 space-y-1">
         <button
           onClick={handleLogout}
-          title={collapsed ? 'Cerrar Sesión' : undefined}
+          title={effectiveCollapsed ? 'Cerrar Sesión' : undefined}
           className={clsx(
             'flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-500 transition-all hover:cursor-pointer hover:bg-red-50 hover:text-red-600',
-            { 'justify-center px-0': collapsed }
+            { 'justify-center px-0': effectiveCollapsed }
           )}
         >
           <LogOut className="h-5 w-5 flex-shrink-0" />
-          {!collapsed && <span>Cerrar Sesión</span>}
+          {!effectiveCollapsed && <span>Cerrar Sesión</span>}
         </button>
       </div>
     </div>

@@ -30,6 +30,7 @@ import {
 import { RecordDetailModal, RecordDetailData } from '@/components/records/RecordDetailModal';
 import { RecordCard, RecordCardData } from '@/components/records/RecordCard';
 import { HealthSidebar } from '@/components/patient/HealthSidebar';
+import { MobileHealthChips } from '@/components/patient/MobileHealthChips';
 import { DocumentUploadModal } from './components/DocumentUploadModal';
 import { Pagination } from '@/components/ui/Pagination';
 import { VitalSignsModal } from '@/components/clinical/VitalSignsModal';
@@ -177,67 +178,81 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
   }
 
   return (
-    <div className="flex flex-row max-w-8xl mx-auto gap-6">
-      {/* Header */}
-      <div className="flex flex-col flex-1 mb-6 gap-7">
+    <div className="flex flex-col lg:flex-row max-w-8xl mx-auto gap-4 lg:gap-6">
+      {/* Left column: Header + Health Sidebar (desktop) */}
+      <div className="flex flex-col lg:flex-1 mb-2 lg:mb-6 gap-4 lg:gap-7">
         <div>
           <Link href="/doctor" className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-emerald-600 transition-colors mb-2">
             <ArrowLeft className="h-3 w-3" />
             Mis Pacientes
           </Link>
           <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center">
-              <User className="h-7 w-7 text-emerald-600" />
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 lg:w-14 lg:h-14 rounded-full bg-emerald-100 flex items-center justify-center">
+                <User className="h-5 w-5 lg:h-7 lg:w-7 text-emerald-600" />
+              </div>
+              <div>
+                <h1 className="text-lg lg:text-xl font-bold text-gray-900">
+                  {patientName}
+                </h1>
+                {patientSubtitle && (
+                  <p className="text-gray-500 text-xs lg:text-sm">{patientSubtitle}</p>
+                )}
+              </div>
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">
-                {patientName}
-              </h1>
-              {patientSubtitle && (
-                <p className="text-gray-500 text-sm">{patientSubtitle}</p>
-              )}
-            </div>
-          </div>
           </div>
         </div>
 
-        {/* Left Sidebar - Health Profile */}
-        <HealthSidebar
-          medications={health?.medications ?? []}
-          conditions={health?.conditions ?? []}
-          allergies={health?.allergies ?? []}
-          healthHabit={health?.health_habit ?? null}
-          familyHistory={health?.family_history ?? []}
-        />
+        {/* Mobile/Tablet: Collapsible health chips */}
+        <div className="lg:hidden">
+          <MobileHealthChips
+            medications={health?.medications ?? []}
+            conditions={health?.conditions ?? []}
+            allergies={health?.allergies ?? []}
+            healthHabit={health?.health_habit ?? null}
+            familyHistory={health?.family_history ?? []}
+          />
+        </div>
+
+        {/* Desktop: Full health sidebar */}
+        <div className="hidden lg:block">
+          <HealthSidebar
+            medications={health?.medications ?? []}
+            conditions={health?.conditions ?? []}
+            allergies={health?.allergies ?? []}
+            healthHabit={health?.health_habit ?? null}
+            familyHistory={health?.family_history ?? []}
+          />
+        </div>
       </div>
 
       {/* Main Content: Sidebar + Tabs */}
-      <div className="flex flex-col flex-4 gap-6">
-        {/* Right Content - 3/4 width */}
+      <div className="flex flex-col lg:flex-[4] gap-4 lg:gap-6 min-w-0">
+        {/* Main Content */}
         <div className="space-y-6">
           {/* Tabs */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100">
             <Tabs defaultValue="records">
-              <TabsList className="border-b border-gray-100 pl-3 pr-1">
-                <TabsTrigger value="records" className="flex items-center gap-2">
+              <TabsList className="border-b border-gray-100 pl-2 sm:pl-3 pr-1">
+                <TabsTrigger value="records" className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
                   <FileText className="h-4 w-4" />
-                  Registros
+                  <span className="hidden sm:inline">Registros</span>
                 </TabsTrigger>
-                <TabsTrigger value="documents" className="flex items-center gap-2">
+                <TabsTrigger value="documents" className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
                   <Paperclip className="h-4 w-4" />
-                  Exámenes
+                  <span className="hidden sm:inline">Exámenes</span>
                 </TabsTrigger>
-                <TabsTrigger value="vitals" className="flex items-center gap-2">
+                <TabsTrigger value="vitals" className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
                   <HeartPulse className="h-4 w-4" />
-                  Signos Vitales
+                  <span className="hidden sm:inline">Signos Vitales</span>
                 </TabsTrigger>
-                <TabsTrigger value="plan" className="flex items-center gap-2">
+                <TabsTrigger value="plan" className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
                   <ClipboardList className="h-4 w-4" />
-                  Plan
+                  <span className="hidden sm:inline">Plan</span>
                 </TabsTrigger>
 
-                <div className="flex-1 flex justify-end gap-1">
+                {/* Desktop action buttons */}
+                <div className="hidden md:flex flex-1 justify-end gap-1">
                   {isReadOnly ? (
                     <span className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 text-sm font-medium">
                       <Eye className="h-4 w-4" />
@@ -393,89 +408,101 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
               {/* Vital Signs History Tab */}
               <TabsContent value="vitals" className="p-0">
                 {vitalSigns.length === 0 ? (
-                  <div className="p-12 text-center">
+                  <div className="p-8 sm:p-12 text-center">
                     <HeartPulse className="h-12 w-12 mx-auto text-gray-300 mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">Sin signos vitales</h3>
                     <p className="text-gray-500">No hay registros de signos vitales para este paciente</p>
                   </div>
                 ) : (
-                  <div className="p-4 overflow-x-auto">
-                    {/* Table header */}
-                    <div className="flex min-w-[900px] text-[10px] font-semibold uppercase tracking-wider text-slate-500 bg-slate-50 rounded-t border border-slate-200 px-3 py-2">
-                      <div className="w-28 flex-shrink-0">Fecha</div>
-                      <div className="flex-1 text-center">FC</div>
-                      <div className="flex-1 text-center">PA</div>
-                      <div className="flex-1 text-center">Temp</div>
-                      <div className="flex-1 text-center">FR</div>
-                      <div className="flex-1 text-center">SpO₂</div>
-                      <div className="flex-1 text-center">Peso</div>
-                      <div className="flex-1 text-center">Talla</div>
-                      <div className="flex-1 text-center">Gluc.</div>
-                      <div className="flex-1 text-center">C. Abd.</div>
-                    </div>
-                    {/* Table rows */}
-                    {vitalSigns
-                      .slice((vsPage - 1) * VS_PAGE_SIZE, vsPage * VS_PAGE_SIZE)
-                      .map((vs) => (
-                        <div
-                          key={vs.id}
-                          className="flex min-w-[900px] items-center px-3 py-2.5 border-x border-b border-slate-200 hover:bg-slate-50 transition-colors text-sm"
-                        >
-                          <div className="w-28 flex-shrink-0 text-xs text-slate-600 font-medium">
-                            {new Date(vs.measured_at).toLocaleDateString('es-ES', {
-                              day: '2-digit',
-                              month: 'short',
-                              year: 'numeric',
-                            })}
-                            <div className="text-[10px] text-blue-600">
-                              {new Date(vs.measured_at).toLocaleTimeString('es-ES', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
+                  <>
+                    {/* Desktop: Full table */}
+                    <div className="hidden md:block p-4 overflow-x-auto">
+                      {/* Table header */}
+                      <div className="flex min-w-[900px] text-[10px] font-semibold uppercase tracking-wider text-slate-500 bg-slate-50 rounded-t border border-slate-200 px-3 py-2">
+                        <div className="w-28 flex-shrink-0">Fecha</div>
+                        <div className="flex-1 text-center">FC</div>
+                        <div className="flex-1 text-center">PA</div>
+                        <div className="flex-1 text-center">Temp</div>
+                        <div className="flex-1 text-center">FR</div>
+                        <div className="flex-1 text-center">SpO₂</div>
+                        <div className="flex-1 text-center">Peso</div>
+                        <div className="flex-1 text-center">Talla</div>
+                        <div className="flex-1 text-center">Gluc.</div>
+                        <div className="flex-1 text-center">C. Abd.</div>
+                      </div>
+                      {vitalSigns
+                        .slice((vsPage - 1) * VS_PAGE_SIZE, vsPage * VS_PAGE_SIZE)
+                        .map((vs) => (
+                          <div
+                            key={vs.id}
+                            className="flex min-w-[900px] items-center px-3 py-2.5 border-x border-b border-slate-200 hover:bg-slate-50 transition-colors text-sm"
+                          >
+                            <div className="w-28 flex-shrink-0 text-xs text-slate-600 font-medium">
+                              {new Date(vs.measured_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
+                              <div className="text-[10px] text-blue-600">
+                                {new Date(vs.measured_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                              </div>
+                            </div>
+                            <div className={`flex-1 text-center ${getVitalColor('heart_rate', vs.heart_rate)}`}>
+                              {vs.heart_rate != null ? <span>{vs.heart_rate} <span className="text-[10px] text-slate-400">bpm</span></span> : '—'}
+                            </div>
+                            <div className={`flex-1 text-center ${getBpColor(vs.systolic_bp, vs.diastolic_bp)}`}>
+                              {vs.systolic_bp != null && vs.diastolic_bp != null
+                                ? <span>{vs.systolic_bp}/{vs.diastolic_bp}</span>
+                                : vs.systolic_bp != null ? `${vs.systolic_bp}/—`
+                                : vs.diastolic_bp != null ? `—/${vs.diastolic_bp}`
+                                : '—'}
+                            </div>
+                            <div className={`flex-1 text-center ${getVitalColor('temperature', vs.temperature)}`}>
+                              {vs.temperature != null ? <span>{vs.temperature} <span className="text-[10px] text-slate-400">°C</span></span> : '—'}
+                            </div>
+                            <div className={`flex-1 text-center ${getVitalColor('respiratory_rate', vs.respiratory_rate)}`}>
+                              {vs.respiratory_rate != null ? <span>{vs.respiratory_rate} <span className="text-[10px] text-slate-400">rpm</span></span> : '—'}
+                            </div>
+                            <div className={`flex-1 text-center ${getVitalColor('oxygen_saturation', vs.oxygen_saturation)}`}>
+                              {vs.oxygen_saturation != null ? <span>{vs.oxygen_saturation}<span className="text-[10px] text-slate-400">%</span></span> : '—'}
+                            </div>
+                            <div className="flex-1 text-center text-slate-700">
+                              {vs.weight != null ? <span>{vs.weight} <span className="text-[10px] text-slate-400">kg</span></span> : '—'}
+                            </div>
+                            <div className="flex-1 text-center text-slate-700">
+                              {vs.height != null ? <span>{vs.height} <span className="text-[10px] text-slate-400">cm</span></span> : '—'}
+                            </div>
+                            <div className={`flex-1 text-center ${getVitalColor('blood_glucose', vs.blood_glucose)}`}>
+                              {vs.blood_glucose != null ? <span>{vs.blood_glucose} <span className="text-[10px] text-slate-400">mg/dL</span></span> : '—'}
+                            </div>
+                            <div className="flex-1 text-center text-slate-700">
+                              {vs.waist_circumference != null ? <span>{vs.waist_circumference} <span className="text-[10px] text-slate-400">cm</span></span> : '—'}
                             </div>
                           </div>
-                          <div className={`flex-1 text-center ${getVitalColor('heart_rate', vs.heart_rate)}`}>
-                            {vs.heart_rate != null ? <span>{vs.heart_rate} <span className="text-[10px] text-slate-400">bpm</span></span> : '—'}
-                          </div>
-                          <div className={`flex-1 text-center ${getBpColor(vs.systolic_bp, vs.diastolic_bp)}`}>
-                            {vs.systolic_bp != null && vs.diastolic_bp != null
-                              ? <span>{vs.systolic_bp}/{vs.diastolic_bp}</span>
-                              : vs.systolic_bp != null ? `${vs.systolic_bp}/—`
-                              : vs.diastolic_bp != null ? `—/${vs.diastolic_bp}`
-                              : '—'}
-                          </div>
-                          <div className={`flex-1 text-center ${getVitalColor('temperature', vs.temperature)}`}>
-                            {vs.temperature != null ? <span>{vs.temperature} <span className="text-[10px] text-slate-400">°C</span></span> : '—'}
-                          </div>
-                          <div className={`flex-1 text-center ${getVitalColor('respiratory_rate', vs.respiratory_rate)}`}>
-                            {vs.respiratory_rate != null ? <span>{vs.respiratory_rate} <span className="text-[10px] text-slate-400">rpm</span></span> : '—'}
-                          </div>
-                          <div className={`flex-1 text-center ${getVitalColor('oxygen_saturation', vs.oxygen_saturation)}`}>
-                            {vs.oxygen_saturation != null ? <span>{vs.oxygen_saturation}<span className="text-[10px] text-slate-400">%</span></span> : '—'}
-                          </div>
-                          <div className="flex-1 text-center text-slate-700">
-                            {vs.weight != null ? <span>{vs.weight} <span className="text-[10px] text-slate-400">kg</span></span> : '—'}
-                          </div>
-                          <div className="flex-1 text-center text-slate-700">
-                            {vs.height != null ? <span>{vs.height} <span className="text-[10px] text-slate-400">cm</span></span> : '—'}
-                          </div>
-                          <div className={`flex-1 text-center ${getVitalColor('blood_glucose', vs.blood_glucose)}`}>
-                            {vs.blood_glucose != null ? <span>{vs.blood_glucose} <span className="text-[10px] text-slate-400">mg/dL</span></span> : '—'}
-                          </div>
-                          <div className="flex-1 text-center text-slate-700">
-                            {vs.waist_circumference != null ? <span>{vs.waist_circumference} <span className="text-[10px] text-slate-400">cm</span></span> : '—'}
-                          </div>
-                        </div>
-                      ))}
-                    <Pagination
-                      currentPage={vsPage}
-                      totalPages={Math.max(1, Math.ceil(vitalSigns.length / VS_PAGE_SIZE))}
-                      totalItems={vitalSigns.length}
-                      pageSize={VS_PAGE_SIZE}
-                      onPageChange={setVsPage}
-                      itemLabel="registros"
-                    />
-                  </div>
+                        ))}
+                      <Pagination
+                        currentPage={vsPage}
+                        totalPages={Math.max(1, Math.ceil(vitalSigns.length / VS_PAGE_SIZE))}
+                        totalItems={vitalSigns.length}
+                        pageSize={VS_PAGE_SIZE}
+                        onPageChange={setVsPage}
+                        itemLabel="registros"
+                      />
+                    </div>
+
+                    {/* Mobile: Compact card grid */}
+                    <div className="md:hidden p-3 space-y-3">
+                      {vitalSigns
+                        .slice((vsPage - 1) * VS_PAGE_SIZE, vsPage * VS_PAGE_SIZE)
+                        .map((vs) => (
+                          <VitalSignsCard key={vs.id} vs={vs} />
+                        ))}
+                      <Pagination
+                        currentPage={vsPage}
+                        totalPages={Math.max(1, Math.ceil(vitalSigns.length / VS_PAGE_SIZE))}
+                        totalItems={vitalSigns.length}
+                        pageSize={VS_PAGE_SIZE}
+                        onPageChange={setVsPage}
+                        itemLabel="registros"
+                      />
+                    </div>
+                  </>
                 )}
               </TabsContent>
 
@@ -612,6 +639,66 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
         </div>
       </div>
 
+      {/* FAB for mobile — Nuevo Registro */}
+      {!isReadOnly && (
+        <div className="md:hidden fixed bottom-6 right-6 z-30">
+          <div className="relative" ref={actionMenuRef}>
+            {actionMenuOpen && (
+              <div className="absolute bottom-full right-0 mb-2 w-52 bg-white rounded-xl shadow-xl border border-gray-200 py-1.5 z-50">
+                <Link
+                  href={`/doctor/patients/${patientId}/records/new`}
+                  className="flex items-center gap-2.5 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                  onClick={() => setActionMenuOpen(false)}
+                >
+                  <Plus className="h-4 w-4 text-emerald-600" />
+                  Nuevo Registro
+                </Link>
+                <Link
+                  href={`/doctor/patients/${patientId}/records/new-tabbed`}
+                  className="flex items-center gap-2.5 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                  onClick={() => setActionMenuOpen(false)}
+                >
+                  <LayoutGrid className="h-4 w-4 text-emerald-600" />
+                  Nuevo (Tabs)
+                </Link>
+                <button
+                  type="button"
+                  className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                  onClick={() => { setActionMenuOpen(false); setUploadModalOpen(true); }}
+                >
+                  <Paperclip className="h-4 w-4 text-blue-600" />
+                  Examenes
+                </button>
+                <div className="border-t border-gray-100 my-1" />
+                <Link
+                  href={`/doctor/patients/${patientId}/health-history`}
+                  className="flex items-center gap-2.5 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                  onClick={() => setActionMenuOpen(false)}
+                >
+                  <ClipboardList className="h-4 w-4 text-purple-600" />
+                  Historial de Salud
+                </Link>
+                <button
+                  type="button"
+                  className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                  onClick={() => { setActionMenuOpen(false); setVitalModalOpen(true); }}
+                >
+                  <Activity className="h-4 w-4 text-rose-600" />
+                  Signos Vitales
+                </button>
+              </div>
+            )}
+            <button
+              onClick={() => setActionMenuOpen((prev) => !prev)}
+              className="w-14 h-14 rounded-full bg-emerald-600 text-white shadow-lg hover:bg-emerald-700 transition-all flex items-center justify-center active:scale-95"
+              aria-label="Acciones"
+            >
+              <Plus className={`h-6 w-6 transition-transform ${actionMenuOpen ? 'rotate-45' : ''}`} />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Record Detail Modal */}
       <RecordDetailModal
         open={modalOpen}
@@ -638,6 +725,95 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
         patientId={patientId}
         patientName={patientName}
       />
+    </div>
+  );
+}
+
+/** Compact vital signs card for mobile — shows key vitals in grid, expandable */
+function VitalSignsCard({ vs }: { vs: VitalSigns }) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full text-left p-3"
+      >
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-medium text-slate-600">
+            {new Date(vs.measured_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
+            <span className="ml-1.5 text-blue-600">
+              {new Date(vs.measured_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          </span>
+          <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+        </div>
+        {/* Key vitals grid */}
+        <div className="grid grid-cols-4 gap-2">
+          <div className="text-center">
+            <div className="text-[10px] text-slate-400 uppercase">FC</div>
+            <div className={`text-sm font-semibold ${getVitalColor('heart_rate', vs.heart_rate)}`}>
+              {vs.heart_rate ?? '—'}
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-[10px] text-slate-400 uppercase">PA</div>
+            <div className={`text-sm font-semibold ${getBpColor(vs.systolic_bp, vs.diastolic_bp)}`}>
+              {vs.systolic_bp != null ? `${vs.systolic_bp}/${vs.diastolic_bp ?? '—'}` : '—'}
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-[10px] text-slate-400 uppercase">SpO₂</div>
+            <div className={`text-sm font-semibold ${getVitalColor('oxygen_saturation', vs.oxygen_saturation)}`}>
+              {vs.oxygen_saturation != null ? `${vs.oxygen_saturation}%` : '—'}
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-[10px] text-slate-400 uppercase">Temp</div>
+            <div className={`text-sm font-semibold ${getVitalColor('temperature', vs.temperature)}`}>
+              {vs.temperature != null ? `${vs.temperature}°` : '—'}
+            </div>
+          </div>
+        </div>
+      </button>
+
+      {/* Expanded: secondary vitals */}
+      {expanded && (
+        <div className="px-3 pb-3 pt-1 border-t border-slate-100">
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div>
+              <div className="text-[10px] text-slate-400 uppercase">FR</div>
+              <div className={`text-sm ${getVitalColor('respiratory_rate', vs.respiratory_rate)}`}>
+                {vs.respiratory_rate ?? '—'} <span className="text-[10px] text-slate-400">rpm</span>
+              </div>
+            </div>
+            <div>
+              <div className="text-[10px] text-slate-400 uppercase">Peso</div>
+              <div className="text-sm text-slate-700">
+                {vs.weight ?? '—'} <span className="text-[10px] text-slate-400">kg</span>
+              </div>
+            </div>
+            <div>
+              <div className="text-[10px] text-slate-400 uppercase">Talla</div>
+              <div className="text-sm text-slate-700">
+                {vs.height ?? '—'} <span className="text-[10px] text-slate-400">cm</span>
+              </div>
+            </div>
+            <div>
+              <div className="text-[10px] text-slate-400 uppercase">Glucosa</div>
+              <div className={`text-sm ${getVitalColor('blood_glucose', vs.blood_glucose)}`}>
+                {vs.blood_glucose ?? '—'} <span className="text-[10px] text-slate-400">mg/dL</span>
+              </div>
+            </div>
+            <div>
+              <div className="text-[10px] text-slate-400 uppercase">C. Abd.</div>
+              <div className="text-sm text-slate-700">
+                {vs.waist_circumference ?? '—'} <span className="text-[10px] text-slate-400">cm</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
