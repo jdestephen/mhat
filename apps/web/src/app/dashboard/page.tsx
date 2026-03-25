@@ -328,13 +328,13 @@ export default function DashboardPage() {
                   return (
                     <div key={record.id} className="bg-white p-6 rounded-lg border border-[var(--border-light)] shadow-sm">
                       <div className="flex items-start gap-3 mb-2">
-                        <div className="h-10 w-10 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 shrink-0">
-                          <Stethoscope size={20} />
+                        <div className="h-8 w-8 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 shrink-0">
+                          <Stethoscope size={16} />
                         </div>
                         <div className="flex justify-between items-start w-full">
-                          <div>
+                          <div className="flex flex-2 flex-col">
                             <h3 className="font-bold text-lg text-slate-900">{record.motive}</h3>
-                            <div className="flex items-center text-xs text-slate-500 gap-2 mt-1 flex-wrap">
+                            <div className="flex flex-row items-center text-xs text-slate-500 gap-2 mt-1 flex-wrap">
                               <span className="flex items-center">
                                 <Calendar size={12} className="mr-1" />
                                 {new Date(record.created_at).toLocaleDateString()}
@@ -351,20 +351,16 @@ export default function DashboardPage() {
                                   </div>
                                 </>
                               )}
+                              {record.category && (
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 px-1 py-1 rounded-md border border-emerald-200 shadow-sm whitespace-nowrap">
+                                  {record.category.name}
+                                </span>
+                              )}
                             </div>
-                          </div>
-                          <div className="flex flex-col gap-2 items-end">
-                            {record.category && (
-                              <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full border border-emerald-200 shadow-sm whitespace-nowrap">
-                                {record.category.name}
-                              </span>
-                            )}
-                            {getStatusBadge(record.status)}
                           </div>
                         </div>
                       </div>
-
-                      <div className="pl-13 ml-1">
+                      <div className="pl-10 ml-1">
                         {diagnosis && (
                           <div className="mb-2">
                             <span className="font-semibold text-xs uppercase tracking-wide text-slate-400">Diagnóstico</span>
@@ -398,6 +394,76 @@ export default function DashboardPage() {
                             </div>
                           </div>
                         )}
+                      </div>
+                      <div className="flex flex-row gap-2 items-center justify-end">
+                        {getStatusBadge(record.status)}
+                        <div className="relative">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenDropdown(openDropdown === record.id ? null : record.id);
+                            }}
+                            className="text-slate-400 hover:text-slate-600 hover:cursor-pointer p-1"
+                          >
+                            <MoreVertical className="h-5 w-5" />
+                          </button>
+
+                          {openDropdown === record.id && (
+                            <>
+                              <div
+                                className="fixed inset-0 z-10"
+                                onClick={() => setOpenDropdown(null)}
+                              />
+                              <div className="absolute right-0 bottom-full mb-1 w-48 rounded-md shadow-lg bg-white ring-1 ring-slate-200 ring-opacity-5 z-20">
+                                <div className="py-1">
+                                  <button
+                                    className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                                    onClick={() => {
+                                      setOpenDropdown(null);
+                                      window.location.href = `/records/${record.id}`;
+                                    }}
+                                  >
+                                    Ver Detalles
+                                  </button>
+                                  {!record.verified_by && (
+                                    <button
+                                      className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                                      onClick={() => {
+                                        setOpenDropdown(null);
+                                        router.push(`/records/${record.id}/edit`);
+                                      }}
+                                    >
+                                      Editar
+                                    </button>
+                                  )}
+                                  <button
+                                    className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                                    onClick={() => {
+                                      setOpenDropdown(null);
+                                      setSelectedRecords({
+                                        ids: [String(record.id)],
+                                        titles: [record.motive],
+                                      });
+                                      setShareDialogOpen(true);
+                                    }}
+                                  >
+                                    Compartir
+                                  </button>
+                                  <button
+                                    className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                                    onClick={() => {
+                                      setOpenDropdown(null);
+                                      setViewLogRecordId(String(record.id));
+                                      setViewLogOpen(true);
+                                    }}
+                                  >
+                                    Historial de Acceso
+                                  </button>
+                                </div>
+                              </div>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );

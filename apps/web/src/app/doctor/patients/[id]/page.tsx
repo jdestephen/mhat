@@ -52,6 +52,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
   const [actionMenuOpen, setActionMenuOpen] = useState(false);
   const [vitalModalOpen, setVitalModalOpen] = useState(false);
   const actionMenuRef = useRef<HTMLDivElement>(null);
+  const fabMenuRef = useRef<HTMLDivElement>(null);
   const [vsPage, setVsPage] = useState(1);
   const [rxPage, setRxPage] = useState(1);
   const [ordersPage, setOrdersPage] = useState(1);
@@ -69,7 +70,10 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (actionMenuRef.current && !actionMenuRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      const insideDesktop = actionMenuRef.current?.contains(target);
+      const insideFab = fabMenuRef.current?.contains(target);
+      if (!insideDesktop && !insideFab) {
         setActionMenuOpen(false);
       }
     };
@@ -231,7 +235,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
         {/* Main Content */}
         <div className="space-y-6">
           {/* Tabs */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-visible">
             <Tabs defaultValue="records">
               <TabsList className="border-b border-gray-100 pl-2 sm:pl-3 pr-1">
                 <TabsTrigger value="records" className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
@@ -259,7 +263,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                       Solo lectura
                     </span>
                   ) : (
-                    <div className="relative" ref={actionMenuRef}>
+                    <div className="relative z-50" ref={actionMenuRef}>
                       <div className="flex items-center">
                         <Link href={`/doctor/patients/${patientId}/records/new`}>
                           <Button
@@ -642,7 +646,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
       {/* FAB for mobile — Nuevo Registro */}
       {!isReadOnly && (
         <div className="md:hidden fixed bottom-6 right-6 z-30">
-          <div className="relative" ref={actionMenuRef}>
+          <div className="relative" ref={fabMenuRef}>
             {actionMenuOpen && (
               <div className="absolute bottom-full right-0 mb-2 w-52 bg-white rounded-xl shadow-xl border border-gray-200 py-1.5 z-50">
                 <Link

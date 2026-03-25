@@ -356,7 +356,7 @@ export default function NewDoctorRecordPage({
           </h1>
         </div>
       </div>
-      <div className="flex flex-col mt-0 ps-0 pr-30">
+      <div className="flex flex-col mt-0 ps-0 lg:pr-30">
         <form
           onSubmit={handleSubmit}
           onKeyDown={(e) => {
