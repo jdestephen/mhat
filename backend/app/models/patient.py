@@ -132,9 +132,15 @@ class PatientProfile(Base):
     dni: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     phone: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     address: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    # Email for matching when patient registers later (nullable, NOT unique — multiple doctors can create the same patient)
+    email: Mapped[Optional[str]] = mapped_column(String, nullable=True, index=True)
+    # Doctor who created this standalone profile (NULL if self-registered)
+    created_by_doctor_id: Mapped[Optional[UUID]] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
 
     # Relationships
-    user: Mapped[Optional["User"]] = relationship("User", back_populates="patient_profile")
+    user: Mapped[Optional["User"]] = relationship("User", back_populates="patient_profile", foreign_keys=[user_id])
     medications: Mapped[List["Medication"]] = relationship("Medication", back_populates="patient_profile")
     medical_records: Mapped[List["MedicalRecord"]] = relationship("MedicalRecord", back_populates="patient")
     allergies: Mapped[List["Allergy"]] = relationship(

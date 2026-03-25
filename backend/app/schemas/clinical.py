@@ -152,8 +152,32 @@ class PatientAccessSummary(BaseModel):
     date_of_birth: Optional[datetime] = None
     sex: Optional[str] = None
     blood_type: Optional[str] = None
+    email: Optional[str] = None
+    has_account: bool = False
+    dni: Optional[str] = None
     access_level: AccessLevel
-    granted_at: Optional[datetime] = None  # Maps from created_at in the endpoint
+    granted_at: Optional[datetime] = None
+
+
+class CreatePatientRequest(BaseModel):
+    """Schema for doctor creating a standalone patient profile."""
+    first_name: str = Field(..., max_length=100)
+    last_name: str = Field(..., max_length=100)
+    date_of_birth: Optional[str] = None  # ISO date string
+    sex: Optional[str] = None  # MASCULINO / FEMENINO
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    dni: Optional[str] = None
+
+
+class CreatePatientResponse(BaseModel):
+    """Response after creating a standalone patient profile."""
+    patient_id: UUID
+    first_name: str
+    last_name: str
+    email: Optional[str] = None
+    activation_email_sent: bool = False
+    message: str
 
 
 # =====================

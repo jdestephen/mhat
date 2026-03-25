@@ -25,8 +25,10 @@ import {
   ClipboardList,
   Droplets,
   Activity,
+  Mail,
 } from 'lucide-react';
 import { VitalSignsModal } from '@/components/clinical/VitalSignsModal';
+import { CreatePatientModal } from '@/components/doctor/CreatePatientModal';
 
 export default function DoctorDashboardPage() {
   const router = useRouter();
@@ -41,6 +43,7 @@ export default function DoctorDashboardPage() {
   const [vitalModalOpen, setVitalModalOpen] = useState(false);
   const [vitalModalPatientId, setVitalModalPatientId] = useState<string>('');
   const [vitalModalPatientName, setVitalModalPatientName] = useState<string>('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -185,6 +188,13 @@ export default function DoctorDashboardPage() {
                 <KeyRound className="w-4 h-4 mr-2" />
                 Vincular Paciente
               </Button>
+              <Button
+                onClick={() => setShowCreateModal(true)}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              >
+                <UserPlus className="w-4 h-4 mr-2" />
+                Crear Paciente
+              </Button>
             </div>
           </div>
         </div>
@@ -216,9 +226,28 @@ export default function DoctorDashboardPage() {
                     </span>
                   </div>
                   <div className="min-w-0">
-                    <p className="font-medium text-gray-900">
-                      {patient.first_name} {patient.last_name}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-gray-900">
+                        {patient.first_name} {patient.last_name}
+                      </p>
+                      {/* Account status indicator */}
+                      {patient.has_account ? (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700" title="Cuenta activa">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                          Cuenta
+                        </span>
+                      ) : patient.email ? (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700" title="Email enviado, sin cuenta">
+                          <Mail className="h-2.5 w-2.5" />
+                          Invitado
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-500" title="Sin cuenta">
+                          <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                          Sin cuenta
+                        </span>
+                      )}
+                    </div>
                     <div className="flex items-center gap-3 text-sm text-gray-500 mt-0.5">
                       {patient.date_of_birth && (
                         <span className="flex items-center gap-1">
@@ -318,6 +347,13 @@ export default function DoctorDashboardPage() {
       onOpenChange={setVitalModalOpen}
       patientId={vitalModalPatientId}
       patientName={vitalModalPatientName}
+    />
+
+    {/* Create Patient Modal */}
+    <CreatePatientModal
+      open={showCreateModal}
+      onOpenChange={setShowCreateModal}
+      onSuccess={(patientId) => router.push(`/doctor/patients/${patientId}`)}
     />
     </>
   );

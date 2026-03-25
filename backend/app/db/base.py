@@ -11,4 +11,5 @@ from app.models.organization import HealthCenter, HealthCenterMembership
 from app.models.clinical import Prescription, ClinicalOrder
 from app.models.access_invitation import AccessInvitation
 from app.models.verification_token import VerificationToken
+from app.models.profile_claim import ProfileClaimRequest
 

@@ -384,6 +384,9 @@ export interface PatientAccess {
   date_of_birth?: string;
   sex?: string;
   blood_type?: string;
+  email?: string;
+  has_account: boolean;
+  dni?: string;
   access_level: AccessLevel;
   granted_at: string;
 }

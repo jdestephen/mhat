@@ -155,6 +155,74 @@ async def claim_invitation_code(
 # Patient List Endpoints
 # =====================
 
+@router.post("/patients/create", response_model=clinical_schema.CreatePatientResponse)
+async def create_patient(
+    patient_in: clinical_schema.CreatePatientRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+):
+    """
+    Create a standalone patient profile (no user account).
+    Doctor gets automatic WRITE access.
+    If email is provided, sends an activation email.
+    """
+    from datetime import date as date_type
+
+    # Parse date_of_birth if provided
+    dob = None
+    if patient_in.date_of_birth:
+        try:
+            dob = date_type.fromisoformat(patient_in.date_of_birth)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Formato de fecha inválido. Use YYYY-MM-DD")
+
+    # Create PatientProfile (no user_id)
+    profile = PatientProfile(
+        first_name=patient_in.first_name,
+        last_name=patient_in.last_name,
+        date_of_birth=dob,
+        email=patient_in.email,
+        phone=patient_in.phone,
+        dni=patient_in.dni,
+        created_by_doctor_id=current_user.id,
+    )
+    db.add(profile)
+    await db.flush()  # Get profile ID
+
+    # Grant doctor WRITE access
+    access = DoctorPatientAccess(
+        doctor_id=current_user.id,
+        patient_profile_id=profile.id,
+        access_level=DoctorAccessLevel.WRITE,
+        granted_by=current_user.id,
+    )
+    db.add(access)
+    await db.commit()
+    await db.refresh(profile)
+
+    # Send activation email if email provided
+    activation_email_sent = False
+    if patient_in.email:
+        try:
+            from app.services.email import send_patient_activation_email
+            doctor_name = f"{current_user.first_name or ''} {current_user.last_name or ''}".strip() or "Tu médico"
+            await send_patient_activation_email(patient_in.email, doctor_name)
+            activation_email_sent = True
+        except Exception as e:
+            # Don't fail the request if email fails
+            import logging
+            logging.getLogger(__name__).error(f"Failed to send activation email: {e}")
+
+    return clinical_schema.CreatePatientResponse(
+        patient_id=profile.id,
+        first_name=profile.first_name,
+        last_name=profile.last_name,
+        email=profile.email,
+        activation_email_sent=activation_email_sent,
+        message="Paciente creado exitosamente",
+    )
+
+
 @router.get("/patients", response_model=List[clinical_schema.PatientAccessSummary])
 async def list_my_patients(
     db: AsyncSession = Depends(get_db),
@@ -185,6 +253,9 @@ async def list_my_patients(
             date_of_birth=profile.date_of_birth,
             sex=user.sex.value if user and user.sex else None,
             blood_type=profile.blood_type,
+            email=profile.email or (user.email if user else None),
+            has_account=user is not None,
+            dni=profile.dni,
             access_level=access.access_level,
             granted_at=access.created_at
         ))

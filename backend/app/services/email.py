@@ -89,6 +89,48 @@ async def send_password_reset_email(email: str, token: str) -> None:
     await _send_email(email, subject, html_body)
 
 
+async def send_patient_activation_email(email: str, doctor_name: str) -> None:
+    """Send activation email to patient when a doctor creates their profile."""
+    register_url = f"{settings.FRONTEND_URL}/auth/register"
+
+    subject = "Tu médico creó tu perfil de salud - MHAT"
+    html_body = f"""
+    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+        <div style="text-align: center; margin-bottom: 32px;">
+            <h1 style="color: #064e3b; font-size: 28px; margin: 0;">MHAT</h1>
+            <p style="color: #6b7280; font-size: 14px; margin-top: 4px;">Historial Médico</p>
+        </div>
+        <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 32px;">
+            <h2 style="color: #1e293b; font-size: 20px; margin-top: 0;">Tu perfil de salud está listo</h2>
+            <p style="color: #4b5563; line-height: 1.6;">
+                <strong>{doctor_name}</strong> ha creado un perfil de salud para ti en MHAT.
+                Para acceder a tu historial médico y gestionar tu información de salud,
+                crea tu cuenta haciendo clic en el siguiente botón.
+            </p>
+            <div style="text-align: center; margin: 32px 0;">
+                <a href="{register_url}"
+                   style="background-color: #064e3b; color: #ffffff; padding: 14px 32px;
+                          text-decoration: none; border-radius: 8px; font-weight: 600;
+                          display: inline-block; font-size: 16px;">
+                    Crear Mi Cuenta
+                </a>
+            </div>
+            <p style="color: #6b7280; font-size: 13px; line-height: 1.5;">
+                Si no reconoces al médico mencionado, puedes ignorar este correo.
+                No se creará ninguna cuenta sin tu consentimiento.
+            </p>
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+            <p style="color: #9ca3af; font-size: 12px;">
+                Si el botón no funciona, copia y pega este enlace en tu navegador:<br/>
+                <a href="{register_url}" style="color: #064e3b; word-break: break-all;">{register_url}</a>
+            </p>
+        </div>
+    </div>
+    """
+
+    await _send_email(email, subject, html_body)
+
+
 async def _send_email(to: str, subject: str, html: str) -> None:
     """Send an email via Resend or log to console in dev mode."""
     if not settings.EMAIL_ENABLED:

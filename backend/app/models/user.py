@@ -74,7 +74,10 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     # Relationships
-    patient_profile: Mapped[Optional["PatientProfile"]] = relationship("PatientProfile", back_populates="user", uselist=False)
+    patient_profile: Mapped[Optional["PatientProfile"]] = relationship(
+        "PatientProfile", back_populates="user", uselist=False,
+        primaryjoin="User.id == foreign(PatientProfile.user_id)"
+    )
     doctor_profile: Mapped[Optional["DoctorProfile"]] = relationship("DoctorProfile", back_populates="user", uselist=False)
     # Patient profiles this user can manage (family members)
     managed_patients: Mapped[List["FamilyMembership"]] = relationship(
