@@ -148,7 +148,7 @@ export default function DashboardPage() {
 
             {/* Desktop Table View (md and up) */}
             {records && records.length > 0 && (
-              <div className="hidden md:block bg-white rounded-lg border border-[var(--border-light)] shadow-sm overflow-hidden">
+              <div className="hidden lg:block bg-white rounded-lg border border-[var(--border-light)] shadow-sm overflow-hidden">
                 <table className="w-full">
                   <thead className="bg-slate-50 border-b border-slate-200">
                     <tr>
@@ -322,7 +322,7 @@ export default function DashboardPage() {
 
             {/* Mobile Card View (below md) */}
             {records && records.length > 0 && (
-              <div className="md:hidden space-y-4">
+              <div className="lg:hidden space-y-4">
                 {paginatedRecords?.map((record) => {
                   const diagnosis = getPrimaryDiagnosis(record);
                   return (
@@ -339,18 +339,6 @@ export default function DashboardPage() {
                                 <Calendar size={12} className="mr-1" />
                                 {new Date(record.created_at).toLocaleDateString()}
                               </span>
-                              {record.tags && record.tags.length > 0 && (
-                                <>
-                                  <span className="text-slate-300">•</span>
-                                  <div className="flex gap-1">
-                                    {record.tags.map((tag, idx) => (
-                                      <span key={idx} className="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-[10px] font-medium border border-slate-200">
-                                        #{tag}
-                                      </span>
-                                    ))}
-                                  </div>
-                                </>
-                              )}
                               {record.category && (
                                 <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 px-1 py-1 rounded-md border border-emerald-200 shadow-sm whitespace-nowrap">
                                   {record.category.name}
