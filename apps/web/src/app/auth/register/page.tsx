@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import api from '@/lib/api';
 
+import { PasswordStrengthBar, isPasswordStrong } from '@/components/ui/PasswordStrengthBar';
+
 import { UserRole } from '@/types';
 
 export default function RegisterPage() {
@@ -17,8 +19,14 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [registered, setRegistered] = useState(false);
 
+  const passwordValid = isPasswordStrong(password);
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!passwordValid) {
+      setError('La contraseña no cumple con los requisitos de seguridad.');
+      return;
+    }
     setLoading(true);
     setError('');
 
@@ -94,12 +102,9 @@ export default function RegisterPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              minLength={8}
               required
             />
-            {password.length > 0 && password.length < 8 && (
-              <p className="text-red-500 text-xs mt-1">La contraseña debe tener al menos 8 caracteres.</p>
-            )}
+            <PasswordStrengthBar password={password} />
           </div>
           
           <div>
@@ -130,7 +135,7 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full" disabled={loading || !passwordValid}>
             {loading ? 'Registrando...' : 'Registrarse'}
           </Button>
         </form>

@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import api from '@/lib/api';
+import { PasswordStrengthBar, isPasswordStrong } from '@/components/ui/PasswordStrengthBar';
 
 export default function ResetPasswordPage() {
   const searchParams = useSearchParams();
@@ -26,8 +27,8 @@ export default function ResetPasswordPage() {
       return;
     }
 
-    if (newPassword.length < 8) {
-      setError('La contraseña debe tener al menos 8 caracteres.');
+    if (!isPasswordStrong(newPassword)) {
+      setError('La contraseña no cumple con los requisitos de seguridad.');
       return;
     }
 
@@ -111,12 +112,9 @@ export default function ResetPasswordPage() {
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              minLength={8}
               required
             />
-            {newPassword.length > 0 && newPassword.length < 8 && (
-              <p className="text-red-500 text-xs mt-1">La contraseña debe tener al menos 8 caracteres.</p>
-            )}
+            <PasswordStrengthBar password={newPassword} />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Confirmar Contraseña</label>
@@ -130,7 +128,7 @@ export default function ResetPasswordPage() {
               <p className="text-red-500 text-xs mt-1">Las contraseñas no coinciden.</p>
             )}
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full" disabled={loading || !isPasswordStrong(newPassword)}>
             {loading ? 'Guardando...' : 'Restablecer Contraseña'}
           </Button>
         </form>

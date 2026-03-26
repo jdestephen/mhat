@@ -26,6 +26,18 @@ class UserCreate(UserBase):
         encoded = v.encode('utf-8')
         if len(encoded) > 72:
             raise ValueError(f"La contraseña no puede exceder 72 bytes. Se recibieron {len(encoded)} bytes.")
+
+        # Enforce strong password rules in production (EMAIL_ENABLED=true)
+        from app.core.config import settings
+        if settings.EMAIL_ENABLED:
+            import re
+            if not re.search(r'[A-Z]', v):
+                raise ValueError("La contraseña debe contener al menos una letra mayúscula.")
+            if not re.search(r'[a-z]', v):
+                raise ValueError("La contraseña debe contener al menos una letra minúscula.")
+            if not re.search(r'[0-9]', v):
+                raise ValueError("La contraseña debe contener al menos un número.")
+
         return v
 
 

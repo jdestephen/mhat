@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     # EMAIL
     EMAIL_ENABLED: bool = False
     RESEND_API_KEY: Optional[str] = None
-    EMAIL_FROM_ADDRESS: str = "noreply@mhat.app"
+    EMAIL_FROM_ADDRESS: str = "noreply@mhathn.com"
     EMAIL_FROM_NAME: str = "MHAT - Historial Médico"
 
     # TOKEN EXPIRY
