@@ -33,10 +33,11 @@ app.add_middleware(
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
-# Mount static files for uploaded docs
+# Mount static files for uploaded docs (local dev mode only)
 import os
-os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-app.mount("/static/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
+if settings.STORAGE_LOCAL_MODE:
+    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+    app.mount("/static/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
 
 @app.get("/")
 def read_root():

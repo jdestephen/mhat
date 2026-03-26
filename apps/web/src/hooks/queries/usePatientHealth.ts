@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
+import { HealthHabit, FamilyHistoryCondition } from '@/types';
 
 interface PatientHealthProfile {
   medications: Array<{
@@ -21,6 +22,8 @@ interface PatientHealthProfile {
     status?: string;
     since_year?: string;
   }>;
+  health_habit: HealthHabit | null;
+  family_history: FamilyHistoryCondition[];
 }
 
 export function usePatientHealth(patientId: string) {

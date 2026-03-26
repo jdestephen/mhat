@@ -17,6 +17,7 @@ export interface User {
   city?: string;
   country?: string;
   is_active: boolean;
+  is_email_verified: boolean;
   role: UserRole;
 }
 
@@ -58,6 +59,7 @@ export interface Medication {
   name: string;
   dosage?: string;
   frequency?: string;
+  route?: string;
   status: MedicationStatus;
   status_reason?: string;
   start_date?: string;
@@ -78,9 +80,107 @@ export interface PatientProfile {
   user_id: string;
   date_of_birth?: string;
   blood_type?: string;
+  dni?: string;
+  phone?: string;
+  address?: string;
   medications?: Medication[];
   allergies?: Allergy[];
   conditions?: Condition[];
+  personal_references?: PersonalReference[];
+  health_habit?: HealthHabit | null;
+  family_history?: FamilyHistoryCondition[];
+}
+
+export enum RelationshipType {
+  PADRE = 'PADRE',
+  MADRE = 'MADRE',
+  HERMANO_A = 'HERMANO_A',
+  ESPOSO_A = 'ESPOSO_A',
+  HIJO_A = 'HIJO_A',
+  TIO_A = 'TIO_A',
+  ABUELO_A = 'ABUELO_A',
+  AMIGO_A = 'AMIGO_A',
+  GUARDIAN = 'GUARDIAN',
+  OTRO = 'OTRO',
+}
+
+export interface PersonalReference {
+  id: number;
+  patient_profile_id: string;
+  name: string;
+  phone: string;
+  relationship_type: RelationshipType;
+}
+
+// Health Habits
+export enum TobaccoUse {
+  NEVER = 'NEVER',
+  EX_SMOKER = 'EX_SMOKER',
+  OCCASIONAL = 'OCCASIONAL',
+  ACTIVE = 'ACTIVE',
+}
+
+export enum AlcoholUse {
+  NONE = 'NONE',
+  OCCASIONAL = 'OCCASIONAL',
+  SOCIAL = 'SOCIAL',
+  FREQUENT = 'FREQUENT',
+}
+
+export enum PhysicalActivity {
+  SEDENTARY = 'SEDENTARY',
+  ONE_TWO = 'ONE_TWO',
+  THREE_FOUR = 'THREE_FOUR',
+  FIVE_PLUS = 'FIVE_PLUS',
+}
+
+export enum DietType {
+  BALANCED = 'BALANCED',
+  HIGH_CARB = 'HIGH_CARB',
+  HIGH_FAT = 'HIGH_FAT',
+  VEGETARIAN = 'VEGETARIAN',
+  VEGAN = 'VEGAN',
+  OTHER = 'OTHER',
+}
+
+export interface HealthHabit {
+  id: number;
+  patient_profile_id: string;
+  tobacco_use?: TobaccoUse | null;
+  cigarettes_per_day?: number | null;
+  years_smoking?: number | null;
+  years_since_quit?: number | null;
+  alcohol_use?: AlcoholUse | null;
+  drinks_per_week?: number | null;
+  drug_use?: boolean | null;
+  drug_type?: string | null;
+  drug_frequency?: string | null;
+  physical_activity?: PhysicalActivity | null;
+  diet?: DietType | null;
+  sleep_hours?: number | null;
+  sleep_problems?: boolean | null;
+  observations?: string | null;
+}
+
+// Family History
+export enum FamilyMemberType {
+  PADRE = 'PADRE',
+  MADRE = 'MADRE',
+  HERMANO_A = 'HERMANO_A',
+  ABUELO_PATERNO = 'ABUELO_PATERNO',
+  ABUELA_PATERNA = 'ABUELA_PATERNA',
+  ABUELO_MATERNO = 'ABUELO_MATERNO',
+  ABUELA_MATERNA = 'ABUELA_MATERNA',
+  TIO_A = 'TIO_A',
+  OTRO = 'OTRO',
+}
+
+export interface FamilyHistoryCondition {
+  id: number;
+  patient_profile_id: string;
+  condition_name: string;
+  family_members: string[];
+  notes?: string | null;
 }
 
 export interface DoctorProfile {
@@ -89,6 +189,10 @@ export interface DoctorProfile {
   date_of_birth?: string;
   degree?: string;
   short_bio?: string;
+  dni?: string;
+  phone?: string;
+  college_number?: string;
+  address?: string;
   workplaces?: string[];
 }
 
@@ -123,6 +227,26 @@ export interface MedicalDiagnosis {
   created_by?: string;
 }
 
+export interface VitalSigns {
+  id: string;
+  patient_id: string;
+  medical_record_id?: string;
+  heart_rate?: number;
+  systolic_bp?: number;
+  diastolic_bp?: number;
+  temperature?: number;
+  respiratory_rate?: number;
+  oxygen_saturation?: number;
+  weight?: number;
+  height?: number;
+  blood_glucose?: number;
+  waist_circumference?: number;
+  notes?: string;
+  measured_at: string;
+  created_by: string;
+  created_at: string;
+}
+
 export interface MedicalRecord {
   id: string;
   patient_id: string;
@@ -150,6 +274,7 @@ export interface MedicalRecord {
   patient_instructions?: string;
   prescriptions?: Prescription[];
   clinical_orders?: ClinicalOrder[];
+  vital_signs?: VitalSigns;
 }
 
 export enum AllergyType {
@@ -258,6 +383,10 @@ export interface PatientAccess {
   last_name: string;
   date_of_birth?: string;
   sex?: string;
+  blood_type?: string;
+  email?: string;
+  has_account: boolean;
+  dni?: string;
   access_level: AccessLevel;
   granted_at: string;
 }

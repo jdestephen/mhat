@@ -1,4 +1,4 @@
-from sqlalchemy import String, Integer, ForeignKey, DateTime, Date, ARRAY, Enum, Text, Boolean
+from sqlalchemy import String, Integer, Float, ForeignKey, DateTime, Date, ARRAY, Enum, Text, Boolean
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -58,6 +58,61 @@ class MedicationSource(str, enum.Enum):
     SELF_REPORTED = "SELF_REPORTED"     # Patient self-reported
     TRANSFERRED = "TRANSFERRED"          # From another facility/system
 
+# --- Enums (Personal References) ---
+
+class RelationshipType(str, enum.Enum):
+    PADRE = "PADRE"
+    MADRE = "MADRE"
+    HERMANO_A = "HERMANO_A"
+    ESPOSO_A = "ESPOSO_A"
+    HIJO_A = "HIJO_A"
+    TIO_A = "TIO_A"
+    ABUELO_A = "ABUELO_A"
+    AMIGO_A = "AMIGO_A"
+    GUARDIAN = "GUARDIAN"
+    OTRO = "OTRO"
+
+# --- Enums (Habits) ---
+
+class TobaccoUse(str, enum.Enum):
+    NEVER = "NEVER"
+    EX_SMOKER = "EX_SMOKER"
+    OCCASIONAL = "OCCASIONAL"
+    ACTIVE = "ACTIVE"
+
+class AlcoholUse(str, enum.Enum):
+    NONE = "NONE"
+    OCCASIONAL = "OCCASIONAL"
+    SOCIAL = "SOCIAL"
+    FREQUENT = "FREQUENT"
+
+class PhysicalActivity(str, enum.Enum):
+    SEDENTARY = "SEDENTARY"
+    ONE_TWO = "ONE_TWO"
+    THREE_FOUR = "THREE_FOUR"
+    FIVE_PLUS = "FIVE_PLUS"
+
+class DietType(str, enum.Enum):
+    BALANCED = "BALANCED"
+    HIGH_CARB = "HIGH_CARB"
+    HIGH_FAT = "HIGH_FAT"
+    VEGETARIAN = "VEGETARIAN"
+    VEGAN = "VEGAN"
+    OTHER = "OTHER"
+
+# --- Enums (Family History) ---
+
+class FamilyMemberType(str, enum.Enum):
+    PADRE = "PADRE"
+    MADRE = "MADRE"
+    HERMANO_A = "HERMANO_A"
+    ABUELO_PATERNO = "ABUELO_PATERNO"
+    ABUELA_PATERNA = "ABUELA_PATERNA"
+    ABUELO_MATERNO = "ABUELO_MATERNO"
+    ABUELA_MATERNA = "ABUELA_MATERNA"
+    TIO_A = "TIO_A"
+    OTRO = "OTRO"
+
 # --- Models ---
 
 class PatientProfile(Base):
@@ -74,14 +129,36 @@ class PatientProfile(Base):
     
     date_of_birth: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     blood_type: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    dni: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    phone: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    address: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    # Email for matching when patient registers later (nullable, NOT unique — multiple doctors can create the same patient)
+    email: Mapped[Optional[str]] = mapped_column(String, nullable=True, index=True)
+    # Doctor who created this standalone profile (NULL if self-registered)
+    created_by_doctor_id: Mapped[Optional[UUID]] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
 
     # Relationships
-    user: Mapped[Optional["User"]] = relationship("User", back_populates="patient_profile")
+    user: Mapped[Optional["User"]] = relationship("User", back_populates="patient_profile", foreign_keys=[user_id])
     medications: Mapped[List["Medication"]] = relationship("Medication", back_populates="patient_profile")
     medical_records: Mapped[List["MedicalRecord"]] = relationship("MedicalRecord", back_populates="patient")
-    allergies: Mapped[List["Allergy"]] = relationship("Allergy", back_populates="patient_profile")
-    conditions: Mapped[List["Condition"]] = relationship("Condition", back_populates="patient_profile")
+    allergies: Mapped[List["Allergy"]] = relationship(
+        "Allergy",
+        back_populates="patient_profile",
+        primaryjoin="and_(PatientProfile.id==Allergy.patient_profile_id, Allergy.deleted==False)",
+        viewonly=True,
+    )
+    conditions: Mapped[List["Condition"]] = relationship(
+        "Condition",
+        back_populates="patient_profile",
+        primaryjoin="and_(PatientProfile.id==Condition.patient_profile_id, Condition.deleted==False)",
+        viewonly=True,
+    )
     share_tokens: Mapped[List["ShareToken"]] = relationship("ShareToken", back_populates="patient")
+    personal_references: Mapped[List["PersonalReference"]] = relationship("PersonalReference", back_populates="patient_profile", cascade="all, delete-orphan")
+    health_habit: Mapped[Optional["HealthHabit"]] = relationship("HealthHabit", back_populates="patient_profile", uselist=False, cascade="all, delete-orphan")
+    family_history: Mapped[List["FamilyHistoryCondition"]] = relationship("FamilyHistoryCondition", back_populates="patient_profile", cascade="all, delete-orphan")
     # Who manages this patient profile (family members with access)
     managed_by: Mapped[List["FamilyMembership"]] = relationship("FamilyMembership", back_populates="patient_profile")
 
@@ -95,6 +172,7 @@ class Medication(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     dosage: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     frequency: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    route: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)  # oral, IV, IM, topical, etc.
     
     # Status tracking (FHIR MedicationStatement)
     status: Mapped[MedicationStatus] = mapped_column(Enum(MedicationStatus), default=MedicationStatus.ACTIVE, nullable=False)
@@ -176,3 +254,66 @@ class Condition(Base):
     verifier: Mapped[Optional["User"]] = relationship("User", foreign_keys=[verified_by])
     patient_profile: Mapped["PatientProfile"] = relationship("PatientProfile", back_populates="conditions")
     medications: Mapped[List["Medication"]] = relationship("Medication", back_populates="condition")
+
+
+class PersonalReference(Base):
+    __tablename__ = "personal_references"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    patient_profile_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("patient_profiles.id"), nullable=False)
+
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    phone: Mapped[str] = mapped_column(String, nullable=False)
+    relationship_type: Mapped[RelationshipType] = mapped_column(Enum(RelationshipType, name='personalreferencetype'), nullable=False)
+
+    patient_profile: Mapped["PatientProfile"] = relationship("PatientProfile", back_populates="personal_references")
+
+
+class HealthHabit(Base):
+    __tablename__ = "health_habits"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    patient_profile_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("patient_profiles.id"), unique=True, nullable=False)
+
+    # Tabaco
+    tobacco_use: Mapped[Optional[TobaccoUse]] = mapped_column(Enum(TobaccoUse, name='tobaccouse'), nullable=True)
+    cigarettes_per_day: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    years_smoking: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    years_since_quit: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+
+    # Alcohol
+    alcohol_use: Mapped[Optional[AlcoholUse]] = mapped_column(Enum(AlcoholUse, name='alcoholuse'), nullable=True)
+    drinks_per_week: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+
+    # Drogas
+    drug_use: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True)
+    drug_type: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    drug_frequency: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+
+    # Actividad Física
+    physical_activity: Mapped[Optional[PhysicalActivity]] = mapped_column(Enum(PhysicalActivity, name='physicalactivity'), nullable=True)
+
+    # Alimentación
+    diet: Mapped[Optional[DietType]] = mapped_column(Enum(DietType, name='diettype'), nullable=True)
+
+    # Sueño
+    sleep_hours: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    sleep_problems: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True)
+
+    # Observaciones
+    observations: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    patient_profile: Mapped["PatientProfile"] = relationship("PatientProfile", back_populates="health_habit")
+
+
+class FamilyHistoryCondition(Base):
+    __tablename__ = "family_history_conditions"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    patient_profile_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("patient_profiles.id"), nullable=False)
+
+    condition_name: Mapped[str] = mapped_column(String, nullable=False)
+    family_members: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=False)
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    patient_profile: Mapped["PatientProfile"] = relationship("PatientProfile", back_populates="family_history")

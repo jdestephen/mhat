@@ -5,6 +5,7 @@ export interface Category {
   id: number;
   name: string;
   has_diagnosis: boolean;
+  documents: boolean;
   order: number;
 }
 

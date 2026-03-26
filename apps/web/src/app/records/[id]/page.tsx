@@ -161,22 +161,6 @@ export default function ViewRecordPage() {
             </div>
           )}
 
-          {/* Brief History */}
-          {record.brief_history && (
-            <div>
-              <label className="text-sm font-semibold text-slate-500">Historia Breve</label>
-              <p className="text-sm text-slate-800 mt-1 bg-slate-50 p-3 rounded-lg whitespace-pre-wrap">{record.brief_history}</p>
-            </div>
-          )}
-
-          {/* Key Finding */}
-          {record.key_finding && (
-            <div>
-              <label className="text-sm font-semibold text-slate-500">Hallazgo Principal</label>
-              <p className="text-sm text-slate-800 mt-1 bg-slate-50 p-3 rounded-lg">{record.key_finding}</p>
-            </div>
-          )}
-
           {/* Red Flags */}
           {record.red_flags && record.red_flags.length > 0 && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3">

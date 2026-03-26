@@ -22,6 +22,23 @@ class Settings(BaseSettings):
 
     # STORAGE
     UPLOAD_DIR: str = "/app/uploads"
+    STORAGE_LOCAL_MODE: bool = True
+    STORAGE_ENDPOINT: Optional[str] = None
+    STORAGE_ACCESS_KEY: Optional[str] = None
+    STORAGE_SECRET_KEY: Optional[str] = None
+    STORAGE_BUCKET: str = "mhat-documents"
+    STORAGE_REGION: str = "auto"
+    STORAGE_PRESIGNED_EXPIRY: int = 3600  # 1 hour
+
+    # EMAIL
+    EMAIL_ENABLED: bool = False
+    RESEND_API_KEY: Optional[str] = None
+    EMAIL_FROM_ADDRESS: str = "noreply@mhathn.com"
+    EMAIL_FROM_NAME: str = "MHAT - Historial Médico"
+
+    # TOKEN EXPIRY
+    EMAIL_VERIFY_TOKEN_EXPIRE_HOURS: int = 24
+    PASSWORD_RESET_TOKEN_EXPIRE_HOURS: int = 1
 
     # FRONTEND
     FRONTEND_URL: str = "http://localhost:3000"

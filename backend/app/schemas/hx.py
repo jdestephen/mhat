@@ -10,6 +10,10 @@ class RecordStatus(str, Enum):
     BACKED_BY_DOCUMENT = "BACKED_BY_DOCUMENT"
     VERIFIED = "VERIFIED"
 
+class VitalSignsStatus(str, Enum):
+    UNVERIFIED = "UNVERIFIED"
+    VERIFIED = "VERIFIED"
+
 class DiagnosisRank(int, Enum):
     PRIMARY = 1
     SECONDARY = 2
@@ -84,6 +88,7 @@ class Category(BaseModel):
     id: int
     name: str
     has_diagnosis: bool
+    documents: bool = False
     order: int
 
     class Config:
@@ -92,8 +97,12 @@ class Category(BaseModel):
 class MedicalRecordCreate(MedicalRecordBase):
     diagnoses: Optional[List[MedicalDiagnosisCreate]] = Field(default_factory=list)
 
-class MedicalRecordUpdate(MedicalRecordBase):
-    pass
+class MedicalRecordUpdate(BaseModel):
+    motive: Optional[str] = None
+    notes: Optional[str] = None
+    category_id: Optional[int] = None
+    tags: Optional[List[str]] = None
+    diagnoses: Optional[List[MedicalDiagnosisCreate]] = None
 
 # Inline response schemas for prescriptions/orders to avoid circular imports
 class PrescriptionInline(BaseModel):
@@ -125,6 +134,51 @@ class ClinicalOrderInline(BaseModel):
     class Config:
         from_attributes = True
 
+# Vital Signs
+class VitalSignsBase(BaseModel):
+    heart_rate: Optional[int] = None
+    systolic_bp: Optional[int] = None
+    diastolic_bp: Optional[int] = None
+    temperature: Optional[float] = None
+    respiratory_rate: Optional[int] = None
+    oxygen_saturation: Optional[int] = None
+    weight: Optional[float] = None
+    height: Optional[float] = None
+    blood_glucose: Optional[float] = None
+    waist_circumference: Optional[float] = None
+    notes: Optional[str] = None
+    measured_at: Optional[datetime] = None
+
+class VitalSignsCreate(VitalSignsBase):
+    pass
+
+class VitalSignsUpdate(VitalSignsBase):
+    pass
+
+class VitalSignsResponse(VitalSignsBase):
+    id: UUID
+    patient_id: UUID
+    medical_record_id: Optional[UUID] = None
+    status: VitalSignsStatus = VitalSignsStatus.UNVERIFIED
+    created_by: UUID
+    created_at: datetime
+    updated_by: Optional[UUID] = None
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class VitalSignsInline(VitalSignsBase):
+    """Inline vital signs for MedicalRecord response."""
+    id: UUID
+    status: VitalSignsStatus = VitalSignsStatus.UNVERIFIED
+    created_by: UUID
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 class MedicalRecord(MedicalRecordBase):
     id: UUID
     patient_id: UUID
@@ -148,6 +202,17 @@ class MedicalRecord(MedicalRecordBase):
     patient_instructions: Optional[str] = None
     prescriptions: List[PrescriptionInline] = []
     clinical_orders: List[ClinicalOrderInline] = []
+    vital_signs: Optional[VitalSignsInline] = None
+
+    class Config:
+        from_attributes = True
+
+
+class RecordViewLogResponse(BaseModel):
+    """Response schema for record view log entries."""
+    id: UUID
+    doctor_name: str
+    viewed_at: datetime
 
     class Config:
         from_attributes = True

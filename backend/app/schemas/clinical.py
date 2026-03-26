@@ -8,6 +8,7 @@ from datetime import datetime
 from uuid import UUID
 from pydantic import BaseModel, Field
 from enum import Enum
+from app.schemas.hx import VitalSignsCreate as VitalSignsCreateBase
 
 
 class OrderType(str, Enum):
@@ -150,8 +151,33 @@ class PatientAccessSummary(BaseModel):
     last_name: str
     date_of_birth: Optional[datetime] = None
     sex: Optional[str] = None
+    blood_type: Optional[str] = None
+    email: Optional[str] = None
+    has_account: bool = False
+    dni: Optional[str] = None
     access_level: AccessLevel
-    granted_at: Optional[datetime] = None  # Maps from created_at in the endpoint
+    granted_at: Optional[datetime] = None
+
+
+class CreatePatientRequest(BaseModel):
+    """Schema for doctor creating a standalone patient profile."""
+    first_name: str = Field(..., max_length=100)
+    last_name: str = Field(..., max_length=100)
+    date_of_birth: Optional[str] = None  # ISO date string
+    sex: Optional[str] = None  # MASCULINO / FEMENINO
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    dni: Optional[str] = None
+
+
+class CreatePatientResponse(BaseModel):
+    """Response after creating a standalone patient profile."""
+    patient_id: UUID
+    first_name: str
+    last_name: str
+    email: Optional[str] = None
+    activation_email_sent: bool = False
+    message: str
 
 
 # =====================
@@ -184,6 +210,8 @@ class DoctorMedicalRecordCreate(BaseModel):
     diagnoses: Optional[List["MedicalDiagnosisCreate"]] = Field(default_factory=list)
     prescriptions: Optional[List[PrescriptionCreate]] = Field(default_factory=list)
     orders: Optional[List[ClinicalOrderCreate]] = Field(default_factory=list)
+    vital_signs: Optional[VitalSignsCreateBase] = None
+    existing_vital_signs_id: Optional[UUID] = None
 
 
 class DoctorMedicalRecordUpdate(BaseModel):
@@ -204,6 +232,12 @@ class DoctorMedicalRecordUpdate(BaseModel):
     follow_up_interval: Optional[str] = Field(None, max_length=50)
     follow_up_with: Optional[str] = Field(None, max_length=200)
     patient_instructions: Optional[str] = Field(None, max_length=350)
+    
+    # Nested clinical data for update
+    diagnoses: Optional[List["MedicalDiagnosisCreate"]] = None
+    prescriptions: Optional[List[PrescriptionCreate]] = None
+    orders: Optional[List[ClinicalOrderCreate]] = None
+    vital_signs: Optional[VitalSignsCreateBase] = None
 
 
 class RecordVerification(BaseModel):
@@ -253,6 +287,45 @@ class DoctorAccessInfo(BaseModel):
     access_level: str
     access_type: str
     granted_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+# --- Claim Request Schemas ---
+
+class ClaimRequestSummary(BaseModel):
+    """Summary of a profile claim request (for doctor and patient views)."""
+    id: UUID
+    user_id: UUID
+    patient_profile_id: UUID
+    status: str
+    requested_at: datetime
+    resolved_at: Optional[datetime] = None
+    # Extra info for display
+    patient_name: str  # Name from the doctor-created profile
+    patient_email: Optional[str] = None
+    requesting_user_name: Optional[str] = None
+    requesting_user_email: Optional[str] = None
+    doctor_name: Optional[str] = None  # Doctor who created the profile
+
+    class Config:
+        from_attributes = True
+
+
+# --- Patient Profile Schemas ---
+
+class PatientProfileSummary(BaseModel):
+    """Summary of a patient profile accessible to the current user."""
+    id: UUID
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    date_of_birth: Optional[str] = None
+    relationship_type: str  # SELF, PARENT, CHILD, etc.
+    access_level: str  # FULL_ACCESS, READ_ONLY, etc.
+    is_self: bool  # Whether this is the user's own profile
+    has_records: bool = False  # Whether this profile has any medical records
+    created_by_doctor_name: Optional[str] = None  # If doctor-created
 
     class Config:
         from_attributes = True

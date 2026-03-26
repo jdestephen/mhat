@@ -1,5 +1,3 @@
-import os
-import shutil
 import uuid
 from typing import List, Any, Optional
 from datetime import datetime, timedelta
@@ -11,41 +9,72 @@ from sqlalchemy.orm import selectinload
 from app.api import deps
 from app.core.config import settings
 from app.db.session import get_db
-from app.models.hx import MedicalRecord, Document, RecordStatus, MedicalDiagnosis, DiagnosisStatus
+from app.models.hx import MedicalRecord, Document, RecordStatus, RecordSource, MedicalDiagnosis, DiagnosisStatus, VitalSigns, RecordViewLog, VitalSignsStatus
 from app.models.user import User, UserRole
 from app.models.patient import PatientProfile
+from app.models.family import FamilyMembership, RelationshipType
 from app.schemas import hx as hx_schema
 from app.services import ocr
+from app.services import storage as storage_service
 from datetime import datetime
 
 router = APIRouter()
+
+
+async def resolve_patient_profile(
+    db: AsyncSession,
+    user: User,
+    profile_id: Optional[str] = None,
+) -> PatientProfile:
+    """
+    Resolve the patient profile to use.
+    If profile_id is given, verify the user has access via FamilyMembership.
+    Otherwise, use the user's default (SELF) profile.
+    """
+    if profile_id:
+        from uuid import UUID as UUIDType
+        pid = UUIDType(profile_id)
+        # Verify access via FamilyMembership
+        result = await db.execute(
+            select(FamilyMembership, PatientProfile)
+            .join(PatientProfile, FamilyMembership.patient_profile_id == PatientProfile.id)
+            .where(
+                FamilyMembership.user_id == user.id,
+                FamilyMembership.patient_profile_id == pid,
+                FamilyMembership.is_active == True,
+            )
+        )
+        row = result.first()
+        if not row:
+            raise HTTPException(status_code=403, detail="No tienes acceso a este perfil")
+        _, profile = row
+        return profile
+
+    # Default: use SELF profile
+    result = await db.execute(
+        select(PatientProfile).filter(PatientProfile.user_id == user.id)
+    )
+    profile = result.scalars().first()
+    if not profile:
+        raise HTTPException(status_code=400, detail="Patient profile not found for this user")
+    return profile
+
 
 @router.post("/", response_model=hx_schema.MedicalRecord)
 async def create_medical_record(
     *,
     db: AsyncSession = Depends(get_db),
     record_in: hx_schema.MedicalRecordCreate,
-    current_user: User = Depends(deps.get_current_user)
+    current_user: User = Depends(deps.get_current_user),
+    profile_id: Optional[str] = Query(None, description="Profile ID to create record for"),
 ) -> Any:
     """
-    Create a new Medical Record. 
-    If user is Patient, creates for self.
-    If user is Doctor, must specify patient_id (TODO: Permission check).
-    For now, assuming Patient creates their own records.
+    Create a new Medical Record.
+    If profile_id is specified, creates for that profile (with access check).
+    Otherwise, creates for the user's default profile.
     """
-    print(f"DEBUG: Received request to create medical record")
-    print(f"DEBUG: record_in = {record_in}")
-    print(f"DEBUG: record_in.diagnoses = {record_in.diagnoses}")
-    
     # Resolve Patient Profile
-    # Simplified logic: Assumes current user is the patient
-    # TODO: Add logic for Doctor creating record for a specific patient
-    
-    result = await db.execute(select(PatientProfile).filter(PatientProfile.user_id == current_user.id))
-    patient_profile = result.scalars().first()
-    
-    if not patient_profile:
-        raise HTTPException(status_code=400, detail="Patient profile not found for this user")
+    patient_profile = await resolve_patient_profile(db, current_user, profile_id)
 
     # Build search_text field by concatenating searchable content
     search_parts = []
@@ -129,7 +158,8 @@ async def create_medical_record(
             selectinload(MedicalRecord.category),
             selectinload(MedicalRecord.diagnoses),
             selectinload(MedicalRecord.prescriptions),
-            selectinload(MedicalRecord.clinical_orders)
+            selectinload(MedicalRecord.clinical_orders),
+            selectinload(MedicalRecord.vital_signs)
         )
     )
     return result.scalars().first()
@@ -163,43 +193,94 @@ async def upload_document_to_record(
     if not record:
         raise HTTPException(status_code=404, detail="Medical Record not found")
     
-    # Ensure upload directory exists
-    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-    
-    # Save file
-    file_extension = file.filename.split(".")[-1]
-    file_name = f"{uuid.uuid4()}.{file_extension}"
-    file_path = os.path.join(settings.UPLOAD_DIR, file_name)
-    s3_key = file_name # using local path as key for prototype
-    
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-        
+    # Upload file via storage service
+    file_extension = file.filename.split('.')[-1] if file.filename else 'bin'
+    result = await storage_service.upload_file(file, folder='documents')
+
     # Create DB Entry
     doc = Document(
         medical_record_id=record.id,
-        s3_key=s3_key,
+        s3_key=result.s3_key,
         filename=file.filename,
         media_type=file_extension,
-        url=f"/static/uploads/{file_name}" # Placeholder URL
+        url=result.url,
     )
     
-    # Optional: Basic OCR Trigger
-    if file_extension.lower() in ["jpg", "jpeg", "png"]:
+    # Optional: Basic OCR Trigger (only for local mode, needs file path)
+    if settings.STORAGE_LOCAL_MODE and file_extension.lower() in ['jpg', 'jpeg', 'png']:
+        import os
+        file_name = result.s3_key.split('/')[-1]
+        file_path = os.path.join(settings.UPLOAD_DIR, file_name)
         try:
             extracted_text = ocr.process_image(file_path)
             doc.ocr_text = extracted_text
         except Exception as e:
-            print(f"OCR Failed: {e}")
+            print(f'OCR Failed: {e}')
         
     db.add(doc)
     
     # Update record status if it's currently unverified
     if record.status == RecordStatus.UNVERIFIED:
         record.status = RecordStatus.BACKED_BY_DOCUMENT
-        await db.commit()
+
+    await db.commit()
     await db.refresh(doc)
     return doc
+
+
+@router.get('/{record_id}/documents/{document_id}/url')
+async def get_document_presigned_url(
+    record_id: uuid.UUID,
+    document_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """
+    Generate a fresh presigned URL for a document.
+    Verifies the user owns or has access to the record.
+    """
+    # Verify record exists
+    result = await db.execute(
+        select(MedicalRecord).filter(MedicalRecord.id == record_id)
+    )
+    record = result.scalars().first()
+    if not record:
+        raise HTTPException(status_code=404, detail='Medical Record not found')
+
+    # Verify access: patient owns the record, or doctor has access
+    if current_user.role == UserRole.PATIENT:
+        patient_result = await db.execute(
+            select(PatientProfile).filter(PatientProfile.user_id == current_user.id)
+        )
+        patient_profile = patient_result.scalars().first()
+        if not patient_profile or record.patient_id != patient_profile.id:
+            raise HTTPException(status_code=403, detail='No tienes acceso a este registro')
+    elif current_user.role == UserRole.DOCTOR:
+        # Doctors can access records of patients they have access to
+        from app.models.family import DoctorAccess
+        access_result = await db.execute(
+            select(DoctorAccess).filter(
+                DoctorAccess.doctor_id == current_user.id,
+                DoctorAccess.patient_id == record.patient_id,
+                DoctorAccess.is_active == True,
+            )
+        )
+        if not access_result.scalars().first():
+            raise HTTPException(status_code=403, detail='No tienes acceso a este paciente')
+
+    # Verify document belongs to this record
+    doc_result = await db.execute(
+        select(Document).filter(
+            Document.id == document_id,
+            Document.medical_record_id == record_id,
+        )
+    )
+    doc = doc_result.scalars().first()
+    if not doc:
+        raise HTTPException(status_code=404, detail='Documento no encontrado')
+
+    url = storage_service.get_presigned_url(doc.s3_key)
+    return {'url': url}
 
 @router.get("/", response_model=List[hx_schema.MedicalRecord])
 async def read_medical_records(
@@ -212,14 +293,14 @@ async def read_medical_records(
     category_id: Optional[int] = Query(None, description="Filter by category ID"),
     date_from: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
     date_to: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
+    profile_id: Optional[str] = Query(None, description="Profile ID to view records for"),
 ) -> Any:
     """
-    Retrieve Medical Records for the current user (Patient) with optional search filters.
+    Retrieve Medical Records with optional search filters.
+    Supports multi-profile via profile_id parameter.
     """
     # Resolve Patient Profile
-    result = await db.execute(select(PatientProfile).filter(PatientProfile.user_id == current_user.id))
-    patient_profile = result.scalars().first()
-    
+    patient_profile = await resolve_patient_profile(db, current_user, profile_id)
     if not patient_profile:
         return []
 
@@ -252,11 +333,119 @@ async def read_medical_records(
         selectinload(MedicalRecord.category),
         selectinload(MedicalRecord.diagnoses),
         selectinload(MedicalRecord.prescriptions),
-        selectinload(MedicalRecord.clinical_orders)
+        selectinload(MedicalRecord.clinical_orders),
+        selectinload(MedicalRecord.vital_signs)
     ).offset(skip).limit(limit).order_by(MedicalRecord.created_at.desc())
     
     result = await db.execute(stmt)
     return result.scalars().all()
+
+
+# === VITAL SIGNS ENDPOINTS (Patient) ===
+# These must be registered BEFORE /{record_id} to avoid route collision.
+
+@router.post("/vital-signs", response_model=hx_schema.VitalSignsResponse)
+async def create_vital_signs(
+    *,
+    db: AsyncSession = Depends(get_db),
+    vital_in: hx_schema.VitalSignsCreate,
+    current_user: User = Depends(deps.get_current_user),
+    profile_id: Optional[str] = Query(None, description="Profile ID"),
+) -> Any:
+    """Create a standalone vital signs record."""
+    patient_profile = await resolve_patient_profile(db, current_user, profile_id)
+
+    vital_signs = VitalSigns(
+        patient_id=patient_profile.id,
+        created_by=current_user.id,
+        **vital_in.model_dump(exclude_none=True),
+    )
+    db.add(vital_signs)
+    await db.commit()
+    await db.refresh(vital_signs)
+    return vital_signs
+
+
+@router.get("/vital-signs", response_model=List[hx_schema.VitalSignsResponse])
+async def list_vital_signs(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+    profile_id: Optional[str] = Query(None, description="Profile ID"),
+) -> Any:
+    """List all vital signs (descending by measured_at)."""
+    patient_profile = await resolve_patient_profile(db, current_user, profile_id)
+
+    stmt = (
+        select(VitalSigns)
+        .filter(VitalSigns.patient_id == patient_profile.id)
+        .order_by(VitalSigns.measured_at.desc())
+    )
+    result = await db.execute(stmt)
+    return result.scalars().all()
+
+
+@router.get("/vital-signs/{vital_id}", response_model=hx_schema.VitalSignsResponse)
+async def get_vital_signs(
+    vital_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """Get a single vital signs record."""
+    result = await db.execute(select(PatientProfile).filter(PatientProfile.user_id == current_user.id))
+    patient_profile = result.scalars().first()
+    if not patient_profile:
+        raise HTTPException(status_code=400, detail="Patient profile not found")
+
+    stmt = select(VitalSigns).filter(
+        VitalSigns.id == vital_id,
+        VitalSigns.patient_id == patient_profile.id,
+    )
+    result = await db.execute(stmt)
+    vital = result.scalars().first()
+    if not vital:
+        raise HTTPException(status_code=404, detail="Vital signs record not found")
+    return vital
+
+
+@router.put("/vital-signs/{vital_id}", response_model=hx_schema.VitalSignsResponse)
+async def update_patient_vital_signs(
+    vital_id: uuid.UUID,
+    vital_in: hx_schema.VitalSignsUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """Update vital signs as patient. Only allowed if patient created it and status is UNVERIFIED."""
+    result = await db.execute(select(PatientProfile).filter(PatientProfile.user_id == current_user.id))
+    patient_profile = result.scalars().first()
+    if not patient_profile:
+        raise HTTPException(status_code=400, detail="Patient profile not found")
+
+    result = await db.execute(
+        select(VitalSigns).filter(
+            VitalSigns.id == vital_id,
+            VitalSigns.patient_id == patient_profile.id,
+        )
+    )
+    vital = result.scalars().first()
+    if not vital:
+        raise HTTPException(status_code=404, detail="Vital signs not found")
+
+    # Patient can only edit if they created it and it's still unverified
+    if vital.created_by != current_user.id:
+        raise HTTPException(status_code=403, detail="You can only edit vital signs you created")
+    if vital.status == VitalSignsStatus.VERIFIED:
+        raise HTTPException(status_code=403, detail="Cannot edit verified vital signs")
+
+    update_data = vital_in.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(vital, key, value)
+    vital.updated_by = current_user.id
+    vital.updated_at = datetime.now()
+
+    await db.commit()
+    await db.refresh(vital)
+    return vital
+
 
 @router.get("/{record_id}", response_model=hx_schema.MedicalRecord)
 async def get_medical_record(
@@ -283,7 +472,8 @@ async def get_medical_record(
         selectinload(MedicalRecord.category),
         selectinload(MedicalRecord.diagnoses),
         selectinload(MedicalRecord.prescriptions),
-        selectinload(MedicalRecord.clinical_orders)
+        selectinload(MedicalRecord.clinical_orders),
+        selectinload(MedicalRecord.vital_signs)
     )
     
     result = await db.execute(stmt)
@@ -293,3 +483,148 @@ async def get_medical_record(
         raise HTTPException(status_code=404, detail="Medical record not found")
     
     return record
+
+
+@router.put("/{record_id}", response_model=hx_schema.MedicalRecord)
+async def update_medical_record(
+    record_id: uuid.UUID,
+    record_in: hx_schema.MedicalRecordUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """
+    Patient updates their own medical record.
+    Allowed only if:
+      - The patient owns this record
+      - The record was created by the patient (record_source == PATIENT)
+      - No doctor has verified/edited it yet (verified_by is None)
+    """
+    # Resolve Patient Profile
+    result = await db.execute(select(PatientProfile).filter(PatientProfile.user_id == current_user.id))
+    patient_profile = result.scalars().first()
+    if not patient_profile:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+
+    # Load the record with relationships
+    result = await db.execute(
+        select(MedicalRecord)
+        .filter(
+            MedicalRecord.id == record_id,
+            MedicalRecord.patient_id == patient_profile.id,
+        )
+        .options(
+            selectinload(MedicalRecord.diagnoses),
+            selectinload(MedicalRecord.documents),
+            selectinload(MedicalRecord.category),
+            selectinload(MedicalRecord.prescriptions),
+            selectinload(MedicalRecord.clinical_orders),
+            selectinload(MedicalRecord.vital_signs),
+        )
+    )
+    record = result.scalars().first()
+    if not record:
+        raise HTTPException(status_code=404, detail="Medical record not found")
+
+    # Permission check
+    if record.record_source != RecordSource.PATIENT or record.created_by != current_user.id:
+        raise HTTPException(status_code=403, detail="Solo puedes editar registros creados por ti")
+    if record.verified_by is not None:
+        raise HTTPException(status_code=403, detail="Este registro ya fue verificado por un médico y no puede ser editado")
+
+    # Update scalar fields
+    update_data = record_in.model_dump(exclude_none=True, exclude={"diagnoses"})
+    for field, value in update_data.items():
+        setattr(record, field, value)
+
+    # Replace diagnoses if provided
+    if record_in.diagnoses is not None:
+        for diag in list(record.diagnoses):
+            await db.delete(diag)
+        for idx, diag_in in enumerate(record_in.diagnoses):
+            diagnosis = MedicalDiagnosis(
+                medical_record_id=record.id,
+                created_by=current_user.id,
+                diagnosis=diag_in.diagnosis,
+                diagnosis_code=diag_in.diagnosis_code,
+                diagnosis_code_system=diag_in.diagnosis_code_system,
+                rank=idx + 1,
+                status=DiagnosisStatus.PROVISIONAL,
+                notes=diag_in.notes,
+            )
+            db.add(diagnosis)
+
+    # Rebuild search_text
+    search_parts = []
+    if record.motive:
+        search_parts.append(record.motive.lower())
+    if record_in.diagnoses:
+        for d in record_in.diagnoses:
+            search_parts.append(d.diagnosis.lower())
+    if record.tags:
+        search_parts.extend([t.lower() for t in record.tags])
+    if record.notes:
+        search_parts.append(record.notes.lower())
+    search_parts.append(record.status.value.lower())
+    record.search_text = " ".join(search_parts)
+
+    await db.commit()
+
+    # Reload with relationships
+    result = await db.execute(
+        select(MedicalRecord)
+        .filter(MedicalRecord.id == record.id)
+        .options(
+            selectinload(MedicalRecord.documents),
+            selectinload(MedicalRecord.category),
+            selectinload(MedicalRecord.diagnoses),
+            selectinload(MedicalRecord.prescriptions),
+            selectinload(MedicalRecord.clinical_orders),
+            selectinload(MedicalRecord.vital_signs),
+        )
+    )
+    return result.scalar_one()
+
+
+@router.get("/{record_id}/view-log", response_model=List[hx_schema.RecordViewLogResponse])
+async def get_record_view_log(
+    record_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+):
+    """
+    Get the view log for a medical record (who viewed it and when).
+    Only the patient who owns the record can access this.
+    """
+    # Verify record exists and belongs to the current user
+    result = await db.execute(
+        select(MedicalRecord).where(MedicalRecord.id == record_id)
+    )
+    record = result.scalar_one_or_none()
+    if not record:
+        raise HTTPException(status_code=404, detail="Record not found")
+
+    # Get the patient profile for the current user
+    profile_result = await db.execute(
+        select(PatientProfile).where(PatientProfile.user_id == current_user.id)
+    )
+    patient_profile = profile_result.scalar_one_or_none()
+    if not patient_profile or record.patient_id != patient_profile.id:
+        raise HTTPException(status_code=403, detail="No permission to view this log")
+
+    # Fetch view logs with doctor info, descending by viewed_at
+    logs_result = await db.execute(
+        select(RecordViewLog, User)
+        .join(User, RecordViewLog.doctor_id == User.id)
+        .where(RecordViewLog.medical_record_id == record_id)
+        .order_by(RecordViewLog.viewed_at.desc())
+    )
+    rows = logs_result.all()
+
+    return [
+        hx_schema.RecordViewLogResponse(
+            id=log.id,
+            doctor_name=f"Dr. {user.first_name or ''} {user.last_name or ''}".strip(),
+            viewed_at=log.viewed_at,
+        )
+        for log, user in rows
+    ]

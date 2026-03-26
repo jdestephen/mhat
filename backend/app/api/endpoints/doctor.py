@@ -4,8 +4,8 @@ Doctor API Endpoints
 Endpoints for doctor workflow: patient access, medical records, prescriptions, orders.
 """
 import uuid
-from typing import List, Optional
-from datetime import datetime, timezone
+from typing import Any, List, Optional
+from datetime import datetime, timezone, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,9 +17,11 @@ from app.api import deps
 from app.api.deps import get_db
 from app.models.user import User, UserRole, DoctorPatientAccess, DoctorAccessLevel
 from app.models.patient import PatientProfile
-from app.models.hx import MedicalRecord, RecordSource, RecordStatus, MedicalDiagnosis
+from app.models.hx import MedicalRecord, RecordSource, RecordStatus, MedicalDiagnosis, VitalSigns, RecordViewLog, VitalSignsStatus
 from app.models.clinical import Prescription, ClinicalOrder
 from app.schemas import clinical as clinical_schema
+from app.schemas import hx as hx_schema
+from app.schemas import patient as patient_schema
 
 router = APIRouter()
 
@@ -153,6 +155,74 @@ async def claim_invitation_code(
 # Patient List Endpoints
 # =====================
 
+@router.post("/patients/create", response_model=clinical_schema.CreatePatientResponse)
+async def create_patient(
+    patient_in: clinical_schema.CreatePatientRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+):
+    """
+    Create a standalone patient profile (no user account).
+    Doctor gets automatic WRITE access.
+    If email is provided, sends an activation email.
+    """
+    from datetime import date as date_type
+
+    # Parse date_of_birth if provided
+    dob = None
+    if patient_in.date_of_birth:
+        try:
+            dob = date_type.fromisoformat(patient_in.date_of_birth)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Formato de fecha inválido. Use YYYY-MM-DD")
+
+    # Create PatientProfile (no user_id)
+    profile = PatientProfile(
+        first_name=patient_in.first_name,
+        last_name=patient_in.last_name,
+        date_of_birth=dob,
+        email=patient_in.email,
+        phone=patient_in.phone,
+        dni=patient_in.dni,
+        created_by_doctor_id=current_user.id,
+    )
+    db.add(profile)
+    await db.flush()  # Get profile ID
+
+    # Grant doctor WRITE access
+    access = DoctorPatientAccess(
+        doctor_id=current_user.id,
+        patient_profile_id=profile.id,
+        access_level=DoctorAccessLevel.WRITE,
+        granted_by=current_user.id,
+    )
+    db.add(access)
+    await db.commit()
+    await db.refresh(profile)
+
+    # Send activation email if email provided
+    activation_email_sent = False
+    if patient_in.email:
+        try:
+            from app.services.email import send_patient_activation_email
+            doctor_name = f"{current_user.first_name or ''} {current_user.last_name or ''}".strip() or "Tu médico"
+            await send_patient_activation_email(patient_in.email, doctor_name)
+            activation_email_sent = True
+        except Exception as e:
+            # Don't fail the request if email fails
+            import logging
+            logging.getLogger(__name__).error(f"Failed to send activation email: {e}")
+
+    return clinical_schema.CreatePatientResponse(
+        patient_id=profile.id,
+        first_name=profile.first_name,
+        last_name=profile.last_name,
+        email=profile.email,
+        activation_email_sent=activation_email_sent,
+        message="Paciente creado exitosamente",
+    )
+
+
 @router.get("/patients", response_model=List[clinical_schema.PatientAccessSummary])
 async def list_my_patients(
     db: AsyncSession = Depends(get_db),
@@ -182,6 +252,10 @@ async def list_my_patients(
             last_name=user.last_name if user else profile.last_name or "Patient",
             date_of_birth=profile.date_of_birth,
             sex=user.sex.value if user and user.sex else None,
+            blood_type=profile.blood_type,
+            email=profile.email or (user.email if user else None),
+            has_account=user is not None,
+            dni=profile.dni,
             access_level=access.access_level,
             granted_at=access.created_at
         ))
@@ -286,7 +360,10 @@ async def get_patient_health_profile(
     Get patient health profile: active medications, allergies, and conditions.
     Requires doctor access to the patient.
     """
-    from app.models.patient import Medication, Allergy, Condition, MedicationStatus
+    from app.models.patient import (
+        Medication, Allergy, Condition, MedicationStatus,
+        HealthHabit, FamilyHistoryCondition,
+    )
 
     await get_doctor_patient_access(patient_profile_id, db, current_user)
 
@@ -317,6 +394,22 @@ async def get_patient_health_profile(
     )
     conditions = conditions_result.scalars().all()
 
+    # Fetch health habit (one-to-one)
+    habit_result = await db.execute(
+        select(HealthHabit).where(
+            HealthHabit.patient_profile_id == patient_profile_id
+        )
+    )
+    habit = habit_result.scalar_one_or_none()
+
+    # Fetch family history conditions
+    fh_result = await db.execute(
+        select(FamilyHistoryCondition).where(
+            FamilyHistoryCondition.patient_profile_id == patient_profile_id
+        )
+    )
+    family_history = fh_result.scalars().all()
+
     return {
         "medications": [
             {
@@ -332,8 +425,13 @@ async def get_patient_health_profile(
             {
                 "id": a.id,
                 "allergen": a.allergen,
+                "code": a.code,
+                "code_system": a.code_system,
+                "type": a.type.value if a.type else None,
                 "reaction": a.reaction,
                 "severity": a.severity.value if a.severity else None,
+                "source": a.source.value if a.source else None,
+                "status": a.status.value if a.status else None,
             }
             for a in allergies
         ],
@@ -341,10 +439,40 @@ async def get_patient_health_profile(
             {
                 "id": c.id,
                 "name": c.name,
+                "code": c.code,
+                "code_system": c.code_system,
                 "status": c.status.value if c.status else None,
+                "source": c.source.value if c.source else None,
                 "since_year": c.since_year,
+                "notes": c.notes,
             }
             for c in conditions
+        ],
+        "health_habit": {
+            "id": habit.id,
+            "tobacco_use": habit.tobacco_use.value if habit.tobacco_use else None,
+            "cigarettes_per_day": habit.cigarettes_per_day,
+            "years_smoking": habit.years_smoking,
+            "years_since_quit": habit.years_since_quit,
+            "alcohol_use": habit.alcohol_use.value if habit.alcohol_use else None,
+            "drinks_per_week": habit.drinks_per_week,
+            "drug_use": habit.drug_use,
+            "drug_type": habit.drug_type,
+            "drug_frequency": habit.drug_frequency,
+            "physical_activity": habit.physical_activity.value if habit.physical_activity else None,
+            "diet": habit.diet.value if habit.diet else None,
+            "sleep_hours": habit.sleep_hours,
+            "sleep_problems": habit.sleep_problems,
+            "observations": habit.observations,
+        } if habit else None,
+        "family_history": [
+            {
+                "id": fh.id,
+                "condition_name": fh.condition_name,
+                "family_members": fh.family_members,
+                "notes": fh.notes,
+            }
+            for fh in family_history
         ],
     }
 
@@ -473,6 +601,45 @@ async def create_patient_record(
         )
         db.add(order)
     
+    # Add vital signs if provided
+    if record_in.vital_signs:
+        if record_in.existing_vital_signs_id:
+            # Update existing vital signs and link to this record
+            result = await db.execute(
+                select(VitalSigns).where(
+                    VitalSigns.id == record_in.existing_vital_signs_id,
+                    VitalSigns.patient_id == patient_profile_id,
+                )
+            )
+            existing_vital = result.scalar_one_or_none()
+            if existing_vital:
+                update_data = record_in.vital_signs.model_dump(exclude_none=True)
+                for key, value in update_data.items():
+                    setattr(existing_vital, key, value)
+                existing_vital.medical_record_id = record.id
+                existing_vital.status = VitalSignsStatus.VERIFIED
+                existing_vital.updated_by = current_user.id
+                existing_vital.updated_at = datetime.now(timezone.utc)
+            else:
+                # Fallback: create new if existing not found
+                vital = VitalSigns(
+                    patient_id=patient_profile_id,
+                    medical_record_id=record.id,
+                    created_by=current_user.id,
+                    status=VitalSignsStatus.VERIFIED,
+                    **record_in.vital_signs.model_dump(exclude_none=True),
+                )
+                db.add(vital)
+        else:
+            vital = VitalSigns(
+                patient_id=patient_profile_id,
+                medical_record_id=record.id,
+                created_by=current_user.id,
+                status=VitalSignsStatus.VERIFIED,
+                **record_in.vital_signs.model_dump(exclude_none=True),
+            )
+            db.add(vital)
+    
     await db.commit()
     await db.refresh(record)
     
@@ -484,7 +651,8 @@ async def create_patient_record(
             selectinload(MedicalRecord.diagnoses),
             selectinload(MedicalRecord.prescriptions),
             selectinload(MedicalRecord.clinical_orders),
-            selectinload(MedicalRecord.category)
+            selectinload(MedicalRecord.category),
+            selectinload(MedicalRecord.vital_signs),
         )
     )
     return result.scalar_one()
@@ -507,7 +675,8 @@ async def get_medical_record(
             selectinload(MedicalRecord.documents),
             selectinload(MedicalRecord.prescriptions),
             selectinload(MedicalRecord.clinical_orders),
-            selectinload(MedicalRecord.category)
+            selectinload(MedicalRecord.category),
+            selectinload(MedicalRecord.vital_signs)
         )
     )
     record = result.scalar_one_or_none()
@@ -517,6 +686,23 @@ async def get_medical_record(
     
     # Validate access
     await get_doctor_patient_access(record.patient_id, db, current_user)
+    
+    # Log the view (15-min de-duplication)
+    fifteen_min_ago = datetime.now(timezone.utc) - timedelta(minutes=15)
+    existing_log = await db.execute(
+        select(RecordViewLog).where(
+            RecordViewLog.medical_record_id == record_id,
+            RecordViewLog.doctor_id == current_user.id,
+            RecordViewLog.viewed_at > fifteen_min_ago,
+        )
+    )
+    if not existing_log.scalar_one_or_none():
+        log_entry = RecordViewLog(
+            medical_record_id=record_id,
+            doctor_id=current_user.id,
+        )
+        db.add(log_entry)
+        await db.commit()
     
     return record
 
@@ -713,3 +899,813 @@ async def delete_clinical_order(
     await db.commit()
     
     return {"message": "Order deleted"}
+
+
+# === VITAL SIGNS ENDPOINTS (Doctor) ===
+
+@router.get("/patients/{patient_profile_id}/vital-signs", response_model=List[hx_schema.VitalSignsResponse])
+async def list_patient_vital_signs(
+    patient_profile_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+):
+    """List all vital signs for a patient (descending)."""
+    await get_doctor_patient_access(patient_profile_id, db, current_user)
+    
+    stmt = (
+        select(VitalSigns)
+        .filter(VitalSigns.patient_id == patient_profile_id)
+        .order_by(VitalSigns.measured_at.desc())
+    )
+    result = await db.execute(stmt)
+    return result.scalars().all()
+
+
+@router.post("/patients/{patient_profile_id}/records/{record_id}/vital-signs", response_model=hx_schema.VitalSignsResponse)
+async def create_record_vital_signs(
+    patient_profile_id: uuid.UUID,
+    record_id: uuid.UUID,
+    vital_in: hx_schema.VitalSignsCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+):
+    """Create vital signs linked to a medical record."""
+    await get_doctor_patient_access(patient_profile_id, db, current_user, require_write=True)
+    
+    # Verify record exists and belongs to patient
+    result = await db.execute(
+        select(MedicalRecord).where(
+            and_(MedicalRecord.id == record_id, MedicalRecord.patient_id == patient_profile_id)
+        )
+    )
+    record = result.scalar_one_or_none()
+    if not record:
+        raise HTTPException(status_code=404, detail="Medical record not found")
+    
+    vital = VitalSigns(
+        patient_id=patient_profile_id,
+        medical_record_id=record_id,
+        created_by=current_user.id,
+        **vital_in.model_dump(exclude_none=True),
+    )
+    db.add(vital)
+    await db.commit()
+    await db.refresh(vital)
+    return vital
+
+
+@router.post("/patients/{patient_profile_id}/vital-signs", response_model=hx_schema.VitalSignsResponse)
+async def create_standalone_vital_signs(
+    patient_profile_id: uuid.UUID,
+    vital_in: hx_schema.VitalSignsCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+):
+    """Create standalone vital signs (not tied to a record). Status = VERIFIED."""
+    await get_doctor_patient_access(patient_profile_id, db, current_user, require_write=True)
+
+    vital = VitalSigns(
+        patient_id=patient_profile_id,
+        created_by=current_user.id,
+        status=VitalSignsStatus.VERIFIED,
+        **vital_in.model_dump(exclude_none=True),
+    )
+    db.add(vital)
+    await db.commit()
+    await db.refresh(vital)
+    return vital
+
+
+@router.put("/patients/{patient_profile_id}/vital-signs/{vital_id}", response_model=hx_schema.VitalSignsResponse)
+async def update_vital_signs(
+    patient_profile_id: uuid.UUID,
+    vital_id: uuid.UUID,
+    vital_in: hx_schema.VitalSignsUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+):
+    """Update vital signs. Doctor can edit if they created it, or if patient created it."""
+    await get_doctor_patient_access(patient_profile_id, db, current_user, require_write=True)
+
+    result = await db.execute(
+        select(VitalSigns).where(
+            VitalSigns.id == vital_id,
+            VitalSigns.patient_id == patient_profile_id,
+        )
+    )
+    vital = result.scalar_one_or_none()
+    if not vital:
+        raise HTTPException(status_code=404, detail="Vital signs not found")
+
+    # Permission: doctor can edit if they created it,
+    # or if a patient created it (not another doctor)
+    creator_result = await db.execute(select(User).where(User.id == vital.created_by))
+    creator = creator_result.scalar_one_or_none()
+
+    if creator and creator.role == UserRole.DOCTOR and vital.created_by != current_user.id:
+        raise HTTPException(status_code=403, detail="Only the creating doctor can edit these vital signs")
+
+    # If it was updated by another doctor, only that doctor can edit
+    if vital.updated_by and vital.updated_by != current_user.id:
+        raise HTTPException(status_code=403, detail="Only the last updating doctor can edit these vital signs")
+
+    update_data = vital_in.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(vital, key, value)
+    vital.updated_by = current_user.id
+    vital.updated_at = datetime.now(timezone.utc)
+    vital.status = VitalSignsStatus.VERIFIED
+
+    await db.commit()
+    await db.refresh(vital)
+    return vital
+
+
+@router.get("/patients/{patient_profile_id}/vital-signs/recent", response_model=hx_schema.VitalSignsResponse | None)
+async def get_recent_vital_signs(
+    patient_profile_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+):
+    """Get the most recent vital signs taken within the last 3 hours."""
+    await get_doctor_patient_access(patient_profile_id, db, current_user)
+
+    three_hours_ago = datetime.now(timezone.utc) - timedelta(hours=3)
+
+    result = await db.execute(
+        select(VitalSigns)
+        .where(
+            VitalSigns.patient_id == patient_profile_id,
+            VitalSigns.measured_at > three_hours_ago,
+        )
+        .order_by(VitalSigns.measured_at.desc())
+        .limit(1)
+    )
+    return result.scalar_one_or_none()
+
+
+# === RECORD UPDATE ENDPOINT ===
+
+@router.put("/records/{record_id}", response_model=hx_schema.MedicalRecord)
+async def update_medical_record(
+    record_id: uuid.UUID,
+    record_in: clinical_schema.DoctorMedicalRecordUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+):
+    """
+    Update a medical record.
+    Allowed if: doctor created it, OR it's a patient-created record not yet verified by another doctor.
+    """
+    result = await db.execute(
+        select(MedicalRecord)
+        .where(MedicalRecord.id == record_id)
+        .options(
+            selectinload(MedicalRecord.diagnoses),
+            selectinload(MedicalRecord.prescriptions),
+            selectinload(MedicalRecord.clinical_orders),
+            selectinload(MedicalRecord.vital_signs),
+        )
+    )
+    record = result.scalar_one_or_none()
+    if not record:
+        raise HTTPException(status_code=404, detail="Medical record not found")
+    
+    # Check access to patient
+    await get_doctor_patient_access(record.patient_id, db, current_user, require_write=True)
+    
+    # Permission check: can this doctor edit this record?
+    can_edit = False
+    if record.created_by == current_user.id:
+        can_edit = True
+    elif record.record_source == RecordSource.PATIENT and (
+        record.verified_by is None or record.verified_by == current_user.id
+    ):
+        can_edit = True
+    
+    if not can_edit:
+        raise HTTPException(status_code=403, detail="No permission to edit this record")
+    
+    # If a doctor is editing a patient-created record, mark it as verified
+    if record.record_source == RecordSource.PATIENT and record.created_by != current_user.id:
+        record.status = RecordStatus.VERIFIED
+        record.verified_by = current_user.id
+        record.verified_at = datetime.now(timezone.utc)
+    
+    # Update scalar fields
+    update_fields = record_in.model_dump(
+        exclude_none=True,
+        exclude={'diagnoses', 'prescriptions', 'orders', 'vital_signs'},
+    )
+    for field, value in update_fields.items():
+        setattr(record, field, value)
+    
+    # Replace diagnoses if provided
+    if record_in.diagnoses is not None:
+        # Delete existing diagnoses
+        for diag in list(record.diagnoses):
+            await db.delete(diag)
+        # Add new ones
+        for diag_in in record_in.diagnoses:
+            diagnosis = MedicalDiagnosis(
+                medical_record_id=record.id,
+                created_by=current_user.id,
+                diagnosis=diag_in.diagnosis,
+                diagnosis_code=diag_in.diagnosis_code,
+                diagnosis_code_system=diag_in.diagnosis_code_system,
+                rank=diag_in.rank,
+                status=diag_in.status,
+                notes=diag_in.notes,
+            )
+            db.add(diagnosis)
+    
+    # Replace prescriptions if provided
+    if record_in.prescriptions is not None:
+        for rx in list(record.prescriptions):
+            await db.delete(rx)
+        for rx_in in record_in.prescriptions:
+            prescription = Prescription(
+                medical_record_id=record.id,
+                created_by=current_user.id,
+                medication_name=rx_in.medication_name,
+                dosage=rx_in.dosage,
+                frequency=rx_in.frequency,
+                duration=rx_in.duration,
+                route=rx_in.route,
+                quantity=rx_in.quantity,
+                instructions=rx_in.instructions,
+            )
+            db.add(prescription)
+    
+    # Replace orders if provided
+    if record_in.orders is not None:
+        for order in list(record.clinical_orders):
+            await db.delete(order)
+        for order_in in record_in.orders:
+            clinical_order = ClinicalOrder(
+                medical_record_id=record.id,
+                created_by=current_user.id,
+                order_type=order_in.order_type,
+                description=order_in.description,
+                urgency=order_in.urgency,
+                reason=order_in.reason,
+                notes=order_in.notes,
+                referral_to=order_in.referral_to,
+            )
+            db.add(clinical_order)
+    
+    # Replace vital signs if provided
+    if record_in.vital_signs is not None:
+        if record.vital_signs:
+            await db.delete(record.vital_signs)
+        vital = VitalSigns(
+            patient_id=record.patient_id,
+            medical_record_id=record.id,
+            created_by=current_user.id,
+            status=VitalSignsStatus.VERIFIED,
+            **record_in.vital_signs.model_dump(exclude_none=True),
+        )
+        db.add(vital)
+    
+    await db.commit()
+    
+    # Reload with relationships
+    result = await db.execute(
+        select(MedicalRecord)
+        .where(MedicalRecord.id == record.id)
+        .options(
+            selectinload(MedicalRecord.diagnoses),
+            selectinload(MedicalRecord.documents),
+            selectinload(MedicalRecord.prescriptions),
+            selectinload(MedicalRecord.clinical_orders),
+            selectinload(MedicalRecord.category),
+            selectinload(MedicalRecord.vital_signs),
+        )
+    )
+    return result.scalar_one()
+
+
+# ============================================
+# Doctor Health History CRUD for Patients
+# ============================================
+
+# --- Conditions ---
+
+@router.post("/patients/{patient_id}/conditions", response_model=patient_schema.Condition)
+async def doctor_add_condition(
+    patient_id: uuid.UUID,
+    condition_in: patient_schema.ConditionCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> Any:
+    """Doctor adds a condition to a patient's profile."""
+    await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
+    from app.models.patient import Condition as ConditionModel
+    condition = ConditionModel(patient_profile_id=patient_id, **condition_in.model_dump())
+    db.add(condition)
+    await db.commit()
+    await db.refresh(condition)
+    return condition
+
+
+@router.patch("/patients/{patient_id}/conditions/{condition_id}", response_model=patient_schema.Condition)
+async def doctor_update_condition(
+    patient_id: uuid.UUID,
+    condition_id: int,
+    condition_in: patient_schema.ConditionUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> Any:
+    """Doctor updates a condition on a patient's profile."""
+    await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
+    from app.models.patient import Condition as ConditionModel
+    result = await db.execute(
+        select(ConditionModel).filter(
+            ConditionModel.id == condition_id,
+            ConditionModel.patient_profile_id == patient_id,
+            ConditionModel.deleted == False,
+        )
+    )
+    condition = result.scalars().first()
+    if not condition:
+        raise HTTPException(status_code=404, detail="Condition not found")
+    for field, value in condition_in.model_dump(exclude_unset=True).items():
+        setattr(condition, field, value)
+    await db.commit()
+    await db.refresh(condition)
+    return condition
+
+
+@router.delete("/patients/{patient_id}/conditions/{condition_id}", status_code=204)
+async def doctor_delete_condition(
+    patient_id: uuid.UUID,
+    condition_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> None:
+    """Doctor soft-deletes a condition from patient's profile."""
+    await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
+    from app.models.patient import Condition as ConditionModel
+    result = await db.execute(
+        select(ConditionModel).filter(
+            ConditionModel.id == condition_id,
+            ConditionModel.patient_profile_id == patient_id,
+            ConditionModel.deleted == False,
+        )
+    )
+    condition = result.scalars().first()
+    if not condition:
+        raise HTTPException(status_code=404, detail="Condition not found")
+    condition.deleted = True
+    condition.deleted_at = datetime.utcnow()
+    await db.commit()
+
+
+# --- Allergies ---
+
+@router.post("/patients/{patient_id}/allergies", response_model=patient_schema.Allergy)
+async def doctor_add_allergy(
+    patient_id: uuid.UUID,
+    allergy_in: patient_schema.AllergyCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> Any:
+    """Doctor adds an allergy to a patient's profile."""
+    await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
+    from app.models.patient import Allergy as AllergyModel
+    allergy = AllergyModel(patient_profile_id=patient_id, **allergy_in.model_dump())
+    db.add(allergy)
+    await db.commit()
+    await db.refresh(allergy)
+    return allergy
+
+
+@router.patch("/patients/{patient_id}/allergies/{allergy_id}", response_model=patient_schema.Allergy)
+async def doctor_update_allergy(
+    patient_id: uuid.UUID,
+    allergy_id: int,
+    allergy_in: patient_schema.AllergyUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> Any:
+    """Doctor updates an allergy on a patient's profile."""
+    await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
+    from app.models.patient import Allergy as AllergyModel
+    result = await db.execute(
+        select(AllergyModel).filter(
+            AllergyModel.id == allergy_id,
+            AllergyModel.patient_profile_id == patient_id,
+            AllergyModel.deleted == False,
+        )
+    )
+    allergy = result.scalars().first()
+    if not allergy:
+        raise HTTPException(status_code=404, detail="Allergy not found")
+    for field, value in allergy_in.model_dump(exclude_unset=True).items():
+        setattr(allergy, field, value)
+    await db.commit()
+    await db.refresh(allergy)
+    return allergy
+
+
+@router.delete("/patients/{patient_id}/allergies/{allergy_id}", status_code=204)
+async def doctor_delete_allergy(
+    patient_id: uuid.UUID,
+    allergy_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> None:
+    """Doctor soft-deletes an allergy from patient's profile."""
+    await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
+    from app.models.patient import Allergy as AllergyModel
+    result = await db.execute(
+        select(AllergyModel).filter(
+            AllergyModel.id == allergy_id,
+            AllergyModel.patient_profile_id == patient_id,
+            AllergyModel.deleted == False,
+        )
+    )
+    allergy = result.scalars().first()
+    if not allergy:
+        raise HTTPException(status_code=404, detail="Allergy not found")
+    allergy.deleted = True
+    allergy.deleted_at = datetime.utcnow()
+    await db.commit()
+
+
+# --- Medications ---
+
+@router.post("/patients/{patient_id}/medications", response_model=patient_schema.Medication)
+async def doctor_add_medication(
+    patient_id: uuid.UUID,
+    med_in: patient_schema.MedicationCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> Any:
+    """Doctor adds a medication to a patient's profile."""
+    await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
+    from app.models.patient import Medication as MedicationModel
+    med = MedicationModel(patient_profile_id=patient_id, created_by_id=current_user.id, **med_in.model_dump())
+    db.add(med)
+    await db.commit()
+    await db.refresh(med)
+    return med
+
+
+@router.patch("/patients/{patient_id}/medications/{med_id}", response_model=patient_schema.Medication)
+async def doctor_update_medication(
+    patient_id: uuid.UUID,
+    med_id: int,
+    med_in: patient_schema.MedicationUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> Any:
+    """Doctor updates a medication on patient's profile."""
+    await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
+    from app.models.patient import Medication as MedicationModel
+    result = await db.execute(
+        select(MedicationModel).filter(
+            MedicationModel.id == med_id,
+            MedicationModel.patient_profile_id == patient_id,
+        )
+    )
+    med = result.scalars().first()
+    if not med:
+        raise HTTPException(status_code=404, detail="Medication not found")
+    for field, value in med_in.model_dump(exclude_unset=True).items():
+        setattr(med, field, value)
+    await db.commit()
+    await db.refresh(med)
+    return med
+
+
+@router.delete("/patients/{patient_id}/medications/{med_id}", status_code=204)
+async def doctor_delete_medication(
+    patient_id: uuid.UUID,
+    med_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> None:
+    """Doctor deletes a medication from patient's profile."""
+    await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
+    from app.models.patient import Medication as MedicationModel
+    result = await db.execute(
+        select(MedicationModel).filter(
+            MedicationModel.id == med_id,
+            MedicationModel.patient_profile_id == patient_id,
+        )
+    )
+    med = result.scalars().first()
+    if not med:
+        raise HTTPException(status_code=404, detail="Medication not found")
+    await db.delete(med)
+    await db.commit()
+
+
+# --- Health Habits ---
+
+@router.get("/patients/{patient_id}/habits", response_model=patient_schema.HealthHabit | None)
+async def doctor_get_habits(
+    patient_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> Any:
+    """Doctor gets a patient's health habits."""
+    await get_doctor_patient_access(patient_id, db, current_user)
+    from app.models.patient import HealthHabit
+    result = await db.execute(
+        select(HealthHabit).filter(HealthHabit.patient_profile_id == patient_id)
+    )
+    return result.scalars().first()
+
+
+@router.put("/patients/{patient_id}/habits", response_model=patient_schema.HealthHabit)
+async def doctor_upsert_habits(
+    patient_id: uuid.UUID,
+    habits_in: patient_schema.HealthHabitUpsert,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> Any:
+    """Doctor creates/updates a patient's health habits."""
+    await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
+    from app.models.patient import HealthHabit
+    result = await db.execute(
+        select(HealthHabit).filter(HealthHabit.patient_profile_id == patient_id)
+    )
+    existing = result.scalars().first()
+    update_data = habits_in.model_dump(exclude_unset=True)
+    if existing:
+        for field, value in update_data.items():
+            setattr(existing, field, value)
+        await db.commit()
+        await db.refresh(existing)
+        return existing
+    else:
+        habit = HealthHabit(patient_profile_id=patient_id, **update_data)
+        db.add(habit)
+        await db.commit()
+        await db.refresh(habit)
+        return habit
+
+
+# --- Family History ---
+
+@router.get("/patients/{patient_id}/family-history", response_model=list[patient_schema.FamilyHistoryConditionResponse])
+async def doctor_get_family_history(
+    patient_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> Any:
+    """Doctor gets a patient's family history conditions."""
+    await get_doctor_patient_access(patient_id, db, current_user)
+    from app.models.patient import FamilyHistoryCondition
+    result = await db.execute(
+        select(FamilyHistoryCondition).filter(
+            FamilyHistoryCondition.patient_profile_id == patient_id
+        )
+    )
+    return result.scalars().all()
+
+
+@router.post("/patients/{patient_id}/family-history", response_model=patient_schema.FamilyHistoryConditionResponse)
+async def doctor_add_family_history(
+    patient_id: uuid.UUID,
+    fh_in: patient_schema.FamilyHistoryConditionCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> Any:
+    """Doctor adds a family history condition."""
+    await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
+    from app.models.patient import FamilyHistoryCondition
+    condition = FamilyHistoryCondition(
+        patient_profile_id=patient_id,
+        condition_name=fh_in.condition_name,
+        family_members=fh_in.family_members,
+        notes=fh_in.notes,
+    )
+    db.add(condition)
+    await db.commit()
+    await db.refresh(condition)
+    return condition
+
+
+@router.put("/patients/{patient_id}/family-history/{condition_id}", response_model=patient_schema.FamilyHistoryConditionResponse)
+async def doctor_update_family_history(
+    patient_id: uuid.UUID,
+    condition_id: int,
+    fh_in: patient_schema.FamilyHistoryConditionUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> Any:
+    """Doctor updates a family history condition."""
+    await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
+    from app.models.patient import FamilyHistoryCondition
+    result = await db.execute(
+        select(FamilyHistoryCondition).filter(
+            FamilyHistoryCondition.id == condition_id,
+            FamilyHistoryCondition.patient_profile_id == patient_id,
+        )
+    )
+    condition = result.scalars().first()
+    if not condition:
+        raise HTTPException(status_code=404, detail="Family history condition not found")
+    for field, value in fh_in.model_dump(exclude_unset=True).items():
+        setattr(condition, field, value)
+    await db.commit()
+    await db.refresh(condition)
+    return condition
+
+
+@router.delete("/patients/{patient_id}/family-history/{condition_id}", status_code=204)
+async def doctor_delete_family_history(
+    patient_id: uuid.UUID,
+    condition_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> None:
+    """Doctor deletes a family history condition."""
+    await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
+    from app.models.patient import FamilyHistoryCondition
+    result = await db.execute(
+        select(FamilyHistoryCondition).filter(
+            FamilyHistoryCondition.id == condition_id,
+            FamilyHistoryCondition.patient_profile_id == patient_id,
+        )
+    )
+    condition = result.scalars().first()
+    if not condition:
+        raise HTTPException(status_code=404, detail="Family history condition not found")
+    await db.delete(condition)
+    await db.commit()
+
+
+# =====================
+# Claim Request Management
+# =====================
+
+@router.get("/claim-requests", response_model=List[clinical_schema.ClaimRequestSummary])
+async def list_claim_requests(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+):
+    """List pending profile claim requests for profiles this doctor created."""
+    from app.models.profile_claim import ProfileClaimRequest, ClaimStatus
+
+    result = await db.execute(
+        select(ProfileClaimRequest, PatientProfile, User)
+        .join(PatientProfile, ProfileClaimRequest.patient_profile_id == PatientProfile.id)
+        .join(User, ProfileClaimRequest.user_id == User.id)
+        .where(
+            PatientProfile.created_by_doctor_id == current_user.id,
+            ProfileClaimRequest.status == ClaimStatus.PENDING,
+        )
+    )
+
+    claims = []
+    for claim, profile, requesting_user in result.all():
+        claims.append(clinical_schema.ClaimRequestSummary(
+            id=claim.id,
+            user_id=claim.user_id,
+            patient_profile_id=claim.patient_profile_id,
+            status=claim.status.value,
+            requested_at=claim.requested_at,
+            resolved_at=claim.resolved_at,
+            patient_name=f"{profile.first_name or ''} {profile.last_name or ''}".strip(),
+            patient_email=profile.email,
+            requesting_user_name=f"{requesting_user.first_name or ''} {requesting_user.last_name or ''}".strip(),
+            requesting_user_email=requesting_user.email,
+            doctor_name=f"{current_user.first_name or ''} {current_user.last_name or ''}".strip(),
+        ))
+
+    return claims
+
+
+@router.post("/claim-requests/{claim_id}/approve")
+async def approve_claim_request(
+    claim_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+):
+    """
+    Approve a claim request. Links the doctor-created profile to the requesting user.
+
+    Smart merge logic:
+    - If patient's self-profile is empty → replace it with the claimed profile
+    - If patient has their own data → add claimed profile as additional FamilyMembership
+    """
+    from app.models.profile_claim import ProfileClaimRequest, ClaimStatus
+    from app.models.family import FamilyMembership, RelationshipType, AccessLevel
+
+    claim_uuid = uuid.UUID(claim_id)
+
+    # Fetch claim + verify this doctor owns the profile
+    result = await db.execute(
+        select(ProfileClaimRequest, PatientProfile)
+        .join(PatientProfile, ProfileClaimRequest.patient_profile_id == PatientProfile.id)
+        .where(
+            ProfileClaimRequest.id == claim_uuid,
+            PatientProfile.created_by_doctor_id == current_user.id,
+            ProfileClaimRequest.status == ClaimStatus.PENDING,
+        )
+    )
+    row = result.first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Claim request not found or already resolved")
+
+    claim, claimed_profile = row
+
+    # Check if the patient's self-profile is empty
+    self_profile_result = await db.execute(
+        select(FamilyMembership)
+        .where(
+            FamilyMembership.user_id == claim.user_id,
+            FamilyMembership.relationship_type == RelationshipType.SELF,
+            FamilyMembership.is_active == True,
+        )
+    )
+    self_membership = self_profile_result.scalars().first()
+
+    if self_membership:
+        # Check if self-profile has any records
+        from app.models.hx import MedicalRecord, VitalSigns
+        records_count = await db.execute(
+            select(MedicalRecord.id).where(
+                MedicalRecord.patient_id == self_membership.patient_profile_id
+            ).limit(1)
+        )
+        vitals_count = await db.execute(
+            select(VitalSigns.id).where(
+                VitalSigns.patient_id == self_membership.patient_profile_id
+            ).limit(1)
+        )
+        self_profile_empty = (
+            records_count.first() is None and vitals_count.first() is None
+        )
+
+        if self_profile_empty:
+            # Replace: link claimed profile to user, delete empty self-profile
+            old_profile_id = self_membership.patient_profile_id
+            claimed_profile.user_id = claim.user_id
+            self_membership.patient_profile_id = claimed_profile.id
+            # Delete the empty profile
+            old_profile = await db.get(PatientProfile, old_profile_id)
+            if old_profile:
+                await db.delete(old_profile)
+        else:
+            # Multi-profile: link claimed profile and add new FamilyMembership
+            claimed_profile.user_id = claim.user_id
+            new_membership = FamilyMembership(
+                user_id=claim.user_id,
+                patient_profile_id=claimed_profile.id,
+                relationship_type=RelationshipType.OTHER,
+                access_level=AccessLevel.FULL_ACCESS,
+                can_manage_family=False,
+                created_by=current_user.id,
+                is_active=True,
+            )
+            db.add(new_membership)
+    else:
+        # No self-membership found — just link the profile
+        claimed_profile.user_id = claim.user_id
+
+    # Resolve the claim
+    claim.status = ClaimStatus.APPROVED
+    claim.resolved_at = datetime.now(timezone.utc)
+    claim.resolved_by = current_user.id
+
+    await db.commit()
+    return {"message": "Solicitud de vinculación aprobada exitosamente"}
+
+
+@router.post("/claim-requests/{claim_id}/reject")
+async def reject_claim_request(
+    claim_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+):
+    """Reject a claim request."""
+    from app.models.profile_claim import ProfileClaimRequest, ClaimStatus
+
+    claim_uuid = uuid.UUID(claim_id)
+
+    result = await db.execute(
+        select(ProfileClaimRequest, PatientProfile)
+        .join(PatientProfile, ProfileClaimRequest.patient_profile_id == PatientProfile.id)
+        .where(
+            ProfileClaimRequest.id == claim_uuid,
+            PatientProfile.created_by_doctor_id == current_user.id,
+            ProfileClaimRequest.status == ClaimStatus.PENDING,
+        )
+    )
+    row = result.first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Claim request not found or already resolved")
+
+    claim, _ = row
+    claim.status = ClaimStatus.REJECTED
+    claim.resolved_at = datetime.now(timezone.utc)
+    claim.resolved_by = current_user.id
+
+    await db.commit()
+    return {"message": "Solicitud de vinculación rechazada"}
+

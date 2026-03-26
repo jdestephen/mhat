@@ -5,7 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { InputWithVoice } from '@/components/ui/input-with-voice';
 import { Select } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import api from '@/lib/api';
+import {
+  DOSAGE_QUANTITIES,
+  DOSAGE_UNITS,
+  FREQUENCY_OPTIONS,
+  ROUTE_OPTIONS,
+} from '@/lib/prescriptionOptions';
 import { 
   PatientProfile, 
   Medication,
@@ -17,11 +24,12 @@ import { X, Plus, Pill, Pencil } from 'lucide-react';
 interface MedicationListProps {
   profile: PatientProfile;
   onRefresh: () => void;
+  apiPrefix?: string;
 }
 
 type FormMode = 'view' | 'add' | 'edit';
 
-export function MedicationList({ profile, onRefresh }: MedicationListProps) {
+export function MedicationList({ profile, onRefresh, apiPrefix = '/profiles/patient' }: MedicationListProps) {
   const [formMode, setFormMode] = useState<FormMode>('view');
   const [editingMedication, setEditingMedication] = useState<Medication | null>(null);
   const [formData, setFormData] = useState<Partial<Medication>>({
@@ -65,9 +73,9 @@ export function MedicationList({ profile, onRefresh }: MedicationListProps) {
     setSaving(true);
     try {
       if (formMode === 'add') {
-        await api.post('/profiles/patient/medications', formData);
+        await api.post(`${apiPrefix}/medications`, formData);
       } else if (formMode === 'edit' && editingMedication) {
-        await api.patch(`/profiles/patient/medications/${editingMedication.id}`, formData);
+        await api.patch(`${apiPrefix}/medications/${editingMedication.id}`, formData);
       }
       
       setFormMode('view');
@@ -91,7 +99,7 @@ export function MedicationList({ profile, onRefresh }: MedicationListProps) {
     }
 
     try {
-      await api.delete(`/profiles/patient/medications/${medicationId}`);
+      await api.delete(`${apiPrefix}/medications/${medicationId}`);
       onRefresh();
     } catch (error) {
       console.error(error);
@@ -160,23 +168,55 @@ export function MedicationList({ profile, onRefresh }: MedicationListProps) {
 
             <div>
               <label className="block text-sm font-medium mb-1">Dosis</label>
-              <Input
-                placeholder="ej. 500mg"
-                value={formData.dosage || ''}
-                onChange={(e) => setFormData({ ...formData, dosage: e.target.value })}
-              />
+              <div className="flex gap-2">
+                <SearchableSelect
+                  options={DOSAGE_QUANTITIES.map((q) => ({ value: q, label: q }))}
+                  value={(formData.dosage || '').split(' ')[0] || ''}
+                  onChange={(val) => {
+                    const unit = (formData.dosage || '').split(' ').slice(1).join(' ') || '';
+                    setFormData({ ...formData, dosage: unit ? `${val} ${unit}` : String(val) });
+                  }}
+                  placeholder="Cant."
+                  searchPlaceholder="Buscar..."
+                  className="w-[45%]"
+                />
+                <SearchableSelect
+                  options={DOSAGE_UNITS}
+                  value={(formData.dosage || '').split(' ').slice(1).join(' ') || ''}
+                  onChange={(val) => {
+                    const qty = (formData.dosage || '').split(' ')[0] || '';
+                    setFormData({ ...formData, dosage: qty ? `${qty} ${val}` : String(val) });
+                  }}
+                  placeholder="Unidad"
+                  searchPlaceholder="Buscar unidad..."
+                  className="w-[55%]"
+                />
+              </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">Frecuencia</label>
-              <Input
-                placeholder="ej. Dos veces al día"
+              <SearchableSelect
+                groups={FREQUENCY_OPTIONS}
                 value={formData.frequency || ''}
-                onChange={(e) => setFormData({ ...formData, frequency: e.target.value })}
+                onChange={(val) => setFormData({ ...formData, frequency: String(val) })}
+                placeholder="Seleccionar frecuencia..."
+                searchPlaceholder="Buscar frecuencia..."
               />
             </div>
 
-            <div className="col-span-2">
+            <div>
+              <label className="block text-sm font-medium mb-1">Vía</label>
+              <SearchableSelect
+                options={ROUTE_OPTIONS}
+                value={formData.route || ''}
+                onChange={(val) => setFormData({ ...formData, route: String(val) })}
+                placeholder="Seleccionar vía..."
+                searchPlaceholder="Buscar vía..."
+              />
+            </div>
+
+            <div className="col-span-1">
               <label className="block text-sm font-medium mb-1">Instrucciones</label>
               <InputWithVoice
                 placeholder="ej. Tomar con comida"
@@ -296,9 +336,10 @@ export function MedicationList({ profile, onRefresh }: MedicationListProps) {
               {/* Table Header */}
               <div className="hidden md:flex gap-4 px-4 py-2 bg-slate-100 rounded font-semibold text-sm text-slate-700">
                 <div className="flex-1">Nombre</div>
-                <div className="w-32">Dosis</div>
-                <div className="w-32">Frecuencia</div>
-                <div className="w-32">Estado</div>
+                <div className="w-28">Dosis</div>
+                <div className="w-36">Frecuencia</div>
+                <div className="w-24">Vía</div>
+                <div className="w-28">Estado</div>
                 <div className="w-24 text-center">Acciones</div>
               </div>
 
@@ -312,14 +353,19 @@ export function MedicationList({ profile, onRefresh }: MedicationListProps) {
                     )}
                   </div>
                   
-                  <div className="w-full md:w-32">
+                  <div className="w-full md:w-28">
                     <span className="md:hidden font-medium text-slate-500">Dosis: </span>
                     <span className="text-slate-700">{med.dosage || '—'}</span>
                   </div>
                   
-                  <div className="w-full md:w-32">
+                  <div className="w-full md:w-36">
                     <span className="md:hidden font-medium text-slate-500">Frecuencia: </span>
                     <span className="text-slate-700">{med.frequency || '—'}</span>
+                  </div>
+
+                  <div className="w-full md:w-24">
+                    <span className="md:hidden font-medium text-slate-500">Vía: </span>
+                    <span className="text-slate-700 capitalize">{med.route ? ROUTE_OPTIONS.find(r => r.value === med.route)?.label || med.route : '—'}</span>
                   </div>
                   
                   <div className="w-full md:w-32">

@@ -70,10 +70,14 @@ class User(Base):
     country: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    is_email_verified: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     # Relationships
-    patient_profile: Mapped[Optional["PatientProfile"]] = relationship("PatientProfile", back_populates="user", uselist=False)
+    patient_profile: Mapped[Optional["PatientProfile"]] = relationship(
+        "PatientProfile", back_populates="user", uselist=False,
+        primaryjoin="User.id == foreign(PatientProfile.user_id)"
+    )
     doctor_profile: Mapped[Optional["DoctorProfile"]] = relationship("DoctorProfile", back_populates="user", uselist=False)
     # Patient profiles this user can manage (family members)
     managed_patients: Mapped[List["FamilyMembership"]] = relationship(

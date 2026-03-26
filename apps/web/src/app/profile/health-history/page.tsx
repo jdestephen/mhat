@@ -6,6 +6,8 @@ import api from '@/lib/api';
 import { User, UserRole, PatientProfile } from '@/types';
 import { PatientHealthHistory } from '../components/patient-health-history';
 import { MedicationList } from '../components/medication-list';
+import { HabitsTab } from '../components/HabitsTab';
+import { FamilyHistoryTab } from '../components/FamilyHistoryTab';
 
 export default function HealthHistoryPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -60,9 +62,11 @@ export default function HealthHistoryPage() {
       <h1 className="text-3xl font-bold mb-8 text-emerald-950">Historial de Salud</h1>
       
       <Tabs defaultValue="history" className="w-full">
-        <TabsList className="mb-0 w-full">
+        <TabsList className="mb-0 w-full flex-wrap">
           <TabsTrigger value="history" className="flex-1 rounded-tl-lg">Condiciones y Alergías</TabsTrigger>
-          <TabsTrigger value="medications" className="flex-1 rounded-tr-lg">Medicamentos</TabsTrigger>
+          <TabsTrigger value="medications" className="flex-1">Medicamentos</TabsTrigger>
+          <TabsTrigger value="habits" className="flex-1">Hábitos</TabsTrigger>
+          <TabsTrigger value="family-history" className="flex-1 rounded-tr-lg">Antecedentes Familiares</TabsTrigger>
         </TabsList>
 
         <TabsContent value="history">
@@ -77,7 +81,7 @@ export default function HealthHistoryPage() {
         </TabsContent>
 
         <TabsContent value="medications">
-          <div className="bg-white p-6 rounded-b-lg shadow-sm">
+          <div className="bg-white p-6 rounded-b-lg shadow-sm border border-[var(--border-light)]">
             {profile && (
               <MedicationList
                 profile={profile}
@@ -86,7 +90,20 @@ export default function HealthHistoryPage() {
             )}
           </div>
         </TabsContent>
+
+        <TabsContent value="habits">
+          <div className="bg-white p-6 rounded-b-lg shadow-sm border border-[var(--border-light)]">
+            <HabitsTab onRefresh={fetchData} />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="family-history">
+          <div className="bg-white p-6 rounded-b-lg shadow-sm border border-[var(--border-light)]">
+            <FamilyHistoryTab onRefresh={fetchData} />
+          </div>
+        </TabsContent>
       </Tabs>
     </div>
   );
 }
+

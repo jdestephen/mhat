@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useMyPatients } from '@/hooks/queries/useMyPatients';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
 import { useClaimInvitation } from '@/hooks/mutations/useClaimInvitation';
@@ -13,16 +13,23 @@ import {
   Users, 
   Search, 
   Calendar, 
-  Clock, 
-  ChevronRight,
   UserPlus,
-  Shield,
-  Activity,
   KeyRound,
   Check,
   X,
   AlertCircle,
+  Eye,
+  Settings,
+  FileText,
+  Paperclip,
+  ClipboardList,
+  Droplets,
+  Activity,
+  Mail,
 } from 'lucide-react';
+import { VitalSignsModal } from '@/components/clinical/VitalSignsModal';
+import { CreatePatientModal } from '@/components/doctor/CreatePatientModal';
+import { ClaimRequestsPanel } from '@/components/doctor/ClaimRequestsPanel';
 
 export default function DoctorDashboardPage() {
   const router = useRouter();
@@ -33,6 +40,24 @@ export default function DoctorDashboardPage() {
   const [showClaimForm, setShowClaimForm] = useState(false);
   const [claimCode, setClaimCode] = useState('');
   const [claimResult, setClaimResult] = useState<{ success: boolean; message: string; patientName?: string } | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [vitalModalOpen, setVitalModalOpen] = useState(false);
+  const [vitalModalPatientId, setVitalModalPatientId] = useState<string>('');
+  const [vitalModalPatientName, setVitalModalPatientName] = useState<string>('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpenMenuId(null);
+      }
+    };
+    if (openMenuId) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [openMenuId]);
 
   // Redirect non-doctors
   if (!userLoading && user?.role !== UserRole.DOCTOR) {
@@ -62,12 +87,16 @@ export default function DoctorDashboardPage() {
   }
 
   return (
+    <>
     <div className="max-w-6xl mx-auto">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-emerald-950">Panel Médico</h1>
-        <p className="text-gray-600 mt-1">Gestiona tus pacientes y registros clínicos</p>
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-emerald-950">Panel Médico</h1>
+        <p className="text-gray-600 mt-1 text-sm sm:text-base">Gestiona tus pacientes y registros clínicos</p>
       </div>
+
+      {/* Claim Requests (pending patient link requests) */}
+      <ClaimRequestsPanel />
 
       {/* Claim Invitation */}
       {showClaimForm && (
@@ -140,51 +169,12 @@ export default function DoctorDashboardPage() {
         </div>
       )}
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-full bg-emerald-100">
-              <Users className="h-6 w-6 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Pacientes Activos</p>
-              <p className="text-2xl font-bold text-gray-900">{patients.length}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-full bg-blue-100">
-              <Activity className="h-6 w-6 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Encuentros Hoy</p>
-              <p className="text-2xl font-bold text-gray-900">0</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-full bg-amber-100">
-              <Clock className="h-6 w-6 text-amber-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Pendientes</p>
-              <p className="text-2xl font-bold text-gray-900">0</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Patient List */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-        <div className="p-6 border-b border-gray-100">
-          <div className="flex items-center justify-between gap-4">
+        <div className="p-4 sm:p-6 border-b border-gray-100">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
             <h2 className="text-lg font-semibold text-gray-900">Mis Pacientes</h2>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
@@ -192,16 +182,28 @@ export default function DoctorDashboardPage() {
                   placeholder="Buscar paciente..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-64"
+                  className="pl-10 w-full sm:w-64"
                 />
               </div>
-              <Button
-                variant="outline"
-                onClick={() => { setShowClaimForm(true); setClaimResult(null); }}
-              >
-                <KeyRound className="w-4 h-4 mr-2" />
-                Vincular Paciente
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => { setShowClaimForm(true); setClaimResult(null); }}
+                  className="flex-1 sm:flex-none text-xs sm:text-sm"
+                >
+                  <KeyRound className="w-4 h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Vincular</span>
+                  <span className="sm:hidden">Vincular</span>
+                </Button>
+                <Button
+                  onClick={() => setShowCreateModal(true)}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white flex-1 sm:flex-none text-xs sm:text-sm"
+                >
+                  <UserPlus className="w-4 h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Crear Paciente</span>
+                  <span className="sm:hidden">Crear</span>
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -221,33 +223,59 @@ export default function DoctorDashboardPage() {
         ) : (
           <div className="divide-y divide-gray-100">
             {filteredPatients.map((patient) => (
-              <Link
+              <div
                 key={patient.patient_id}
-                href={`/doctor/patients/${patient.patient_id}`}
-                className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 hover:bg-gray-50/50 transition-colors gap-3"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center">
+                {/* Left: Avatar + Info */}
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                  <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
                     <span className="text-lg font-semibold text-emerald-700">
                       {patient.first_name[0]}{patient.last_name[0]}
                     </span>
                   </div>
-                  <div>
-                    <p className="font-medium text-gray-900">
-                      {patient.first_name} {patient.last_name}
-                    </p>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-gray-900">
+                        {patient.first_name} {patient.last_name}
+                      </p>
+                      {/* Account status indicator */}
+                      {patient.has_account ? (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700" title="Cuenta activa">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                          Cuenta
+                        </span>
+                      ) : patient.email ? (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700" title="Email enviado, sin cuenta">
+                          <Mail className="h-2.5 w-2.5" />
+                          Invitado
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-500" title="Sin cuenta">
+                          <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                          Sin cuenta
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-gray-500 mt-0.5">
                       {patient.date_of_birth && (
-                        <>
+                        <span className="flex items-center gap-1">
                           <Calendar className="h-3.5 w-3.5" />
-                          <span>{formatDate(patient.date_of_birth)}</span>
-                        </>
+                          {formatDate(patient.date_of_birth)}
+                        </span>
+                      )}
+                      {patient.blood_type && (
+                        <span className="flex items-center gap-1 text-red-600">
+                          <Droplets className="h-3.5 w-3.5" />
+                          {patient.blood_type}
+                        </span>
                       )}
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4">
+                {/* Right: Access Badge + Actions */}
+                <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 ml-auto sm:ml-0">
                   <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
                     patient.access_level === AccessLevel.WRITE
                       ? 'bg-emerald-100 text-emerald-700'
@@ -255,13 +283,87 @@ export default function DoctorDashboardPage() {
                   }`}>
                     {patient.access_level === AccessLevel.WRITE ? 'Escritura' : 'Lectura'}
                   </span>
-                  <ChevronRight className="h-5 w-5 text-gray-400" />
+
+                  <Link href={`/doctor/patients/${patient.patient_id}`}>
+                    <Button variant="ghost" size="sm" className="flex items-center gap-1.5">
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                  </Link>
+
+                  {/* Gear Dropdown */}
+                  <div className="relative" ref={openMenuId === patient.patient_id ? menuRef : undefined}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="px-2"
+                      onClick={() => setOpenMenuId(openMenuId === patient.patient_id ? null : patient.patient_id)}
+                    >
+                      <Settings className="h-4 w-4 text-gray-500" />
+                    </Button>
+                    {openMenuId === patient.patient_id && (
+                      <div className="absolute right-0 top-full mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                        <Link
+                          href={`/doctor/patients/${patient.patient_id}/records/new`}
+                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                          onClick={() => setOpenMenuId(null)}
+                        >
+                          <FileText className="h-4 w-4 text-emerald-600" />
+                          Nuevo Registro Médico
+                        </Link>
+                        <Link
+                          href={`/doctor/patients/${patient.patient_id}?action=upload`}
+                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                          onClick={() => setOpenMenuId(null)}
+                        >
+                          <Paperclip className="h-4 w-4 text-blue-600" />
+                          Adjuntar Examen
+                        </Link>
+                        <div className="border-t border-gray-100 my-1" />
+                        <Link
+                          href={`/doctor/patients/${patient.patient_id}/health-history`}
+                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                          onClick={() => setOpenMenuId(null)}
+                        >
+                          <ClipboardList className="h-4 w-4 text-purple-600" />
+                          Historial de Salud
+                        </Link>
+                        <button
+                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                          onClick={() => {
+                            setOpenMenuId(null);
+                            setVitalModalPatientId(patient.patient_id);
+                            setVitalModalPatientName(`${patient.first_name} ${patient.last_name}`);
+                            setVitalModalOpen(true);
+                          }}
+                        >
+                          <Activity className="h-4 w-4 text-rose-600" />
+                          Signos Vitales
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         )}
       </div>
     </div>
+
+    {/* Vital Signs Modal */}
+    <VitalSignsModal
+      open={vitalModalOpen}
+      onOpenChange={setVitalModalOpen}
+      patientId={vitalModalPatientId}
+      patientName={vitalModalPatientName}
+    />
+
+    {/* Create Patient Modal */}
+    <CreatePatientModal
+      open={showCreateModal}
+      onOpenChange={setShowCreateModal}
+      onSuccess={(patientId) => router.push(`/doctor/patients/${patientId}`)}
+    />
+    </>
   );
 }

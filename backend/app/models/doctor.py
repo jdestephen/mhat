@@ -17,6 +17,10 @@ class DoctorProfile(Base):
     date_of_birth: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     degree: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     short_bio: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    dni: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    phone: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    college_number: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    address: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     
     # Hospitals/Clinics where they work
     workplaces: Mapped[Optional[List[str]]] = mapped_column(ARRAY(String), nullable=True)

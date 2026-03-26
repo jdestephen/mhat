@@ -7,7 +7,7 @@ from sqlalchemy.orm import selectinload
 from app.api import deps
 from app.db.session import get_db
 from app.models.user import User, UserRole
-from app.models.patient import PatientProfile, Medication, MedicationStatus, Condition
+from app.models.patient import PatientProfile, Medication, MedicationStatus, Condition, PersonalReference, HealthHabit, FamilyHistoryCondition
 from app.models.doctor import DoctorProfile
 from app.schemas import patient as patient_schema
 from app.schemas import doctor as doctor_schema
@@ -31,7 +31,10 @@ async def get_patient_profile(
         .options(
             selectinload(PatientProfile.medications),
             selectinload(PatientProfile.allergies),
-            selectinload(PatientProfile.conditions)
+            selectinload(PatientProfile.conditions),
+            selectinload(PatientProfile.personal_references),
+            selectinload(PatientProfile.health_habit),
+            selectinload(PatientProfile.family_history)
         )
     )
     profile = result.scalars().first()
@@ -105,7 +108,10 @@ async def update_patient_profile(
         .options(
             selectinload(PatientProfile.medications),
             selectinload(PatientProfile.allergies),
-            selectinload(PatientProfile.conditions)
+            selectinload(PatientProfile.conditions),
+            selectinload(PatientProfile.personal_references),
+            selectinload(PatientProfile.health_habit),
+            selectinload(PatientProfile.family_history)
         )
     )
     profile = result.scalars().first()
@@ -198,7 +204,10 @@ async def add_patient_allergy(
         .options(
              selectinload(PatientProfile.medications),
              selectinload(PatientProfile.allergies),
-             selectinload(PatientProfile.conditions)
+             selectinload(PatientProfile.conditions),
+             selectinload(PatientProfile.personal_references),
+             selectinload(PatientProfile.health_habit),
+             selectinload(PatientProfile.family_history),
         )
     )
     return result.scalars().first()
@@ -259,10 +268,158 @@ async def add_patient_condition(
         .options(
              selectinload(PatientProfile.medications),
              selectinload(PatientProfile.allergies),
-             selectinload(PatientProfile.conditions)
+             selectinload(PatientProfile.conditions),
+             selectinload(PatientProfile.personal_references),
+             selectinload(PatientProfile.health_habit),
+             selectinload(PatientProfile.family_history),
         )
     )
     return result.scalars().first()
+
+
+@router.patch("/patient/conditions/{condition_id}", response_model=patient_schema.Condition)
+async def update_patient_condition(
+    *,
+    condition_id: int,
+    condition_in: patient_schema.ConditionUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """Update a condition on the patient profile."""
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Not a patient")
+
+    result = await db.execute(select(PatientProfile).filter(PatientProfile.user_id == current_user.id))
+    profile = result.scalars().first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+
+    from app.models.patient import Condition as ConditionModel
+    result = await db.execute(
+        select(ConditionModel).filter(
+            ConditionModel.id == condition_id,
+            ConditionModel.patient_profile_id == profile.id,
+            ConditionModel.deleted == False,
+        )
+    )
+    condition = result.scalars().first()
+    if not condition:
+        raise HTTPException(status_code=404, detail="Condition not found")
+
+    update_data = condition_in.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(condition, field, value)
+
+    await db.commit()
+    await db.refresh(condition)
+    return condition
+
+
+@router.delete("/patient/conditions/{condition_id}", status_code=204)
+async def delete_patient_condition(
+    *,
+    condition_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> None:
+    """Soft-delete a condition from the patient profile."""
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Not a patient")
+
+    result = await db.execute(select(PatientProfile).filter(PatientProfile.user_id == current_user.id))
+    profile = result.scalars().first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+
+    from app.models.patient import Condition as ConditionModel
+    result = await db.execute(
+        select(ConditionModel).filter(
+            ConditionModel.id == condition_id,
+            ConditionModel.patient_profile_id == profile.id,
+            ConditionModel.deleted == False,
+        )
+    )
+    condition = result.scalars().first()
+    if not condition:
+        raise HTTPException(status_code=404, detail="Condition not found")
+
+    from datetime import datetime as dt
+    condition.deleted = True
+    condition.deleted_at = dt.utcnow()
+    await db.commit()
+
+
+@router.patch("/patient/allergies/{allergy_id}", response_model=patient_schema.Allergy)
+async def update_patient_allergy(
+    *,
+    allergy_id: int,
+    allergy_in: patient_schema.AllergyUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """Update an allergy on the patient profile."""
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Not a patient")
+
+    result = await db.execute(select(PatientProfile).filter(PatientProfile.user_id == current_user.id))
+    profile = result.scalars().first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+
+    from app.models.patient import Allergy as AllergyModel
+    result = await db.execute(
+        select(AllergyModel).filter(
+            AllergyModel.id == allergy_id,
+            AllergyModel.patient_profile_id == profile.id,
+            AllergyModel.deleted == False,
+        )
+    )
+    allergy = result.scalars().first()
+    if not allergy:
+        raise HTTPException(status_code=404, detail="Allergy not found")
+
+    update_data = allergy_in.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(allergy, field, value)
+
+    await db.commit()
+    await db.refresh(allergy)
+    return allergy
+
+
+@router.delete("/patient/allergies/{allergy_id}", status_code=204)
+async def delete_patient_allergy(
+    *,
+    allergy_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> None:
+    """Soft-delete an allergy from the patient profile."""
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Not a patient")
+
+    result = await db.execute(select(PatientProfile).filter(PatientProfile.user_id == current_user.id))
+    profile = result.scalars().first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+
+    from app.models.patient import Allergy as AllergyModel
+    result = await db.execute(
+        select(AllergyModel).filter(
+            AllergyModel.id == allergy_id,
+            AllergyModel.patient_profile_id == profile.id,
+            AllergyModel.deleted == False,
+        )
+    )
+    allergy = result.scalars().first()
+    if not allergy:
+        raise HTTPException(status_code=404, detail="Allergy not found")
+
+    from datetime import datetime as dt
+    allergy.deleted = True
+    allergy.deleted_at = dt.utcnow()
+    await db.commit()
+
 
 @router.put("/doctor", response_model=doctor_schema.DoctorProfile)
 async def update_doctor_profile(
@@ -288,6 +445,279 @@ async def update_doctor_profile(
     await db.commit()
     await db.refresh(profile)
     return profile
+
+
+# ==========================
+# Personal Reference Endpoints
+# ==========================
+
+@router.post("/patient/references", response_model=patient_schema.PersonalReference)
+async def create_personal_reference(
+    *,
+    db: AsyncSession = Depends(get_db),
+    ref_in: patient_schema.PersonalReferenceCreate,
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """Add a personal reference to the patient profile (max 3)."""
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Not a patient")
+
+    result = await db.execute(
+        select(PatientProfile)
+        .filter(PatientProfile.user_id == current_user.id)
+        .options(selectinload(PatientProfile.personal_references))
+    )
+    profile = result.scalars().first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+
+    if len(profile.personal_references) >= 3:
+        raise HTTPException(status_code=400, detail="Máximo 3 referencias personales permitidas")
+
+    reference = PersonalReference(
+        patient_profile_id=profile.id,
+        **ref_in.dict()
+    )
+    db.add(reference)
+    await db.commit()
+    await db.refresh(reference)
+    return reference
+
+
+@router.put("/patient/references/{ref_id}", response_model=patient_schema.PersonalReference)
+async def update_personal_reference(
+    *,
+    ref_id: int,
+    ref_in: patient_schema.PersonalReferenceUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """Update a personal reference."""
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Not a patient")
+
+    result = await db.execute(
+        select(PatientProfile).filter(PatientProfile.user_id == current_user.id)
+    )
+    profile = result.scalars().first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+
+    result = await db.execute(
+        select(PersonalReference).filter(
+            PersonalReference.id == ref_id,
+            PersonalReference.patient_profile_id == profile.id
+        )
+    )
+    reference = result.scalars().first()
+    if not reference:
+        raise HTTPException(status_code=404, detail="Reference not found")
+
+    update_data = ref_in.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(reference, field, value)
+
+    await db.commit()
+    await db.refresh(reference)
+    return reference
+
+
+@router.delete("/patient/references/{ref_id}", status_code=204)
+async def delete_personal_reference(
+    *,
+    ref_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> None:
+    """Delete a personal reference."""
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Not a patient")
+
+    result = await db.execute(
+        select(PatientProfile).filter(PatientProfile.user_id == current_user.id)
+    )
+    profile = result.scalars().first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+
+    result = await db.execute(
+        select(PersonalReference).filter(
+            PersonalReference.id == ref_id,
+            PersonalReference.patient_profile_id == profile.id
+        )
+    )
+    reference = result.scalars().first()
+    if not reference:
+        raise HTTPException(status_code=404, detail="Reference not found")
+
+    await db.delete(reference)
+    await db.commit()
+
+
+# ==========================
+# Health Habits Endpoints
+# ==========================
+
+@router.get("/patient/habits", response_model=patient_schema.HealthHabit | None)
+async def get_patient_habits(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+):
+    """Get the patient's health habits."""
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Only patients can access habits")
+    result = await db.execute(
+        select(HealthHabit)
+        .join(PatientProfile)
+        .where(PatientProfile.user_id == current_user.id)
+    )
+    return result.scalars().first()
+
+
+@router.put("/patient/habits", response_model=patient_schema.HealthHabit)
+async def upsert_patient_habits(
+    *,
+    db: AsyncSession = Depends(get_db),
+    habits_in: patient_schema.HealthHabitUpsert,
+    current_user: User = Depends(deps.get_current_user),
+):
+    """Create or update the patient's health habits."""
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Only patients can update habits")
+    result = await db.execute(
+        select(PatientProfile).where(PatientProfile.user_id == current_user.id)
+    )
+    profile = result.scalars().first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+
+    # Check if habits already exist
+    result = await db.execute(
+        select(HealthHabit).where(HealthHabit.patient_profile_id == profile.id)
+    )
+    existing = result.scalars().first()
+
+    update_data = habits_in.model_dump(exclude_unset=True)
+
+    if existing:
+        for key, value in update_data.items():
+            setattr(existing, key, value)
+        await db.commit()
+        await db.refresh(existing)
+        return existing
+    else:
+        new_habit = HealthHabit(patient_profile_id=profile.id, **update_data)
+        db.add(new_habit)
+        await db.commit()
+        await db.refresh(new_habit)
+        return new_habit
+
+
+# ==========================
+# Family History Endpoints
+# ==========================
+
+@router.get("/patient/family-history", response_model=List[patient_schema.FamilyHistoryConditionResponse])
+async def get_family_history(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+):
+    """Get patient's family history conditions."""
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Only patients can access family history")
+    result = await db.execute(
+        select(FamilyHistoryCondition)
+        .join(PatientProfile)
+        .where(PatientProfile.user_id == current_user.id)
+    )
+    return result.scalars().all()
+
+
+@router.post("/patient/family-history", response_model=patient_schema.FamilyHistoryConditionResponse)
+async def create_family_history_condition(
+    *,
+    db: AsyncSession = Depends(get_db),
+    condition_in: patient_schema.FamilyHistoryConditionCreate,
+    current_user: User = Depends(deps.get_current_user),
+):
+    """Add a family history condition."""
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Only patients can add family history")
+    result = await db.execute(
+        select(PatientProfile).where(PatientProfile.user_id == current_user.id)
+    )
+    profile = result.scalars().first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+
+    new_condition = FamilyHistoryCondition(
+        patient_profile_id=profile.id,
+        condition_name=condition_in.condition_name,
+        family_members=condition_in.family_members,
+        notes=condition_in.notes,
+    )
+    db.add(new_condition)
+    await db.commit()
+    await db.refresh(new_condition)
+    return new_condition
+
+
+@router.put("/patient/family-history/{condition_id}", response_model=patient_schema.FamilyHistoryConditionResponse)
+async def update_family_history_condition(
+    *,
+    condition_id: int,
+    condition_in: patient_schema.FamilyHistoryConditionUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+):
+    """Update a family history condition."""
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Only patients can update family history")
+    result = await db.execute(
+        select(FamilyHistoryCondition)
+        .join(PatientProfile)
+        .where(
+            FamilyHistoryCondition.id == condition_id,
+            PatientProfile.user_id == current_user.id,
+        )
+    )
+    condition = result.scalars().first()
+    if not condition:
+        raise HTTPException(status_code=404, detail="Condition not found")
+
+    update_data = condition_in.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(condition, key, value)
+
+    await db.commit()
+    await db.refresh(condition)
+    return condition
+
+
+@router.delete("/patient/family-history/{condition_id}", status_code=204)
+async def delete_family_history_condition(
+    *,
+    condition_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+):
+    """Delete a family history condition."""
+    if current_user.role != UserRole.PATIENT:
+        raise HTTPException(status_code=403, detail="Only patients can delete family history")
+    result = await db.execute(
+        select(FamilyHistoryCondition)
+        .join(PatientProfile)
+        .where(
+            FamilyHistoryCondition.id == condition_id,
+            PatientProfile.user_id == current_user.id,
+        )
+    )
+    condition = result.scalars().first()
+    if not condition:
+        raise HTTPException(status_code=404, detail="Condition not found")
+
+    await db.delete(condition)
+    await db.commit()
 
 
 # ==========================
