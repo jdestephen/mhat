@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { InputWithVoice } from '@/components/ui/input-with-voice';
-import { Autocomplete } from '@/components/ui/autocomplete';
+import { Combobox } from '@/components/ui/Combobox';
 import { Select } from '@/components/ui/select';
 import api from '@/lib/api';
 import { 
@@ -49,6 +49,7 @@ export function PatientHealthHistory({
       since_year: ''
   });
   const [savingCond, setSavingCond] = useState(false);
+  const [condError, setCondError] = useState<string | null>(null);
 
   // --- Allergy state ---
   const [allergyMode, setAllergyMode] = useState<FormMode>('view');
@@ -60,6 +61,7 @@ export function PatientHealthHistory({
       status: AllergyStatus.UNVERIFIED
   });
   const [savingAllergy, setSavingAllergy] = useState(false);
+  const [allergyError, setAllergyError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchOptions();
@@ -77,6 +79,7 @@ export function PatientHealthHistory({
   // --- Condition handlers ---
   const handleAddCondition = () => {
     setCondMode('add');
+    setCondError(null);
     setNewCondition({
       status: ConditionStatus.ACTIVE,
       source: ConditionSource.SUSPECTED,
@@ -87,12 +90,14 @@ export function PatientHealthHistory({
 
   const handleEditCondition = (cond: Condition) => {
     setCondMode('edit');
+    setCondError(null);
     setEditingCondition(cond);
     setNewCondition(cond);
   };
 
   const handleCancelCondition = () => {
     setCondMode('view');
+    setCondError(null);
     setEditingCondition(null);
     setNewCondition({
       status: ConditionStatus.ACTIVE,
@@ -102,11 +107,11 @@ export function PatientHealthHistory({
   };
 
   const handleSaveCondition = async () => {
-    if (!newCondition.name) return;
-    if (condMode === 'add' && (!newCondition.code || !newCondition.code_system)) {
-      alert('Por favor selecciona una condición del menú desplegable para asegurar la codificación apropiada.');
+    if (!newCondition.name) {
+      setCondError('Por favor ingresa el nombre de la condición.');
       return;
     }
+    setCondError(null);
 
     setSavingCond(true);
     try {
@@ -119,7 +124,7 @@ export function PatientHealthHistory({
       onRefresh();
     } catch (error) {
       console.error(error);
-      alert('Error al guardar condición');
+      setCondError('Error al guardar condición. Intenta de nuevo.');
     } finally {
       setSavingCond(false);
     }
@@ -139,6 +144,7 @@ export function PatientHealthHistory({
   // --- Allergy handlers ---
   const handleAddAllergy = () => {
     setAllergyMode('add');
+    setAllergyError(null);
     setNewAllergy({
       type: AllergyType.OTHER,
       severity: AllergySeverity.UNKNOWN,
@@ -150,12 +156,14 @@ export function PatientHealthHistory({
 
   const handleEditAllergy = (allergy: Allergy) => {
     setAllergyMode('edit');
+    setAllergyError(null);
     setEditingAllergy(allergy);
     setNewAllergy(allergy);
   };
 
   const handleCancelAllergy = () => {
     setAllergyMode('view');
+    setAllergyError(null);
     setEditingAllergy(null);
     setNewAllergy({
       type: AllergyType.OTHER,
@@ -166,11 +174,11 @@ export function PatientHealthHistory({
   };
 
   const handleSaveAllergy = async () => {
-    if (!newAllergy.allergen) return;
-    if (allergyMode === 'add' && (!newAllergy.code || !newAllergy.code_system)) {
-      alert('Por favor selecciona una alergia del menú desplegable para asegurar la codificación apropiada.');
+    if (!newAllergy.allergen) {
+      setAllergyError('Por favor ingresa el nombre del alérgeno.');
       return;
     }
+    setAllergyError(null);
 
     setSavingAllergy(true);
     try {
@@ -183,7 +191,7 @@ export function PatientHealthHistory({
       onRefresh();
     } catch (error) {
       console.error(error);
-      alert('Error al guardar alergia');
+      setAllergyError('Error al guardar alergia. Intenta de nuevo.');
     } finally {
       setSavingAllergy(false);
     }
@@ -233,42 +241,48 @@ export function PatientHealthHistory({
   return (
     <div className="space-y-8">
       {/* Conditions Section */}
-      <div className="border border-[var(--border-light)] rounded-lg p-4">
+      <div className="border border-[var(--border-light)] rounded-lg p-3 sm:p-4">
         <div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-2">
           <h2 className="text-lg font-semibold text-emerald-900">Condiciones</h2>
           {condMode === 'view' && (
             <Button variant="outline" size="sm" onClick={handleAddCondition}>
               <Plus className="w-4 h-4 mr-1" />
-              Agregar Condición
+              <span className="hidden sm:inline">Agregar Condición</span>
+              <span className="sm:hidden">Agregar</span>
             </Button>
           )}
         </div>
 
         {/* Condition Form (Add / Edit) */}
         {(condMode === 'add' || condMode === 'edit') && (
-          <div className="mb-6 p-4 bg-slate-50 rounded-md border border-[var(--border-light)]">
+          <div className="mb-6 p-3 sm:p-4 bg-slate-50 rounded-md border border-[var(--border-light)]">
             <h3 className="text-md font-semibold mb-4 text-emerald-900">
               {condMode === 'add' ? 'Agregar Condición' : 'Editar Condición'}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div className="col-span-2">
+              <div className="col-span-1 md:col-span-2">
                 <label className="block text-sm font-medium mb-1">Condición *</label>
-                <Autocomplete
+                <Combobox
                   endpoint="/catalog/conditions"
                   placeholder="Buscar condición (ej. Asma)"
-                  onSelect={(opt) => setNewCondition({ 
-                    ...newCondition, 
-                    name: opt.display,
-                    code: opt.code,
-                    code_system: opt.code_system
-                  })}
-                  onChange={(val) => {
-                    if (val !== newCondition.name) {
-                      setNewCondition({ ...newCondition, name: val, code: undefined, code_system: undefined });
-                    }
-                  }}
                   value={newCondition.name}
+                  onValueChange={(val, option) => {
+                    setNewCondition({
+                      ...newCondition,
+                      name: val,
+                      code: option?.code ?? undefined,
+                      code_system: option?.code_system ?? undefined,
+                    });
+                    if (condError) setCondError(null);
+                  }}
+                  creatable
                 />
+                {!newCondition.code && newCondition.name && (
+                  <p className="text-xs text-slate-400 mt-1">Valor personalizado (sin código estándar)</p>
+                )}
+                {condError && (
+                  <p className="text-xs text-red-600 mt-1">{condError}</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Estado</label>
@@ -293,30 +307,30 @@ export function PatientHealthHistory({
                 />
               </div>
             </div>
-            <div className="flex gap-2">
-              <Button onClick={handleSaveCondition} disabled={savingCond} className="bg-emerald-900 hover:bg-emerald-800">
-                {savingCond ? 'Guardando...' : 'Guardar Condición'}
+            <div className="flex flex-row w-full gap-2 justify-end">
+              <Button onClick={handleSaveCondition} disabled={savingCond} className="bg-emerald-900 hover:bg-emerald-800 w-full sm:w-auto">
+                {savingCond ? 'Guardando...' : 'Guardar'}
               </Button>
-              <Button onClick={handleCancelCondition} variant="outline">
+              <Button onClick={handleCancelCondition} variant="outline" className="w-full sm:w-auto">
                 Cancelar
               </Button>
             </div>
           </div>
         )}
 
-        {/* Conditions Table */}
+        {/* Conditions List */}
         {condMode === 'view' && (
           <div className="space-y-2">
             {profile.conditions?.length === 0 && <p className="text-slate-500 italic">No hay condiciones registradas.</p>}
             {profile.conditions?.map((cond) => (
-              <div key={cond.id} className="flex justify-between items-center p-3 bg-slate-50 rounded border border-slate-100 hover:bg-slate-100 transition-colors">
-                <div>
+              <div key={cond.id} className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-3 bg-slate-50 rounded border border-slate-100 hover:bg-slate-100 transition-colors">
+                <div className="min-w-0">
                   <p className="font-medium text-slate-800">{cond.name}</p>
                   <p className="text-xs text-slate-500">
                     Desde: {cond.since_year || 'Desconocido'}
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-shrink-0">
                   <span className={`px-2 py-0.5 text-xs rounded ${getConditionStatusColor(cond.status)}`}>
                     {getConditionStatusLabel(cond.status)}
                   </span>
@@ -344,44 +358,48 @@ export function PatientHealthHistory({
       </div>
       
       {/* Allergies Section */}
-      <div className="border border-[var(--border-light)] rounded-lg p-4">
+      <div className="border border-[var(--border-light)] rounded-lg p-3 sm:p-4">
         <div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-2">
            <h2 className="text-lg font-semibold text-emerald-900">Alergias</h2>
            {allergyMode === 'view' && (
              <Button variant="outline" size="sm" onClick={handleAddAllergy}>
                <Plus className="w-4 h-4 mr-1" />
-               Agregar Alergia
+               <span className="hidden sm:inline">Agregar Alergia</span>
+               <span className="sm:hidden">Agregar</span>
              </Button>
            )}
         </div>
 
         {/* Allergy Form (Add / Edit) */}
         {(allergyMode === 'add' || allergyMode === 'edit') && (
-          <div className="mb-6 p-4 bg-slate-50 rounded-md border border-[var(--border-light)]">
+          <div className="mb-6 p-3 sm:p-4 bg-slate-50 rounded-md border border-[var(--border-light)]">
             <h3 className="text-md font-semibold mb-4 text-emerald-900">
               {allergyMode === 'add' ? 'Agregar Alergia' : 'Editar Alergia'}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Álergeno *</label>
-                <Autocomplete 
+                <Combobox
                   endpoint="/catalog/allergies"
                   placeholder="Buscar alergia (ej. Maní)"
-                  onSelect={(opt) => {
-                    setNewAllergy({
-                      ...newAllergy, 
-                      allergen: opt.display,
-                      code: opt.code,
-                      code_system: opt.code_system
-                    });
-                  }}
-                  onChange={(val) => {
-                    if (val !== newAllergy.allergen) {
-                      setNewAllergy({...newAllergy, allergen: val, code: undefined, code_system: undefined});
-                    }
-                  }}
                   value={newAllergy.allergen}
+                  onValueChange={(val, option) => {
+                    setNewAllergy({
+                      ...newAllergy,
+                      allergen: val,
+                      code: option?.code ?? undefined,
+                      code_system: option?.code_system ?? undefined,
+                    });
+                    if (allergyError) setAllergyError(null);
+                  }}
+                  creatable
                 />
+                {!newAllergy.code && newAllergy.allergen && (
+                  <p className="text-xs text-slate-400 mt-1">Valor personalizado (sin código estándar)</p>
+                )}
+                {allergyError && (
+                  <p className="text-xs text-red-600 mt-1">{allergyError}</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Severidad</label>
@@ -397,7 +415,7 @@ export function PatientHealthHistory({
                   placeholder="Selecciona severidad..."
                 />
               </div>
-              <div className="col-span-2">
+              <div className="col-span-1 md:col-span-2">
                 <label className="block text-sm font-medium mb-1">Reacción</label>
                 <InputWithVoice 
                   placeholder="ej. Ronchas"
@@ -408,30 +426,30 @@ export function PatientHealthHistory({
                 />
               </div>
             </div>
-            <div className="flex gap-2">
-              <Button onClick={handleSaveAllergy} disabled={savingAllergy} className="bg-emerald-900 hover:bg-emerald-800">
-                {savingAllergy ? 'Guardando...' : 'Guardar Alergia'}
+            <div className="flex flex-row w-full gap-2 justify-end">
+              <Button onClick={handleSaveAllergy} disabled={savingAllergy} className="bg-emerald-900 hover:bg-emerald-800 w-full sm:w-auto">
+                {savingAllergy ? 'Guardando...' : 'Guardar'}
               </Button>
-              <Button onClick={handleCancelAllergy} variant="outline">
+              <Button onClick={handleCancelAllergy} variant="outline" className="w-full sm:w-auto">
                 Cancelar
               </Button>
             </div>
           </div>
         )}
 
-        {/* Allergies Table */}
+        {/* Allergies List */}
         {allergyMode === 'view' && (
           <div className="space-y-2">
             {profile.allergies?.length === 0 && <p className="text-slate-500 italic">No hay alergias registradas.</p>}
             {profile.allergies?.map((allergy) => (
-              <div key={allergy.id} className="flex justify-between items-center p-3 bg-slate-50 rounded border border-slate-100 hover:bg-slate-100 transition-colors">
-                <div>
+              <div key={allergy.id} className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-3 bg-slate-50 rounded border border-slate-100 hover:bg-slate-100 transition-colors">
+                <div className="min-w-0">
                   <p className="font-medium text-slate-800">{allergy.allergen}</p>
                   <p className="text-xs text-slate-500">
                     {getAllergySeverityLabel(allergy.severity)} • {allergy.reaction || 'Sin reacción especificada'}
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-shrink-0">
                   <span className="px-2 py-0.5 text-xs rounded bg-slate-200 text-slate-700">
                     {capitalize(allergy.status)}
                   </span>

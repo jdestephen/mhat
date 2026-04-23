@@ -150,8 +150,8 @@ class Medication(MedicationBase):
 # Allergy
 class AllergyBase(BaseModel):
     allergen: str
-    code: str
-    code_system: str
+    code: Optional[str] = None
+    code_system: Optional[str] = None
     type: AllergyType
     reaction: Optional[str] = None
     severity: AllergySeverity
@@ -186,8 +186,8 @@ class Allergy(AllergyBase):
 # Condition
 class ConditionBase(BaseModel):
     name: str
-    code: str
-    code_system: str
+    code: Optional[str] = None
+    code_system: Optional[str] = None
     since_year: Optional[str] = None
     status: ConditionStatus
     source: ConditionSource

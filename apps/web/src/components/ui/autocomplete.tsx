@@ -1,3 +1,7 @@
+/**
+ * @deprecated Use `Combobox` from '@/components/ui/Combobox' instead.
+ * This component is kept for backward compatibility with pages not yet migrated.
+ */
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';

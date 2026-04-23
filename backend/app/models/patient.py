@@ -212,8 +212,8 @@ class Allergy(Base):
     patient_profile_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("patient_profiles.id"), nullable=False)
     
     allergen: Mapped[str] = mapped_column(String, nullable=False) # "To what?"
-    code: Mapped[str] = mapped_column(String, nullable=False) # SNOMED CT code
-    code_system: Mapped[str] = mapped_column(String, nullable=False) # e.g., "http://snomed.info/sct"
+    code: Mapped[Optional[str]] = mapped_column(String, nullable=True)  # SNOMED CT code (null for custom entries)
+    code_system: Mapped[Optional[str]] = mapped_column(String, nullable=True)  # e.g., "http://snomed.info/sct"
     type: Mapped[AllergyType] = mapped_column(Enum(AllergyType), default=AllergyType.OTHER, nullable=False)
     reaction: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     severity: Mapped[AllergySeverity] = mapped_column(Enum(AllergySeverity), default=AllergySeverity.UNKNOWN, nullable=False)
@@ -237,8 +237,8 @@ class Condition(Base):
     patient_profile_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("patient_profiles.id"), nullable=False)
     
     name: Mapped[str] = mapped_column(String, nullable=False) # "condition"
-    code: Mapped[str] = mapped_column(String, nullable=False) # SNOMED CT code
-    code_system: Mapped[str] = mapped_column(String, nullable=False) # e.g., "http://snomed.info/sct"
+    code: Mapped[Optional[str]] = mapped_column(String, nullable=True)  # SNOMED CT code (null for custom entries)
+    code_system: Mapped[Optional[str]] = mapped_column(String, nullable=True)  # e.g., "http://snomed.info/sct"
     since_year: Mapped[Optional[str]] = mapped_column(String, nullable=True) # "since" (Year or "No sé")
     status: Mapped[ConditionStatus] = mapped_column(Enum(ConditionStatus), default=ConditionStatus.UNKNOWN, nullable=False)
     source: Mapped[ConditionSource] = mapped_column(Enum(ConditionSource), default=ConditionSource.SUSPECTED, nullable=False)

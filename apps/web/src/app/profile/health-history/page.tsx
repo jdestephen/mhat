@@ -58,19 +58,19 @@ export default function HealthHistoryPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto pb-20">
-      <h1 className="text-3xl font-bold mb-8 text-emerald-950">Historial de Salud</h1>
+    <div className="max-w-4xl mx-auto pb-20 lg:px-4 md:px-0 sm:px-0">
+      <h1 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8 text-emerald-950">Historial de Salud</h1>
       
       <Tabs defaultValue="history" className="w-full">
-        <TabsList className="mb-0 w-full flex-wrap">
-          <TabsTrigger value="history" className="flex-1 rounded-tl-lg">Condiciones y Alergías</TabsTrigger>
-          <TabsTrigger value="medications" className="flex-1">Medicamentos</TabsTrigger>
-          <TabsTrigger value="habits" className="flex-1">Hábitos</TabsTrigger>
-          <TabsTrigger value="family-history" className="flex-1 rounded-tr-lg">Antecedentes Familiares</TabsTrigger>
+        <TabsList className="mb-0 w-full">
+          <TabsTrigger value="history" className="flex-1 text-xs sm:text-sm">Condiciones y Alergías</TabsTrigger>
+          <TabsTrigger value="medications" className="flex-1 text-xs sm:text-sm">Medicamentos</TabsTrigger>
+          <TabsTrigger value="habits" className="flex-1 text-xs sm:text-sm">Hábitos</TabsTrigger>
+          <TabsTrigger value="family-history" className="flex-1 text-xs sm:text-sm">Antecedentes Familiares</TabsTrigger>
         </TabsList>
 
         <TabsContent value="history">
-          <div className="bg-white p-6 rounded-b-lg rounded-tr-lg shadow-sm border border-[var(--border-light)]">
+          <div className="bg-white p-3 sm:p-6 rounded-b-lg shadow-sm border border-[var(--border-light)]">
             {profile && (
               <PatientHealthHistory
                 profile={profile}
@@ -81,7 +81,7 @@ export default function HealthHistoryPage() {
         </TabsContent>
 
         <TabsContent value="medications">
-          <div className="bg-white p-6 rounded-b-lg shadow-sm border border-[var(--border-light)]">
+          <div className="bg-white p-3 sm:p-6 rounded-b-lg shadow-sm border border-[var(--border-light)]">
             {profile && (
               <MedicationList
                 profile={profile}
@@ -92,13 +92,13 @@ export default function HealthHistoryPage() {
         </TabsContent>
 
         <TabsContent value="habits">
-          <div className="bg-white p-6 rounded-b-lg shadow-sm border border-[var(--border-light)]">
+          <div className="bg-white p-3 sm:p-6 rounded-b-lg shadow-sm border border-[var(--border-light)]">
             <HabitsTab onRefresh={fetchData} />
           </div>
         </TabsContent>
 
         <TabsContent value="family-history">
-          <div className="bg-white p-6 rounded-b-lg shadow-sm border border-[var(--border-light)]">
+          <div className="bg-white p-3 sm:p-6 rounded-b-lg shadow-sm border border-[var(--border-light)]">
             <FamilyHistoryTab onRefresh={fetchData} />
           </div>
         </TabsContent>

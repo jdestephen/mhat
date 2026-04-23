@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { InputWithVoice } from '@/components/ui/input-with-voice';
 import { Select } from '@/components/ui/select';
-import { SearchableSelect } from '@/components/ui/searchable-select';
+import { Combobox } from '@/components/ui/Combobox';
 import api from '@/lib/api';
 import {
   DOSAGE_QUANTITIES,
@@ -134,16 +134,22 @@ export function MedicationList({ profile, onRefresh, apiPrefix = '/profiles/pati
     }
   };
 
+  // Helper to convert FREQUENCY_OPTIONS groups to Combobox format
+  const frequencyGroups = FREQUENCY_OPTIONS.map((g) => ({
+    group: g.group,
+    options: g.options.map((o) => ({ value: o.value, label: o.label })),
+  }));
+
   return (
-    <div className="border border-[var(--border-light)] rounded-lg p-4">
+    <div className="border border-[var(--border-light)] rounded-lg p-3 sm:p-4">
       <div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-2">
         <h2 className="text-lg font-semibold text-emerald-900 flex items-center gap-2">
           <Pill className="w-5 h-5" />
           Medicamentos
         </h2>
         {formMode === 'view' && (
-          <Button variant="outline" size="sm" onClick={handleAdd}>
-            <Plus className="w-4 h-4 mr-1" />
+          <Button variant="outline" size="sm" onClick={handleAdd} compact>
+            <Plus className="w-4 h-4" />
             Agregar Medicamento
           </Button>
         )}
@@ -151,13 +157,13 @@ export function MedicationList({ profile, onRefresh, apiPrefix = '/profiles/pati
 
       {/* Form (Add or Edit) */}
       {(formMode === 'add' || formMode === 'edit') && (
-        <div className="mb-6 p-4 bg-slate-50 rounded-md border border-[var(--border-light)]">
+        <div className="mb-6 p-3 sm:p-4 bg-slate-50 rounded-md border border-[var(--border-light)]">
           <h3 className="text-md font-semibold mb-4 text-emerald-900">
             {formMode === 'add' ? 'Agregar Medicamento' : 'Editar Medicamento'}
           </h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div className="col-span-2">
+            <div className="col-span-1 md:col-span-2">
               <label className="block text-sm font-medium mb-1">Nombre del Medicamento *</label>
               <Input
                 placeholder="ej. Metformina"
@@ -169,26 +175,30 @@ export function MedicationList({ profile, onRefresh, apiPrefix = '/profiles/pati
             <div>
               <label className="block text-sm font-medium mb-1">Dosis</label>
               <div className="flex gap-2">
-                <SearchableSelect
+                <Combobox
                   options={DOSAGE_QUANTITIES.map((q) => ({ value: q, label: q }))}
                   value={(formData.dosage || '').split(' ')[0] || ''}
-                  onChange={(val) => {
+                  onValueChange={(val) => {
                     const unit = (formData.dosage || '').split(' ').slice(1).join(' ') || '';
                     setFormData({ ...formData, dosage: unit ? `${val} ${unit}` : String(val) });
                   }}
                   placeholder="Cant."
                   searchPlaceholder="Buscar..."
+                  searchable
+                  creatable
                   className="w-[45%]"
                 />
-                <SearchableSelect
+                <Combobox
                   options={DOSAGE_UNITS}
                   value={(formData.dosage || '').split(' ').slice(1).join(' ') || ''}
-                  onChange={(val) => {
+                  onValueChange={(val) => {
                     const qty = (formData.dosage || '').split(' ')[0] || '';
                     setFormData({ ...formData, dosage: qty ? `${qty} ${val}` : String(val) });
                   }}
                   placeholder="Unidad"
                   searchPlaceholder="Buscar unidad..."
+                  searchable
+                  creatable
                   className="w-[55%]"
                 />
               </div>
@@ -196,23 +206,27 @@ export function MedicationList({ profile, onRefresh, apiPrefix = '/profiles/pati
 
             <div>
               <label className="block text-sm font-medium mb-1">Frecuencia</label>
-              <SearchableSelect
-                groups={FREQUENCY_OPTIONS}
+              <Combobox
+                groups={frequencyGroups}
                 value={formData.frequency || ''}
-                onChange={(val) => setFormData({ ...formData, frequency: String(val) })}
+                onValueChange={(val) => setFormData({ ...formData, frequency: String(val) })}
                 placeholder="Seleccionar frecuencia..."
                 searchPlaceholder="Buscar frecuencia..."
+                searchable
+                creatable
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">Vía</label>
-              <SearchableSelect
+              <Combobox
                 options={ROUTE_OPTIONS}
                 value={formData.route || ''}
-                onChange={(val) => setFormData({ ...formData, route: String(val) })}
+                onValueChange={(val) => setFormData({ ...formData, route: String(val) })}
                 placeholder="Seleccionar vía..."
                 searchPlaceholder="Buscar vía..."
+                searchable
+                creatable
               />
             </div>
 
@@ -302,7 +316,7 @@ export function MedicationList({ profile, onRefresh, apiPrefix = '/profiles/pati
               formData.status === MedicationStatus.ON_HOLD ||
               formData.status === MedicationStatus.ENTERED_IN_ERROR ||
               formData.status === MedicationStatus.NOT_TAKEN) && (
-              <div className="col-span-2">
+              <div className="col-span-1 md:col-span-2">
                 <label className="block text-sm font-medium mb-1">Razón del Estado</label>
                 <Input
                   placeholder="ej. Efectos secundarios, médico indicó pausar, etc."
@@ -313,11 +327,11 @@ export function MedicationList({ profile, onRefresh, apiPrefix = '/profiles/pati
             )}
           </div>
           
-          <div className="flex gap-2">
-            <Button onClick={handleSave} disabled={saving} className="bg-emerald-900 hover:bg-emerald-800">
-              {saving ? 'Guardando...' : 'Guardar Medicamento'}
+          <div className="flex flex-row gap-2 w-full justify-end">
+            <Button onClick={handleSave} disabled={saving} className="bg-emerald-900 hover:bg-emerald-800 w-full sm:w-auto">
+              {saving ? 'Guardando...' : 'Guardar'}
             </Button>
-            <Button onClick={handleCancel} variant="outline">
+            <Button onClick={handleCancel} variant="outline" className="w-full sm:w-auto">
               Cancelar
             </Button>
           </div>
@@ -345,8 +359,8 @@ export function MedicationList({ profile, onRefresh, apiPrefix = '/profiles/pati
 
               {/* Table Rows */}
               {profile.medications.map((med) => (
-                <div key={med.id} className="flex flex-col md:flex-row gap-4 p-4 bg-slate-50 rounded border border-slate-100 hover:bg-slate-100 transition-colors">
-                  <div className="flex-1">
+                <div key={med.id} className="flex flex-col md:flex-row gap-2 md:gap-4 p-3 md:p-4 bg-slate-50 rounded border border-slate-100 hover:bg-slate-100 transition-colors">
+                  <div className="flex-1 min-w-0">
                     <span className="font-semibold text-slate-900">{med.name}</span>
                     {med.instructions && (
                       <p className="text-xs text-slate-600 mt-1">{med.instructions}</p>

@@ -79,9 +79,11 @@ export function PersonalInfoSidebar({ user, profile, onUpdate }: PersonalInfoSid
   return (
     <div className={`relative transition-all duration-300 ${isCollapsed ? 'w-12' : 'w-full lg:w-1/3'}`}>
       {/* Collapse/Expand Button */}
-      <button
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-4 z-10 bg-white border border-slate-200 rounded-full p-1.5 shadow-md hover:bg-slate-50 transition-colors"
+        className="absolute -right-3 top-4 z-10 bg-white border border-slate-200 rounded-full h-8 w-8 shadow-md hover:bg-slate-50"
         aria-label={isCollapsed ? 'Expandir' : 'Colapsar'}
       >
         {isCollapsed ? (
@@ -89,7 +91,7 @@ export function PersonalInfoSidebar({ user, profile, onUpdate }: PersonalInfoSid
         ) : (
           <ChevronLeft className="w-4 h-4 text-slate-600" />
         )}
-      </button>
+      </Button>
 
       {/* Sidebar Content */}
       <div className={`bg-white p-6 rounded-lg shadow-sm border border-[var(--border-light)] transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>

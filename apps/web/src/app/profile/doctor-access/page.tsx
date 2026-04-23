@@ -103,8 +103,8 @@ export default function DoctorAccessPage() {
           <h1 className="text-3xl font-bold text-emerald-950">Acceso Médico</h1>
           <p className="text-slate-500 mt-1">Gestiona qué doctores tienen acceso a tus registros</p>
         </div>
-        <Button onClick={() => { setShowCreateForm(true); setGeneratedCode(null); }}>
-          <UserPlus className="w-4 h-4 mr-2" />
+        <Button onClick={() => { setShowCreateForm(true); setGeneratedCode(null); }} compact>
+          <UserPlus className="w-4 h-4" />
           Invitar Doctor
         </Button>
       </div>
@@ -117,9 +117,9 @@ export default function DoctorAccessPage() {
               <KeyRound className="w-5 h-5" />
               {generatedCode ? 'Código de Invitación' : 'Nueva Invitación'}
             </h2>
-            <button onClick={() => { setShowCreateForm(false); setGeneratedCode(null); }} className="text-slate-400 hover:text-slate-600">
+            <Button variant="ghost" size="icon" onClick={() => { setShowCreateForm(false); setGeneratedCode(null); }} className="h-8 w-8">
               <X className="w-5 h-5" />
-            </button>
+            </Button>
           </div>
 
           {generatedCode ? (
@@ -129,16 +129,18 @@ export default function DoctorAccessPage() {
                 <span className="text-3xl font-mono font-bold text-emerald-800 tracking-wider">
                   {generatedCode}
                 </span>
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => handleCopyCode(generatedCode)}
-                  className="p-2 rounded-lg bg-emerald-100 hover:bg-emerald-200 transition-colors"
+                  className="h-10 w-10 bg-emerald-100 hover:bg-emerald-200"
                 >
                   {copiedCode === generatedCode ? (
                     <Check className="w-5 h-5 text-emerald-600" />
                   ) : (
                     <Copy className="w-5 h-5 text-emerald-700" />
                   )}
-                </button>
+                </Button>
               </div>
               <p className="text-xs text-slate-400 mt-3">
                 El código expira en 24 horas • Solo puede ser usado una vez
@@ -289,13 +291,15 @@ export default function DoctorAccessPage() {
                       {doc.access_type === 'TEMPORARY' ? 'Temporal' : 'Permanente'}
                     </span>
                   </div>
-                  <button
+                  <Button
+                    variant="danger-ghost"
+                    size="icon"
                     onClick={() => handleRevokeDoctorAccess(doc.access_id, doc.doctor_name)}
-                    className="p-2 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                    className="h-9 w-9"
                     title="Revocar acceso"
                   >
                     <Trash2 className="w-4 h-4" />
-                  </button>
+                  </Button>
                 </div>
               </div>
             ))}
@@ -348,9 +352,11 @@ export default function DoctorAccessPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => handleCopyCode(inv.code)}
-                      className="p-2 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                      className="h-9 w-9 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50"
                       title="Copiar código"
                     >
                       {copiedCode === inv.code ? (
@@ -358,14 +364,16 @@ export default function DoctorAccessPage() {
                       ) : (
                         <Copy className="w-4 h-4" />
                       )}
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="danger-ghost"
+                      size="icon"
                       onClick={() => handleRevokeInvitation(inv.id)}
-                      className="p-2 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      className="h-9 w-9"
                       title="Revocar invitación"
                     >
                       <X className="w-4 h-4" />
-                    </button>
+                    </Button>
                   </div>
                 </div>
               );

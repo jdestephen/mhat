@@ -81,8 +81,9 @@ export default function SharedLinksPage() {
         <Button
           onClick={() => setCreateDialogOpen(true)}
           className="bg-emerald-900 hover:bg-emerald-800"
+          compact
         >
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus className="w-4 h-4" />
           Nuevo Enlace
         </Button>
       </div>

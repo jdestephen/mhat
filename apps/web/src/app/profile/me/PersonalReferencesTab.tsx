@@ -136,13 +136,15 @@ export function PersonalReferencesTab({ references, onRefresh }: PersonalReferen
             <h3 className="text-sm font-semibold text-emerald-900">
               {editId ? 'Editar Referencia' : 'Nueva Referencia'}
             </h3>
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="icon"
               onClick={closeForm}
-              className="text-slate-400 hover:text-slate-600 hover:cursor-pointer"
+              className="h-8 w-8"
             >
               <X className="w-4 h-4" />
-            </button>
+            </Button>
           </div>
           <form onSubmit={handleSave} className="space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -219,23 +221,27 @@ export function PersonalReferencesTab({ references, onRefresh }: PersonalReferen
             </div>
           </div>
           <div className="flex items-center gap-1 ml-3 shrink-0">
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="icon"
               onClick={() => openEdit(ref)}
-              className="p-1.5 text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 rounded transition-colors hover:cursor-pointer"
+              className="h-8 w-8 text-slate-400 hover:text-emerald-700 hover:bg-emerald-50"
               aria-label="Editar referencia"
             >
               <Pencil className="w-4 h-4" />
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="danger-ghost"
+              size="icon"
               onClick={() => handleDelete(ref.id)}
               disabled={deleting === ref.id}
-              className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors hover:cursor-pointer disabled:opacity-50"
+              className="h-8 w-8"
               aria-label="Eliminar referencia"
             >
               <Trash2 className="w-4 h-4" />
-            </button>
+            </Button>
           </div>
         </div>
       ))}

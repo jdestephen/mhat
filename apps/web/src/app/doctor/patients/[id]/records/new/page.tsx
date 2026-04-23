@@ -13,8 +13,7 @@ import { InputWithVoice } from '@/components/ui/input-with-voice';
 import { TextareaWithVoice } from '@/components/ui/textarea-with-voice';
 import { TagInput } from '@/components/ui/tag-input';
 import { Select } from '@/components/ui/select';
-import { SearchableSelect } from '@/components/ui/searchable-select';
-import { CatalogSearchSelect } from '@/components/ui/catalog-search-select';
+import { Combobox } from '@/components/ui/Combobox';
 import { VitalSignsForm, VitalSignsFormData } from '@/components/clinical/VitalSignsForm';
 import {
   DOSAGE_QUANTITIES,
@@ -342,13 +341,14 @@ export default function NewDoctorRecordPage({
       {/* Header */}
       <div className="flex flex-col justify-start">
         <div>
-          <button
+          <Button
+            variant="ghost"
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-3 hover:cursor-pointer"
+            className="mb-3 text-gray-600 hover:text-gray-900 gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
             <span>Volver</span>
-          </button>
+          </Button>
         </div>
         <div className="mb-5">
           <h1 className="text-3xl font-bold text-emerald-950">
@@ -368,17 +368,18 @@ export default function NewDoctorRecordPage({
         >
           {/* Vital Signs Card */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-100">
-            <button
+            <Button
               type="button"
+              variant="ghost"
               onClick={() => setShowVitalSigns(!showVitalSigns)}
-              className="w-full p-4 flex items-center justify-between hover:bg-gray-50 rounded-t-lg"
+              className="w-full p-4 flex items-center justify-between hover:bg-gray-50 rounded-t-lg h-auto"
             >
               <span className="flex items-center gap-2 text-lg font-semibold text-emerald-900">
                 <HeartPulse className="h-5 w-5 text-rose-500" />
                 Signos Vitales
               </span>
               {showVitalSigns ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
-            </button>
+            </Button>
 
             {showVitalSigns && (
               <div className="p-6 border-t border-gray-100">
@@ -471,18 +472,18 @@ export default function NewDoctorRecordPage({
                   {diagnoses.map((d, idx) => (
                     <div key={idx} className="flex items-start gap-2">
                       <div className="flex-1">
-                        <CatalogSearchSelect
+                        <Combobox
                           endpoint="/catalog/conditions"
-                          value={d.diagnosis ? { id: d.diagnosis_code || d.diagnosis, display: d.diagnosis, code: d.diagnosis_code ?? undefined, code_system: d.diagnosis_code_system ?? undefined } : null}
-                          onChange={(item) => {
+                          value={d.diagnosis ? d.diagnosis : undefined}
+                          onValueChange={(val, option) => {
                             setDiagnoses((prev) =>
                               prev.map((diag, i) =>
                                 i === idx
                                   ? {
                                       ...diag,
-                                      diagnosis: item.display,
-                                      diagnosis_code: item.code || null,
-                                      diagnosis_code_system: item.code_system || null,
+                                      diagnosis: val,
+                                      diagnosis_code: option?.code || null,
+                                      diagnosis_code_system: option?.code_system || null,
                                     }
                                   : diag,
                               ),
@@ -490,6 +491,7 @@ export default function NewDoctorRecordPage({
                           }}
                           placeholder="Buscar diagnóstico..."
                           disabled={!showDiagnosis}
+                          creatable
                         />
                       </div>
                       <div className="w-[160px]">
@@ -511,14 +513,16 @@ export default function NewDoctorRecordPage({
                           disabled={!showDiagnosis}
                         />
                       </div>
-                      <button
+                      <Button
                         type="button"
+                        variant="danger-ghost"
+                        size="icon"
                         onClick={() => setDiagnoses((prev) => prev.filter((_, i) => i !== idx))}
-                        className="mt-2.5 text-gray-400 hover:text-red-500 transition-colors"
+                        className="mt-2.5 h-8 w-8"
                         disabled={!showDiagnosis}
                       >
                         <Trash2 className="h-4 w-4" />
-                      </button>
+                      </Button>
                     </div>
                   ))}
                   {diagnoses.length < 5 && (
@@ -589,14 +593,15 @@ export default function NewDoctorRecordPage({
 
           {/* Plan Card */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-100">
-            <button
+            <Button
               type="button"
+              variant="ghost"
               onClick={() => setShowPlan(!showPlan)}
-              className="w-full p-4 flex items-center justify-between hover:bg-gray-50 rounded-t-lg"
+              className="w-full p-4 flex items-center justify-between hover:bg-gray-50 rounded-t-lg h-auto"
             >
               <span className="text-lg font-semibold text-emerald-900">Plan para el paciente</span>
               {showPlan ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
-            </button>
+            </Button>
 
             {showPlan && (
               <div className="p-6 border-t border-gray-100 space-y-4">
@@ -657,29 +662,32 @@ export default function NewDoctorRecordPage({
 
           {/* Prescriptions Accordion */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-100">
-            <button
+            <Button
               type="button"
+              variant="ghost"
               onClick={() => setShowPrescriptions(!showPrescriptions)}
-              className="w-full p-4 flex items-center justify-between hover:bg-gray-50"
+              className="w-full p-4 flex items-center justify-between hover:bg-gray-50 h-auto"
             >
               <div className="flex items-center gap-3">
                 <Pill className="h-5 w-5 text-emerald-600" />
                 <span className="font-medium">Recetas ({prescriptions.length})</span>
               </div>
               {showPrescriptions ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
-            </button>
+            </Button>
 
             {showPrescriptions && (
               <div className="p-4 border-t border-gray-100 space-y-4">
                 {prescriptions.map((rx, idx) => (
                   <div key={idx} className="p-4 bg-gray-50 rounded-lg relative">
-                    <button
+                    <Button
                       type="button"
+                      variant="danger-ghost"
+                      size="icon"
                       onClick={() => removePrescription(idx)}
-                      className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
+                      className="absolute top-2 right-2 h-8 w-8"
                     >
                       <Trash2 className="h-4 w-4" />
-                    </button>
+                    </Button>
 
                     <div className="grid grid-cols-2 gap-3">
                       <div className="col-span-2">
@@ -695,73 +703,88 @@ export default function NewDoctorRecordPage({
                       <div>
                         <label className="block text-xs font-medium mb-1">Dosis</label>
                         <div className="flex gap-2">
-                          <SearchableSelect
+                          <Combobox
                             options={DOSAGE_QUANTITIES.map((q) => ({ value: q, label: q }))}
                             value={rx.dosage.split(' ')[0] || ''}
-                            onChange={(val) => {
+                            onValueChange={(val) => {
                               const unit = rx.dosage.split(' ').slice(1).join(' ') || '';
                               updatePrescription(idx, 'dosage', unit ? `${val} ${unit}` : String(val));
                             }}
                             placeholder="Cant."
                             searchPlaceholder="Buscar..."
+                            searchable
+                            creatable
                             className="w-[45%]"
                           />
-                          <SearchableSelect
+                          <Combobox
                             options={DOSAGE_UNITS}
                             value={rx.dosage.split(' ').slice(1).join(' ') || ''}
-                            onChange={(val) => {
+                            onValueChange={(val) => {
                               const qty = rx.dosage.split(' ')[0] || '';
                               updatePrescription(idx, 'dosage', qty ? `${qty} ${val}` : String(val));
                             }}
                             placeholder="Unidad"
                             searchPlaceholder="Buscar unidad..."
+                            searchable
+                            creatable
                             className="w-[55%]"
                           />
                         </div>
                       </div>
                       <div>
                         <label className="block text-xs font-medium mb-1">Frecuencia</label>
-                        <SearchableSelect
-                          groups={FREQUENCY_OPTIONS}
+                        <Combobox
+                          groups={FREQUENCY_OPTIONS.map((g) => ({
+                            group: g.group,
+                            options: g.options.map((o) => ({ value: o.value, label: o.label })),
+                          }))}
                           value={rx.frequency}
-                          onChange={(val) => updatePrescription(idx, 'frequency', String(val))}
+                          onValueChange={(val) => updatePrescription(idx, 'frequency', String(val))}
                           placeholder="Seleccionar frecuencia..."
                           searchPlaceholder="Buscar frecuencia..."
+                          searchable
+                          creatable
                         />
                       </div>
                       <div>
                         <label className="block text-xs font-medium mb-1">Vía</label>
-                        <SearchableSelect
+                        <Combobox
                           options={ROUTE_OPTIONS}
                           value={rx.route}
-                          onChange={(val) => updatePrescription(idx, 'route', String(val))}
+                          onValueChange={(val) => updatePrescription(idx, 'route', String(val))}
                           placeholder="Seleccionar vía..."
                           searchPlaceholder="Buscar vía..."
+                          searchable
+                          creatable
                         />
                       </div>
                       <div>
                         <label className="block text-xs font-medium mb-1">Duración</label>
                         <div className="flex gap-2">
-                          <SearchableSelect
+                          <Combobox
                             options={DURATION_QUANTITIES.map((q) => ({ value: q, label: q }))}
                             value={rx.duration.split(' ')[0] || ''}
-                            onChange={(val) => {
+                            onValueChange={(val) => {
                               const unit = rx.duration.split(' ').slice(1).join(' ') || '';
                               updatePrescription(idx, 'duration', unit ? `${val} ${unit}` : String(val));
                             }}
                             placeholder="Cant."
                             searchPlaceholder="Buscar..."
+                            searchable
+                            creatable
                             className="w-[40%]"
                           />
-                          <SearchableSelect
+                          <Combobox
                             options={DURATION_UNITS}
                             value={rx.duration.split(' ').slice(1).join(' ') || ''}
-                            onChange={(val) => {
+                            onValueChange={(val) => {
                               const qty = rx.duration.split(' ')[0] || '';
                               updatePrescription(idx, 'duration', qty ? `${qty} ${val}` : String(val));
                             }}
                             placeholder="Unidad"
                             searchPlaceholder="Buscar..."
+                            searchable
+                            creatable
                             className="w-[60%]"
                           />
                         </div>
@@ -800,29 +823,32 @@ export default function NewDoctorRecordPage({
 
           {/* Orders Accordion */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-100">
-            <button
+            <Button
               type="button"
+              variant="ghost"
               onClick={() => setShowOrders(!showOrders)}
-              className="w-full p-4 flex items-center justify-between hover:bg-gray-50"
+              className="w-full p-4 flex items-center justify-between hover:bg-gray-50 h-auto"
             >
               <div className="flex items-center gap-3">
                 <ClipboardList className="h-5 w-5 text-blue-600" />
                 <span className="font-medium">Órdenes ({orders.length})</span>
               </div>
               {showOrders ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
-            </button>
+            </Button>
 
             {showOrders && (
               <div className="p-4 border-t border-gray-100 space-y-4">
                 {orders.map((order, idx) => (
                   <div key={idx} className="p-4 bg-gray-50 rounded-lg relative">
-                    <button
+                    <Button
                       type="button"
+                      variant="danger-ghost"
+                      size="icon"
                       onClick={() => removeOrder(idx)}
-                      className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
+                      className="absolute top-2 right-2 h-8 w-8"
                     >
                       <Trash2 className="h-4 w-4" />
-                    </button>
+                    </Button>
 
                     <div className="grid grid-cols-2 gap-3">
                       <div>
