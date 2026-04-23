@@ -25,6 +25,7 @@ from app.utils.sharing import (
     check_record_ownership,
     is_token_expired
 )
+from app.services import storage as storage_service
 
 
 router = APIRouter()
@@ -316,7 +317,7 @@ async def view_shared_records(
             documents=[{
                 "id": str(doc.id),
                 "filename": doc.filename,
-                "url": doc.url
+                "url": storage_service.get_presigned_url(doc.s3_key)
             } for doc in record.documents] if record.documents else []
         ))
     
@@ -548,7 +549,7 @@ async def view_summary_record_detail(
         documents=[{
             "id": str(doc.id),
             "filename": doc.filename,
-            "url": doc.url
+            "url": storage_service.get_presigned_url(doc.s3_key)
         } for doc in record.documents] if record.documents else []
     )
 
@@ -604,6 +605,5 @@ async def view_shared_document(
         )
     
     # Generate a fresh presigned URL via storage service
-    from app.services import storage as storage_service
     url = storage_service.get_presigned_url(document.s3_key)
     return RedirectResponse(url=url)
