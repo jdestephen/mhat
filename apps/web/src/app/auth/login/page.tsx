@@ -62,12 +62,13 @@ export default function LoginPage() {
           <div className="text-center">
             <p className="text-red-500">{error}</p>
             {showResend && (
-              <button
+              <Button
+                variant="link"
                 onClick={handleResend}
-                className="text-emerald-800 hover:underline text-sm font-medium mt-1"
+                className="text-sm mt-1"
               >
                 Reenviar correo de verificación
-              </button>
+              </Button>
             )}
           </div>
         )}

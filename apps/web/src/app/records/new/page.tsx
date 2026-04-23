@@ -6,9 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { InputWithVoice } from '@/components/ui/input-with-voice';
 import { TextareaWithVoice } from '@/components/ui/textarea-with-voice';
-import { Autocomplete } from '@/components/ui/autocomplete';
+import { Combobox } from '@/components/ui/Combobox';
 import { Select, SelectOption } from '@/components/ui/select';
-import { MultiSelect } from '@/components/ui/multi-select';
 import { DiagnosisRank, DiagnosisStatus, MedicalDiagnosis, UserRole } from '@/types';
 import { UploadCloud, FileText, X, GripVertical, Plus, Trash2 } from 'lucide-react';
 import { useCategories } from '@/hooks/queries/useCategories';
@@ -203,18 +202,19 @@ export default function NewRecordPage() {
 
                 {isPatient ? (
                   /* PATIENT UI: Inline multi-select with chips */
-                  <MultiSelect
+                  <Combobox
                     endpoint="/catalog/conditions"
                     placeholder="Buscar y seleccionar condiciones..."
+                    multiple
                     selectedItems={diagnoses.map(d => ({
-                      id: d.diagnosis_code || d.diagnosis, // Use code as ID if available
-                      display: d.diagnosis,
-                      code: d.diagnosis_code,
-                      code_system: d.diagnosis_code_system,
+                      value: d.diagnosis_code || d.diagnosis,
+                      label: d.diagnosis,
+                      code: d.diagnosis_code ?? undefined,
+                      code_system: d.diagnosis_code_system ?? undefined,
                     }))}
                     onItemsChange={(items) => {
                       setDiagnoses(items.map((item, idx) => ({
-                        diagnosis: item.display,
+                        diagnosis: item.label,
                         rank: idx + 1,
                         status: DiagnosisStatus.PROVISIONAL,
                         diagnosis_code: item.code || null,
@@ -223,6 +223,7 @@ export default function NewRecordPage() {
                       })));
                     }}
                     maxItems={5}
+                    creatable
                   />
                 ) : (
                   /* DOCTOR UI: Comprehensive form (existing) */
@@ -256,22 +257,16 @@ export default function NewRecordPage() {
                               <label className="block text-xs font-medium text-gray-600 mb-1">
                                 Diagnóstico {idx + 1}
                               </label>
-                              <Autocomplete
+                              <Combobox
                                 endpoint="/catalog/conditions"
                                 placeholder="Buscar diagnóstico (ej., Diabetes)"
                                 value={diag.diagnosis}
-                                onSelect={(opt) => {
-                                  updateDiagnosis(idx, 'diagnosis', opt.display);
-                                  updateDiagnosis(idx, 'diagnosis_code', opt.code);
-                                  updateDiagnosis(idx, 'diagnosis_code_system', opt.code_system);
-                                }}
-                                onChange={(val) => {
+                                onValueChange={(val, option) => {
                                   updateDiagnosis(idx, 'diagnosis', val);
-                                  if (!val.trim()) {
-                                    updateDiagnosis(idx, 'diagnosis_code', null);
-                                    updateDiagnosis(idx, 'diagnosis_code_system', null);
-                                  }
+                                  updateDiagnosis(idx, 'diagnosis_code', option?.code ?? null);
+                                  updateDiagnosis(idx, 'diagnosis_code_system', option?.code_system ?? null);
                                 }}
+                                creatable
                               />
                             </div>
 
@@ -327,13 +322,15 @@ export default function NewRecordPage() {
                           </div>
 
                           {diagnoses.length > 1 && (
-                            <button
+                            <Button
                               type="button"
+                              variant="danger-ghost"
+                              size="icon"
                               onClick={() => removeDiagnosis(idx)}
-                              className="text-red-500 hover:text-red-700 mt-2"
+                              className="mt-2 h-9 w-9"
                             >
                               <Trash2 className="h-5 w-5" />
-                            </button>
+                            </Button>
                           )}
                         </div>
                       </div>

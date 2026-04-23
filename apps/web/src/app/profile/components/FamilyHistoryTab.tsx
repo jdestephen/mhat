@@ -220,13 +220,15 @@ export function FamilyHistoryTab({ onRefresh, apiPrefix = '/profiles/patient' }:
                         {condition.family_members.length} familiar{condition.family_members.length > 1 ? 'es' : ''}
                       </span>
                     )}
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="icon"
                       onClick={() => setExpandedCondition(isExpanded ? null : conditionName)}
-                      className="text-slate-400 hover:text-emerald-600 transition-colors"
+                      className="h-8 w-8 text-slate-400 hover:text-emerald-600"
                     >
                       {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                    </button>
+                    </Button>
                   </div>
                 )}
               </div>
@@ -291,20 +293,24 @@ export function FamilyHistoryTab({ onRefresh, apiPrefix = '/profiles/patient' }:
                         {condition.family_members.length} familiar{condition.family_members.length > 1 ? 'es' : ''}
                       </span>
                     )}
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="icon"
                       onClick={() => setExpandedCondition(isExpanded ? null : condition.condition_name)}
-                      className="text-slate-400 hover:text-emerald-600 transition-colors"
+                      className="h-8 w-8 text-slate-400 hover:text-emerald-600"
                     >
                       {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
+                      variant="danger-ghost"
+                      size="icon"
                       onClick={() => toggleCondition(condition.condition_name)}
-                      className="text-slate-400 hover:text-red-500 transition-colors ml-1"
+                      className="h-8 w-8 ml-1"
                     >
                       <X className="w-4 h-4" />
-                    </button>
+                    </Button>
                   </div>
                 </div>
 

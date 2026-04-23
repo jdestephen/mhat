@@ -39,7 +39,7 @@ export function TabsList({ className, children }: { className?: string; children
   return (
     <div
       className={cn(
-        "flex w-full items-center justify-start border-b border-emerald-900/10 bg-transparent p-0",
+        "grid grid-cols-2 sm:flex w-full items-center justify-start border-b border-emerald-900/10 bg-transparent p-0",
         className
       )}
     >
