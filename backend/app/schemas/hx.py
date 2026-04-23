@@ -1,7 +1,7 @@
 from typing import Optional, List
 from datetime import datetime
 from uuid import UUID
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from enum import Enum
 
 # Enums
@@ -46,7 +46,14 @@ class Document(DocumentBase):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+    @model_validator(mode='after')
+    def refresh_presigned_url(self) -> 'Document':
+        """Replace the stale stored URL with a fresh presigned URL."""
+        from app.services.storage import get_presigned_url
+        self.url = get_presigned_url(self.s3_key)
+        return self
 
 # Medical Diagnoses
 class MedicalDiagnosisBase(BaseModel):
