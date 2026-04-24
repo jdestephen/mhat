@@ -481,7 +481,7 @@ async def get_patient_health_profile(
 # Medical Record Endpoints
 # =====================
 
-@router.get("/patients/{patient_profile_id}/records")
+@router.get("/patients/{patient_profile_id}/records", response_model=List[hx_schema.MedicalRecord])
 async def list_patient_records(
     patient_profile_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
@@ -502,7 +502,8 @@ async def list_patient_records(
         selectinload(MedicalRecord.documents),
         selectinload(MedicalRecord.prescriptions),
         selectinload(MedicalRecord.clinical_orders),
-        selectinload(MedicalRecord.category)
+        selectinload(MedicalRecord.category),
+        selectinload(MedicalRecord.vital_signs),
     ).order_by(MedicalRecord.created_at.desc())
     
     if category_id:
@@ -516,7 +517,7 @@ async def list_patient_records(
     return records
 
 
-@router.post("/patients/{patient_profile_id}/records")
+@router.post("/patients/{patient_profile_id}/records", response_model=hx_schema.MedicalRecord)
 async def create_patient_record(
     patient_profile_id: uuid.UUID,
     record_in: clinical_schema.DoctorMedicalRecordCreate,
@@ -658,7 +659,7 @@ async def create_patient_record(
     return result.scalar_one()
 
 
-@router.get("/records/{record_id}")
+@router.get("/records/{record_id}", response_model=hx_schema.MedicalRecord)
 async def get_medical_record(
     record_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
