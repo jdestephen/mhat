@@ -12,11 +12,13 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [showResend, setShowResend] = useState(false);
+  const [isPendingDoctor, setIsPendingDoctor] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setShowResend(false);
+    setIsPendingDoctor(false);
 
     try {
       const formData = new FormData();
@@ -37,6 +39,11 @@ export default function LoginPage() {
       if (status === 403 && detail?.includes('verificar')) {
         setError(detail);
         setShowResend(true);
+      } else if (status === 403 && detail?.includes('pendiente de aprobación')) {
+        setError(detail);
+        setIsPendingDoctor(true);
+      } else if (status === 403 && detail?.includes('rechazada')) {
+        setError(detail);
       } else {
         setError(detail || 'Credenciales inválidas');
       }
@@ -60,15 +67,27 @@ export default function LoginPage() {
         <h1 className="text-2xl font-bold text-center text-slate-800">Iniciar Sesión en MHAT</h1>
         {error && (
           <div className="text-center">
-            <p className="text-red-500">{error}</p>
-            {showResend && (
-              <Button
-                variant="link"
-                onClick={handleResend}
-                className="text-sm mt-1"
-              >
-                Reenviar correo de verificación
-              </Button>
+            {isPendingDoctor ? (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-left">
+                <p className="text-amber-800 text-sm font-medium">⏳ Cuenta pendiente de aprobación</p>
+                <p className="text-amber-700 text-xs mt-1">
+                  Tu solicitud de cuenta de médico está siendo revisada. Recibirás un correo
+                  cuando sea aprobada.
+                </p>
+              </div>
+            ) : (
+              <>
+                <p className="text-red-500 text-sm">{error}</p>
+                {showResend && (
+                  <Button
+                    variant="link"
+                    onClick={handleResend}
+                    className="text-sm mt-1"
+                  >
+                    Reenviar correo de verificación
+                  </Button>
+                )}
+              </>
             )}
           </div>
         )}

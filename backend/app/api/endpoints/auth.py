@@ -12,10 +12,14 @@ from app.core.config import settings
 from app.db.session import get_db
 from app.models.user import User, UserRole
 from app.models.patient import PatientProfile
-from app.models.doctor import DoctorProfile
+from app.models.doctor import DoctorProfile, DoctorApprovalStatus
 from app.models.verification_token import VerificationToken, TokenType
 from app.schemas import user as user_schema, token as token_schema
-from app.services.email import send_verification_email, send_password_reset_email
+from app.services.email import (
+    send_verification_email,
+    send_password_reset_email,
+    send_doctor_registration_notification,
+)
 
 router = APIRouter()
 
@@ -88,6 +92,24 @@ async def login_access_token(
         )
     elif not user.is_active:
         raise HTTPException(status_code=400, detail="Usuario inactivo.")
+
+    # Gate pending/rejected doctors
+    if user.role == UserRole.DOCTOR:
+        result_dp = await db.execute(
+            select(DoctorProfile).filter(DoctorProfile.user_id == user.id)
+        )
+        doctor_profile = result_dp.scalars().first()
+        if doctor_profile and doctor_profile.approval_status == DoctorApprovalStatus.PENDING:
+            raise HTTPException(
+                status_code=403,
+                detail="Tu cuenta de médico está pendiente de aprobación. Te notificaremos cuando sea aprobada.",
+            )
+        if doctor_profile and doctor_profile.approval_status == DoctorApprovalStatus.REJECTED:
+            reason = doctor_profile.rejection_reason or "No se proporcionó una razón."
+            raise HTTPException(
+                status_code=403,
+                detail=f"Tu solicitud de cuenta de médico fue rechazada. Razón: {reason}",
+            )
 
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     return {
@@ -170,7 +192,12 @@ async def register_user(
                 )
                 db.add(claim)
     elif user.role == UserRole.DOCTOR:
-        profile = DoctorProfile(user_id=user.id)
+        profile = DoctorProfile(
+            user_id=user.id,
+            college_number=user_in.college_number,
+            verification_phone=user_in.verification_phone,
+            approval_status=DoctorApprovalStatus.PENDING,
+        )
         db.add(profile)
 
     # Generate verification token and send email
@@ -179,6 +206,16 @@ async def register_user(
     await db.refresh(user)
 
     await send_verification_email(user.email, token_value)
+
+    # Notify admins about new doctor registration
+    if user.role == UserRole.DOCTOR:
+        doctor_name = f"{user.first_name or ''} {user.last_name or ''}".strip() or user.email
+        await send_doctor_registration_notification(
+            doctor_name=doctor_name,
+            college_number=user_in.college_number or "",
+            phone=user_in.verification_phone or "",
+            email=user.email,
+        )
 
     return user
 

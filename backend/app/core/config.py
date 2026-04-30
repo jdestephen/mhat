@@ -42,6 +42,9 @@ class Settings(BaseSettings):
 
     # FRONTEND
     FRONTEND_URL: str = "http://localhost:3000"
+
+    # ADMIN
+    ADMIN_NOTIFICATION_EMAIL: Optional[str] = None
     
     def assemble_db_url(self):
         if not self.DATABASE_URL:

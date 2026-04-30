@@ -18,6 +18,26 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
+    # Doctor-specific registration fields
+    college_number: Optional[str] = None
+    verification_phone: Optional[str] = None
+
+    @validator("college_number")
+    def validate_college_number(cls, v: Optional[str], values: dict) -> Optional[str]:
+        if values.get("role") == UserRole.DOCTOR:
+            if not v or not v.strip():
+                raise ValueError("El número de colegiación es requerido para médicos.")
+            v = v.strip()
+            if len(v) < 5 or len(v) > 15:
+                raise ValueError("El número de colegiación debe tener entre 5 y 15 caracteres.")
+        return v
+
+    @validator("verification_phone")
+    def validate_verification_phone(cls, v: Optional[str], values: dict) -> Optional[str]:
+        if values.get("role") == UserRole.DOCTOR:
+            if not v or not v.strip():
+                raise ValueError("El teléfono de contacto es requerido para médicos.")
+        return v
 
     @validator("password")
     def validate_password_length(cls, v: str) -> str:
@@ -59,6 +79,7 @@ class UserInDBBase(UserBase):
 
 class User(UserInDBBase):
     role: UserRole
+    is_admin: bool = False
     is_email_verified: bool = False
     created_at: datetime
     pass

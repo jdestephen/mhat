@@ -254,6 +254,8 @@ async def list_my_patients(
             sex=user.sex.value if user and user.sex else None,
             blood_type=profile.blood_type,
             email=profile.email or (user.email if user else None),
+            phone=profile.phone,
+            address=profile.address,
             has_account=user is not None,
             dni=profile.dni,
             access_level=access.access_level,

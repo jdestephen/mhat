@@ -153,6 +153,8 @@ class PatientAccessSummary(BaseModel):
     sex: Optional[str] = None
     blood_type: Optional[str] = None
     email: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
     has_account: bool = False
     dni: Optional[str] = None
     access_level: AccessLevel
