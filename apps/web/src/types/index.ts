@@ -385,6 +385,8 @@ export interface PatientAccess {
   sex?: string;
   blood_type?: string;
   email?: string;
+  phone?: string;
+  address?: string;
   has_account: boolean;
   dni?: string;
   access_level: AccessLevel;

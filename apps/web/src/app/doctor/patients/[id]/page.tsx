@@ -9,7 +9,8 @@ import { usePatientHealth } from '@/hooks/queries/usePatientHealth';
 import { useVerifyRecord } from '@/hooks/mutations/useVerifyRecord';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { UserRole, RecordStatus, AccessLevel, VitalSigns } from '@/types';
+import { UserRole, AccessLevel, VitalSigns } from '@/types';
+import { PatientInfoBanner } from '@/components/doctor/PatientInfoBanner';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -18,7 +19,6 @@ import {
   ClipboardList,
   Plus,
   Eye,
-  User,
   Paperclip,
   Download,
   ChevronDown,
@@ -95,28 +95,9 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
   // Find current patient from doctor's patient list
   const patient = patients.find((p) => p.patient_id === patientId);
 
-  const computeAge = (dob: string): number => {
-    const birth = new Date(dob);
-    const today = new Date();
-    let age = today.getFullYear() - birth.getFullYear();
-    const m = today.getMonth() - birth.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
-      age--;
-    }
-    return age;
-  };
-
   const patientName = patient
     ? `${patient.first_name} ${patient.last_name}`
     : 'Paciente';
-
-  const patientSubtitle = patient
-    ? [
-        patient.date_of_birth ? `${computeAge(patient.date_of_birth)} años` : null,
-        patient.sex ? patient.sex : null,
-        patient.blood_type ? `🩸 ${patient.blood_type}` : null,
-      ].filter(Boolean).join(' • ')
-    : '';
 
   const isReadOnly = patient?.access_level === AccessLevel.READ_ONLY;
 
@@ -190,21 +171,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
             <ArrowLeft className="h-3 w-3" />
             Mis Pacientes
           </Link>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 lg:w-14 lg:h-14 rounded-full bg-emerald-100 flex items-center justify-center">
-                <User className="h-5 w-5 lg:h-7 lg:w-7 text-emerald-600" />
-              </div>
-              <div>
-                <h1 className="text-lg lg:text-xl font-bold text-gray-900">
-                  {patientName}
-                </h1>
-                {patientSubtitle && (
-                  <p className="text-gray-500 text-xs lg:text-sm">{patientSubtitle}</p>
-                )}
-              </div>
-            </div>
-          </div>
+          {patient && <PatientInfoBanner patient={patient} variant="compact" />}
         </div>
 
         {/* Mobile/Tablet: Collapsible health chips */}

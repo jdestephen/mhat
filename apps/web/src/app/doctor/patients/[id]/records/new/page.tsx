@@ -7,14 +7,15 @@ import { useCreateDoctorRecord } from '@/hooks/mutations/useCreateDoctorRecord';
 import { useUpdateDoctorRecord } from '@/hooks/mutations/useUpdateDoctorRecord';
 import { useCategories } from '@/hooks/queries/useCategories';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
+import { useMyPatients } from '@/hooks/queries/useMyPatients';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { InputWithVoice } from '@/components/ui/input-with-voice';
 import { TextareaWithVoice } from '@/components/ui/textarea-with-voice';
 import { TagInput } from '@/components/ui/tag-input';
 import { Select } from '@/components/ui/select';
 import { Combobox } from '@/components/ui/Combobox';
 import { VitalSignsForm, VitalSignsFormData } from '@/components/clinical/VitalSignsForm';
+import { PatientInfoBanner } from '@/components/doctor/PatientInfoBanner';
 import {
   DOSAGE_QUANTITIES,
   DOSAGE_UNITS,
@@ -41,6 +42,7 @@ import {
   ChevronDown,
   ChevronRight,
   HeartPulse,
+  XIcon,
 } from 'lucide-react';
 
 interface PrescriptionForm {
@@ -93,9 +95,12 @@ export default function NewDoctorRecordPage({
   const router = useRouter();
   const { data: categories = [] } = useCategories();
   const { data: user, isLoading: userLoading } = useCurrentUser();
+  const { data: patients = [] } = useMyPatients();
   const createRecord = useCreateDoctorRecord();
   const updateRecord = useUpdateDoctorRecord();
   const isEditMode = !!initialData;
+
+  const patient = patients.find((p) => p.patient_id === patientId);
 
   // Core fields — pre-populated if editing
   const [motive, setMotive] = useState(initialData?.motive || '');
@@ -339,22 +344,34 @@ export default function NewDoctorRecordPage({
   return (
     <div className="max-w-6xl mx-auto pb-12">
       {/* Header */}
-      <div className="flex flex-col justify-start">
-        <div>
-          <Button
-            variant="ghost"
-            onClick={() => router.back()}
-            className="mb-3 text-gray-600 hover:text-gray-900 gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Volver</span>
-          </Button>
+      <div className="flex flex-col justify-start lg:pr-30">
+        <div className="flex justify-between mb-2">
+          <div>
+            <h1 className="text-3xl font-bold text-emerald-950">
+              {isEditMode ? 'Editar Registro Clínico' : 'Nuevo Registro Clínico'}
+            </h1>
+          </div>  
+          <div>
+            <Button
+              variant="ghost"
+              onClick={() => router.back()}
+              className="mb-3 text-gray-600 hover:text-gray-900 gap-2"
+            >
+              <XIcon className="h-8 w-8" />
+            </Button>
+          </div>
         </div>
-        <div className="mb-5">
-          <h1 className="text-3xl font-bold text-emerald-950">
-            {isEditMode ? 'Editar Registro Clínico' : 'Nuevo Registro Clínico'}
-          </h1>
-        </div>
+        {patient && (
+          <div className="mb-5">
+            <PatientInfoBanner
+              patient={patient}
+              variant="extended"
+              layout="row"
+              collapsible
+              defaultCollapsed
+            />
+          </div>
+        )}
       </div>
       <div className="flex flex-col mt-0 ps-0 lg:pr-30">
         <form
