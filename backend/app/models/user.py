@@ -79,7 +79,10 @@ class User(Base):
         "PatientProfile", back_populates="user", uselist=False,
         primaryjoin="User.id == foreign(PatientProfile.user_id)"
     )
-    doctor_profile: Mapped[Optional["DoctorProfile"]] = relationship("DoctorProfile", back_populates="user", uselist=False)
+    doctor_profile: Mapped[Optional["DoctorProfile"]] = relationship(
+        "DoctorProfile", back_populates="user", uselist=False,
+        foreign_keys="[DoctorProfile.user_id]"
+    )
     # Patient profiles this user can manage (family members)
     managed_patients: Mapped[List["FamilyMembership"]] = relationship(
         "FamilyMembership",
