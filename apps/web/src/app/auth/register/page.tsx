@@ -15,16 +15,29 @@ export default function RegisterPage() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [role, setRole] = useState<UserRole>(UserRole.PATIENT);
+
+  // Doctor-specific fields
+  const [collegeNumber, setCollegeNumber] = useState('');
+  const [verificationPhone, setVerificationPhone] = useState('');
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [registered, setRegistered] = useState(false);
 
+  const isDoctor = role === UserRole.DOCTOR;
   const passwordValid = isPasswordStrong(password);
+
+  const collegeNumberValid =
+    !isDoctor || (collegeNumber.trim().length >= 5 && collegeNumber.trim().length <= 15);
+  const phoneValid = !isDoctor || verificationPhone.trim().length > 0;
+
+  const formValid =
+    passwordValid && (!isDoctor || (collegeNumberValid && phoneValid));
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!passwordValid) {
-      setError('La contraseña no cumple con los requisitos de seguridad.');
+    if (!formValid) {
+      setError('Por favor completa todos los campos requeridos correctamente.');
       return;
     }
     setLoading(true);
@@ -36,7 +49,11 @@ export default function RegisterPage() {
         password,
         first_name: firstName,
         last_name: lastName,
-        role
+        role,
+        ...(isDoctor && {
+          college_number: collegeNumber.trim(),
+          verification_phone: verificationPhone.trim(),
+        }),
       });
       setRegistered(true);
     } catch (err: unknown) {
@@ -62,6 +79,15 @@ export default function RegisterPage() {
             Hemos enviado un enlace de verificación a <span className="font-medium">{email}</span>.
             Haz clic en el enlace para activar tu cuenta.
           </p>
+          {isDoctor && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-left">
+              <p className="text-amber-800 text-sm font-medium">⏳ Aprobación pendiente</p>
+              <p className="text-amber-700 text-xs mt-1">
+                Después de verificar tu correo, un administrador revisará tu información
+                y recibirás una notificación cuando tu cuenta sea aprobada.
+              </p>
+            </div>
+          )}
           <p className="text-slate-400 text-xs">
             Si no encuentras el correo, revisa tu carpeta de spam.
           </p>
@@ -80,7 +106,7 @@ export default function RegisterPage() {
     <div className="flex min-h-screen items-center justify-center">
       <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md border border-[var(--border-light)]">
         <h1 className="text-2xl font-bold text-center text-slate-800">Crear Cuenta</h1>
-        {error && <p className="text-red-500 text-center">{error}</p>}
+        {error && <p className="text-red-500 text-center text-sm">{error}</p>}
         <form onSubmit={handleRegister} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -135,7 +161,46 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading || !passwordValid}>
+          {/* Doctor-specific fields */}
+          {isDoctor && (
+            <div className="space-y-4 border-t border-gray-100 pt-4">
+              <p className="text-xs text-gray-500">
+                Los siguientes datos son necesarios para verificar tu identidad como médico.
+              </p>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Número de Colegiación <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  value={collegeNumber}
+                  onChange={(e) => setCollegeNumber(e.target.value)}
+                  placeholder="Ej: 12345"
+                  maxLength={15}
+                />
+                {collegeNumber.trim().length > 0 && !collegeNumberValid && (
+                  <p className="text-red-500 text-xs mt-1">
+                    Debe tener entre 5 y 15 caracteres.
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Teléfono de Contacto <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  type="tel"
+                  value={verificationPhone}
+                  onChange={(e) => setVerificationPhone(e.target.value)}
+                  placeholder="Ej: +504 9999-9999"
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  Un administrador podrá contactarte para verificar tu información.
+                </p>
+              </div>
+            </div>
+          )}
+
+          <Button type="submit" className="w-full" disabled={loading || !formValid}>
             {loading ? 'Registrando...' : 'Registrarse'}
           </Button>
         </form>

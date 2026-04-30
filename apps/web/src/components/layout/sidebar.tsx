@@ -92,6 +92,22 @@ export function Sidebar({ onClose }: SidebarProps = {}) {
     );
   }
 
+  // Admin section — visible to any admin regardless of clinical role
+  if (user?.is_admin) {
+    sidebarItems.push({
+      label: 'Admin',
+      href: '/admin',
+      icon: <Users className="w-5 h-5" />,
+      children: [
+        {
+          label: 'Médicos Pendientes',
+          href: '/admin/doctors',
+          icon: <Stethoscope className="w-5 h-5" />,
+        },
+      ],
+    });
+  }
+
   sidebarItems.push({
     label: 'Perfil',
     href: '/profile',

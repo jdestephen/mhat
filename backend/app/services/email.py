@@ -131,6 +131,114 @@ async def send_patient_activation_email(email: str, doctor_name: str) -> None:
     await _send_email(email, subject, html_body)
 
 
+async def send_doctor_registration_notification(
+    doctor_name: str,
+    college_number: str,
+    phone: str,
+    email: str,
+) -> None:
+    """Notify admin(s) about a new doctor registration pending approval."""
+    admin_url = f"{settings.FRONTEND_URL}/admin/doctors"
+
+    subject = "Nuevo médico pendiente de aprobación - MHAT"
+    html_body = f"""
+    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+        <div style="text-align: center; margin-bottom: 32px;">
+            <h1 style="color: #064e3b; font-size: 28px; margin: 0;">MHAT</h1>
+            <p style="color: #6b7280; font-size: 14px; margin-top: 4px;">Administración</p>
+        </div>
+        <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 32px;">
+            <h2 style="color: #1e293b; font-size: 20px; margin-top: 0;">Nuevo registro de médico</h2>
+            <p style="color: #4b5563; line-height: 1.6;">
+                Un nuevo médico se ha registrado y requiere aprobación:
+            </p>
+            <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+                <tr><td style="padding: 8px 0; color: #6b7280; width: 140px;">Nombre:</td><td style="padding: 8px 0; color: #1e293b; font-weight: 600;">{doctor_name}</td></tr>
+                <tr><td style="padding: 8px 0; color: #6b7280;">Email:</td><td style="padding: 8px 0; color: #1e293b;">{email}</td></tr>
+                <tr><td style="padding: 8px 0; color: #6b7280;">Nro. Colegiación:</td><td style="padding: 8px 0; color: #1e293b; font-weight: 600;">{college_number}</td></tr>
+                <tr><td style="padding: 8px 0; color: #6b7280;">Teléfono:</td><td style="padding: 8px 0; color: #1e293b;">{phone}</td></tr>
+            </table>
+            <div style="text-align: center; margin: 32px 0;">
+                <a href="{admin_url}"
+                   style="background-color: #064e3b; color: #ffffff; padding: 14px 32px;
+                          text-decoration: none; border-radius: 8px; font-weight: 600;
+                          display: inline-block; font-size: 16px;">
+                    Revisar Solicitud
+                </a>
+            </div>
+        </div>
+    </div>
+    """
+
+    admin_email = settings.ADMIN_NOTIFICATION_EMAIL
+    if admin_email:
+        await _send_email(admin_email, subject, html_body)
+
+
+async def send_doctor_approval_email(doctor_email: str, doctor_name: str) -> None:
+    """Notify a doctor that their account has been approved."""
+    login_url = f"{settings.FRONTEND_URL}/auth/login"
+
+    subject = "¡Tu cuenta de médico ha sido aprobada! - MHAT"
+    html_body = f"""
+    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+        <div style="text-align: center; margin-bottom: 32px;">
+            <h1 style="color: #064e3b; font-size: 28px; margin: 0;">MHAT</h1>
+            <p style="color: #6b7280; font-size: 14px; margin-top: 4px;">Historial Médico</p>
+        </div>
+        <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 32px;">
+            <h2 style="color: #1e293b; font-size: 20px; margin-top: 0;">¡Bienvenido, Dr. {doctor_name}!</h2>
+            <p style="color: #4b5563; line-height: 1.6;">
+                Tu cuenta de médico en MHAT ha sido verificada y aprobada.
+                Ya puedes iniciar sesión y comenzar a gestionar tus pacientes.
+            </p>
+            <div style="text-align: center; margin: 32px 0;">
+                <a href="{login_url}"
+                   style="background-color: #064e3b; color: #ffffff; padding: 14px 32px;
+                          text-decoration: none; border-radius: 8px; font-weight: 600;
+                          display: inline-block; font-size: 16px;">
+                    Iniciar Sesión
+                </a>
+            </div>
+        </div>
+    </div>
+    """
+
+    await _send_email(doctor_email, subject, html_body)
+
+
+async def send_doctor_rejection_email(
+    doctor_email: str, doctor_name: str, reason: str
+) -> None:
+    """Notify a doctor that their account application was rejected."""
+    subject = "Actualización sobre tu solicitud de cuenta - MHAT"
+    html_body = f"""
+    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+        <div style="text-align: center; margin-bottom: 32px;">
+            <h1 style="color: #064e3b; font-size: 28px; margin: 0;">MHAT</h1>
+            <p style="color: #6b7280; font-size: 14px; margin-top: 4px;">Historial Médico</p>
+        </div>
+        <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 32px;">
+            <h2 style="color: #1e293b; font-size: 20px; margin-top: 0;">Actualización de tu solicitud</h2>
+            <p style="color: #4b5563; line-height: 1.6;">
+                Estimado/a {doctor_name}, lamentamos informarte que tu solicitud de cuenta
+                de médico no fue aprobada.
+            </p>
+            <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin: 16px 0;">
+                <p style="color: #991b1b; margin: 0; font-size: 14px;">
+                    <strong>Razón:</strong> {reason}
+                </p>
+            </div>
+            <p style="color: #6b7280; font-size: 13px; line-height: 1.5;">
+                Si crees que esto es un error, por favor contáctanos para resolver la situación.
+            </p>
+        </div>
+    </div>
+    """
+
+    await _send_email(doctor_email, subject, html_body)
+
+
 async def _send_email(to: str, subject: str, html: str) -> None:
     """Send an email via Resend or log to console in dev mode."""
     if not settings.EMAIL_ENABLED:

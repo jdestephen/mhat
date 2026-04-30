@@ -17,6 +17,7 @@ export interface User {
   city?: string;
   country?: string;
   is_active: boolean;
+  is_admin: boolean;
   is_email_verified: boolean;
   role: UserRole;
 }
@@ -51,6 +52,12 @@ export enum DiagnosisStatus {
   DIFFERENTIAL = 'DIFFERENTIAL',
   REFUTED = 'REFUTED',
   ENTERED_IN_ERROR = 'ENTERED_IN_ERROR',
+}
+
+export enum DoctorApprovalStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
 }
 
 export interface Medication {
