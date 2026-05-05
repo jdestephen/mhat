@@ -41,3 +41,52 @@ body {
   color: var(--color-foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ===== driver.js Tour Overrides ===== */
+.driver-popover.mhat-tour-popover {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e2e8f0;
+  max-width: 340px;
+}
+
+.driver-popover.mhat-tour-popover .driver-popover-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.driver-popover.mhat-tour-popover .driver-popover-description {
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.driver-popover.mhat-tour-popover .driver-popover-progress-text {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.driver-popover.mhat-tour-popover .driver-popover-prev-btn {
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 13px;
+}
+
+.driver-popover.mhat-tour-popover .driver-popover-next-btn,
+.driver-popover.mhat-tour-popover .driver-popover-close-btn-text {
+  background: #065f46;
+  color: white;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 13px;
+  border: none;
+}
+
+.driver-popover.mhat-tour-popover .driver-popover-next-btn:hover,
+.driver-popover.mhat-tour-popover .driver-popover-close-btn-text:hover {
+  background: #047857;
+}

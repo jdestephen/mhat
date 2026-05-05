@@ -32,6 +32,7 @@ interface MenuItem {
   children?: MenuItem[];
   onClick?: () => void;
   roles?: UserRole[];
+  id?: string;
 }
 
 interface SidebarProps {
@@ -75,16 +76,19 @@ export function Sidebar({ onClose }: SidebarProps = {}) {
   } else {
     sidebarItems.push(
       {
+        id: 'nav-dashboard',
         label: 'Panel',
         href: '/dashboard',
         icon: <LayoutDashboard className="w-5 h-5" />,
       },
       {
+        id: 'nav-new-record',
         label: 'Nuevo Registro',
         href: '/records/new',
         icon: <FilePlus2 className="w-5 h-5" />,
       },
       {
+        id: 'nav-vital-signs',
         label: 'Signos Vitales',
         href: '/dashboard/vital-signs',
         icon: <HeartPulse className="w-5 h-5" />,
@@ -120,11 +124,13 @@ export function Sidebar({ onClose }: SidebarProps = {}) {
       },
       ...(isPatient ? [
         {
+          id: 'nav-health-history',
           label: 'Historial de Salud',
           href: '/profile/health-history',
           icon: <Stethoscope className="w-5 h-5" />,
         },
         {
+          id: 'nav-doctor-access',
           label: 'Acceso Médico',
           href: '/profile/doctor-access',
           icon: <KeyRound className="w-5 h-5" />,
@@ -220,6 +226,7 @@ export function Sidebar({ onClose }: SidebarProps = {}) {
       <Link
         key={item.href}
         href={item.href!}
+        id={item.id}
         title={collapsed ? item.label : undefined}
         className={clsx(
           'flex items-center gap-3 px-4 py-3 transition-colors font-primary',

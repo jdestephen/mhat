@@ -15,10 +15,14 @@ import { Pagination } from '@/components/ui/Pagination';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
 import { ClaimRequestBanner } from '@/components/patient/ClaimRequestBanner';
 import { useActiveProfile } from '@/hooks/useActiveProfile';
+import { WelcomeCard } from '@/components/onboarding/WelcomeCard';
+import { ProfileCompletionBanner } from '@/components/onboarding/ProfileCompletionBanner';
+import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
 
 export default function DashboardPage() {
   const router = useRouter();
   const { data: user, isLoading: userLoading } = useCurrentUser();
+  const { isNewUser, hasCompletedSetup, isLoading: onboardingLoading } = useOnboardingStatus();
   
   // Redirect doctors to their dashboard
   useEffect(() => {
@@ -26,6 +30,15 @@ export default function DashboardPage() {
       router.replace('/doctor');
     }
   }, [user, userLoading, router]);
+
+  // Redirect new patients to onboarding wizard
+  useEffect(() => {
+    if (!userLoading && !onboardingLoading && user?.role === UserRole.PATIENT) {
+      if (isNewUser && !hasCompletedSetup) {
+        router.replace('/onboarding');
+      }
+    }
+  }, [user, userLoading, isNewUser, hasCompletedSetup, onboardingLoading, router]);
   
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -128,6 +141,7 @@ export default function DashboardPage() {
       />
       
       <ClaimRequestBanner />
+      <ProfileCompletionBanner />
       
       <div className="mb-6">
         <h2 className="text-xl font-semibold text-slate-700 mb-4">Historial Clínico</h2>
@@ -137,13 +151,7 @@ export default function DashboardPage() {
         ) : (
           <>
             {records?.length === 0 && (
-              <div className="text-center py-16 bg-white rounded-lg border border-dashed border-slate-300">
-                <Stethoscope className="mx-auto h-12 w-12 text-slate-300 mb-3" />
-                <p className="text-slate-500 mb-2">No se encontraron registros médicos.</p>
-                <Link href="/records/new">
-                  <Button variant="outline">Crea tu primer registro</Button>
-                </Link>
-              </div>
+              <WelcomeCard />
             )}
 
             {/* Desktop Table View (md and up) */}

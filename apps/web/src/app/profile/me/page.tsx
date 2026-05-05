@@ -8,6 +8,8 @@ import { PatientProfileForm } from './PatientProfileForm';
 import { DoctorProfileForm } from './DoctorProfileForm';
 import { PersonalReferencesTab } from './PersonalReferencesTab';
 import { ChangePasswordForm } from './ChangePasswordForm';
+import { useProductTour } from '@/hooks/useProductTour';
+import { Compass } from 'lucide-react';
 
 export default function PersonalInfoPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -37,6 +39,8 @@ export default function PersonalInfoPage() {
     }
   };
 
+  const { startTour } = useProductTour();
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -53,7 +57,18 @@ export default function PersonalInfoPage() {
 
   return (
     <div className="max-w-2xl mx-auto pb-20 px-4 sm:px-0">
-      <h1 className="text-3xl font-bold mb-8 text-emerald-950">Mi Perfil</h1>
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold text-emerald-950">Mi Perfil</h1>
+        {isPatient && (
+          <button
+            onClick={startTour}
+            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-emerald-600 transition-colors"
+          >
+            <Compass className="w-4 h-4" />
+            <span className="hidden sm:inline">Ver tour de la app</span>
+          </button>
+        )}
+      </div>
 
       {isPatient ? (
         <Tabs defaultValue="personal">
