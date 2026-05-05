@@ -59,7 +59,15 @@ export default function HealthHistoryPage() {
 
   return (
     <div className="max-w-4xl mx-auto pb-20 lg:px-4 md:px-0 sm:px-0">
-      <h1 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8 text-emerald-950">Historial de Salud</h1>
+      <h1 className="text-2xl md:text-3xl font-bold mb-4 text-emerald-950">Historial de Salud</h1>
+
+      <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-6">
+        <p className="text-xs text-blue-700">
+          💡 Aquí puedes registrar tu historial de salud. Esta información será marcada
+          como &quot;auto-reportada&quot; y un médico podrá verificarla durante tu consulta.
+          Si no estás seguro de algún dato, puedes indicarlo como &quot;sospechado&quot;.
+        </p>
+      </div>
       
       <Tabs defaultValue="history" className="w-full">
         <TabsList className="mb-0 w-full">

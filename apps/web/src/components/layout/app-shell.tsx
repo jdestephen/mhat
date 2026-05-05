@@ -9,7 +9,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const isAuthPage = pathname?.startsWith('/auth');
-  const isPublicPage = pathname === '/' || pathname?.startsWith('/shared'); 
+  const isPublicPage = pathname === '/' || pathname?.startsWith('/shared');
+  const isOnboardingPage = pathname?.startsWith('/onboarding');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
@@ -37,6 +38,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   if (isAuthPage || isPublicPage) {
     return <>{children}</>;
+  }
+
+  // Onboarding renders with minimal chrome (no sidebar, just centered content)
+  if (isOnboardingPage) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <main className="max-w-4xl mx-auto px-4 py-6">
+          {children}
+        </main>
+      </div>
+    );
   }
 
   return (
