@@ -56,7 +56,7 @@ export default function PersonalInfoPage() {
   const isPatient = user.role === UserRole.PATIENT;
 
   return (
-    <div className="max-w-2xl mx-auto pb-20 px-4 sm:px-0">
+    <div className="max-w-2xl mx-auto pb-20 px-0 sm:px-0">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold text-emerald-950">Mi Perfil</h1>
         {isPatient && (
@@ -74,7 +74,10 @@ export default function PersonalInfoPage() {
         <Tabs defaultValue="personal">
           <TabsList>
             <TabsTrigger value="personal">Datos Personales</TabsTrigger>
-            <TabsTrigger value="references">Contactos de Emergencia</TabsTrigger>
+            <TabsTrigger value="references">
+              <span className="hidden sm:inline">Contactos de Emergencia</span>
+              <span className="sm:hidden">Emergencia</span>
+            </TabsTrigger>
             <TabsTrigger value="security">Seguridad</TabsTrigger>
           </TabsList>
 
