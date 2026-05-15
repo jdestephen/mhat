@@ -58,7 +58,7 @@ export default function HealthHistoryPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto pb-20 lg:px-4 md:px-0 sm:px-0">
+    <div className="max-w-4xl md:max-w-6xl mx-auto pb-20 lg:px-4 md:px-0 sm:px-0">
       <h1 className="text-2xl md:text-3xl font-bold mb-4 text-emerald-950">Historial de Salud</h1>
 
       <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-6">

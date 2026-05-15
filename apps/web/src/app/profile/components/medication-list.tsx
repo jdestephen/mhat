@@ -352,15 +352,15 @@ export function MedicationList({ profile, onRefresh, apiPrefix = '/profiles/pati
                 <div className="flex-1">Nombre</div>
                 <div className="w-28">Dosis</div>
                 <div className="w-36">Frecuencia</div>
-                <div className="w-24">Vía</div>
+                <div className="w-34">Vía</div>
                 <div className="w-28">Estado</div>
-                <div className="w-24 text-center">Acciones</div>
+                <div className="w-14 text-center">Acciones</div>
               </div>
 
               {/* Table Rows */}
               {profile.medications.map((med) => (
                 <div key={med.id} className="flex flex-col md:flex-row gap-2 md:gap-4 p-3 md:p-4 bg-slate-50 rounded border border-slate-100 hover:bg-slate-100 transition-colors">
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 flex-col min-w-0">
                     <span className="font-semibold text-slate-900">{med.name}</span>
                     {med.instructions && (
                       <p className="text-xs text-slate-600 mt-1">{med.instructions}</p>
@@ -369,26 +369,26 @@ export function MedicationList({ profile, onRefresh, apiPrefix = '/profiles/pati
                   
                   <div className="w-full md:w-28">
                     <span className="md:hidden font-medium text-slate-500">Dosis: </span>
-                    <span className="text-slate-700">{med.dosage || '—'}</span>
+                    <span className="text-slate-700 text-sm">{med.dosage || '—'}</span>
                   </div>
                   
                   <div className="w-full md:w-36">
                     <span className="md:hidden font-medium text-slate-500">Frecuencia: </span>
-                    <span className="text-slate-700">{med.frequency || '—'}</span>
+                    <span className="text-slate-700 text-sm">{med.frequency || '—'}</span>
                   </div>
 
-                  <div className="w-full md:w-24">
+                  <div className="w-full md:w-34">
                     <span className="md:hidden font-medium text-slate-500">Vía: </span>
-                    <span className="text-slate-700 capitalize">{med.route ? ROUTE_OPTIONS.find(r => r.value === med.route)?.label || med.route : '—'}</span>
+                    <span className="text-slate-700 capitalize text-sm truncate">{med.route ? ROUTE_OPTIONS.find(r => r.value === med.route)?.label || med.route : '—'}</span>
                   </div>
                   
-                  <div className="w-full md:w-32">
+                  <div className="w-full md:w-28 ">
                     <span className={`px-2 py-0.5 text-xs rounded inline-block ${getStatusColor(med.status)}`}>
                       {getStatusLabel(med.status)}
                     </span>
                   </div>
                   
-                  <div className="w-full md:w-24 flex gap-2 justify-start md:justify-center">
+                  <div className="w-full md:w-14 flex gap-1 justify-start md:justify-center">
                     <Button
                       variant="ghost"
                       size="sm"
