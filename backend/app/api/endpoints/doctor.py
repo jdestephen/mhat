@@ -652,6 +652,7 @@ async def create_patient_record(
         .where(MedicalRecord.id == record.id)
         .options(
             selectinload(MedicalRecord.diagnoses),
+            selectinload(MedicalRecord.documents),
             selectinload(MedicalRecord.prescriptions),
             selectinload(MedicalRecord.clinical_orders),
             selectinload(MedicalRecord.category),
