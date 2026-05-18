@@ -14,6 +14,7 @@ import { useCategories } from '@/hooks/queries/useCategories';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
 import { useCreateMedicalRecord } from '@/hooks/mutations/useCreateMedicalRecord';
 import { useUploadDocument } from '@/hooks/mutations/useUploadDocument';
+import { PrescriptionForm, PrescriptionFormData } from '@/components/clinical/PrescriptionForm';
 
 
 export default function NewRecordPage() {
@@ -39,6 +40,9 @@ export default function NewRecordPage() {
   // Uploads
   const [files, setFiles] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
+
+  // Prescriptions
+  const [prescriptions, setPrescriptions] = useState<PrescriptionFormData[]>([]);
   
   // State
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -120,7 +124,18 @@ export default function NewRecordPage() {
             rank: d.rank,
             status: d.status,
             notes: d.notes || undefined,
-          }))
+          })),
+        prescriptions: prescriptions
+          .filter(p => p.medication_name.trim())
+          .map(p => ({
+            medication_name: p.medication_name,
+            dosage: p.dosage || undefined,
+            frequency: p.frequency || undefined,
+            duration: p.duration || undefined,
+            route: p.route || undefined,
+            quantity: p.quantity || undefined,
+            instructions: p.instructions || undefined,
+          })),
       };
       if (categoryId) payload.category_id = parseInt(categoryId);
 
@@ -378,6 +393,12 @@ export default function NewRecordPage() {
             </div>
           </div>
         </div>
+
+        {/* Prescriptions Accordion */}
+        <PrescriptionForm
+          prescriptions={prescriptions}
+          onChange={setPrescriptions}
+        />
 
         {/* File Upload Section */}
         <div className="bg-white p-6 rounded-lg shadow-sm border border-[var(--border-light)]">

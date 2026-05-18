@@ -16,14 +16,13 @@ import { TagInput } from '@/components/ui/tag-input';
 import { Select } from '@/components/ui/select';
 import { Combobox } from '@/components/ui/Combobox';
 import { VitalSignsForm, VitalSignsFormData } from '@/components/clinical/VitalSignsForm';
+import { PrescriptionForm, PrescriptionFormData, EMPTY_PRESCRIPTION } from '@/components/clinical/PrescriptionForm';
 import { PatientInfoBanner } from '@/components/doctor/PatientInfoBanner';
 import {
   DOSAGE_QUANTITIES,
   DOSAGE_UNITS,
   FREQUENCY_OPTIONS,
   ROUTE_OPTIONS,
-  DURATION_QUANTITIES,
-  DURATION_UNITS,
 } from '@/lib/prescriptionOptions';
 import { 
   UserRole, 
@@ -38,7 +37,6 @@ import {
   Plus, 
   Trash2, 
   AlertTriangle,
-  Pill,
   ClipboardList,
   ChevronDown,
   ChevronRight,
@@ -47,15 +45,6 @@ import {
   CalendarDays,
 } from 'lucide-react';
 
-interface PrescriptionForm {
-  medication_name: string;
-  dosage: string;
-  frequency: string;
-  duration: string;
-  route: string;
-  quantity: string;
-  instructions: string;
-}
 
 interface OrderForm {
   order_type: OrderType;
@@ -138,7 +127,7 @@ export default function NewDoctorRecordPage({
   const [patientInstructions, setPatientInstructions] = useState(initialData?.patient_instructions || '');
 
   // Prescriptions & Orders — pre-populated if editing
-  const [prescriptions, setPrescriptions] = useState<PrescriptionForm[]>(
+  const [prescriptions, setPrescriptions] = useState<PrescriptionFormData[]>(
     initialData?.prescriptions?.map(p => ({
       medication_name: p.medication_name,
       dosage: p.dosage || '',
@@ -163,9 +152,6 @@ export default function NewDoctorRecordPage({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showClinicalAssessment, setShowClinicalAssessment] = useState(true);
   const [showPlan, setShowPlan] = useState(true);
-  const [showPrescriptions, setShowPrescriptions] = useState(
-    initialData?.prescriptions ? initialData.prescriptions.length > 0 : false
-  );
   const [showOrders, setShowOrders] = useState(
     initialData?.clinical_orders ? initialData.clinical_orders.length > 0 : false
   );
@@ -239,25 +225,6 @@ export default function NewDoctorRecordPage({
   const selectedCategory = categories.find(c => c.id === parseInt(categoryId));
   const showDiagnosis = selectedCategory?.has_diagnosis ?? false;
 
-  const addPrescription = () => {
-    setPrescriptions([...prescriptions, {
-      medication_name: '',
-      dosage: '',
-      frequency: '',
-      duration: '',
-      route: 'oral',
-      quantity: '',
-      instructions: '',
-    }]);
-  };
-
-  const updatePrescription = (idx: number, field: keyof PrescriptionForm, value: string) => {
-    setPrescriptions(prev => prev.map((p, i) => i === idx ? { ...p, [field]: value } : p));
-  };
-
-  const removePrescription = (idx: number) => {
-    setPrescriptions(prev => prev.filter((_, i) => i !== idx));
-  };
 
   const addOrder = () => {
     setOrders([...orders, {
@@ -697,165 +664,12 @@ export default function NewDoctorRecordPage({
           </div>
 
           {/* Prescriptions Accordion */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setShowPrescriptions(!showPrescriptions)}
-              className="w-full p-4 flex items-center justify-between hover:bg-gray-50 h-auto"
-            >
-              <div className="flex items-center gap-3">
-                <Pill className="h-5 w-5 text-emerald-600" />
-                <span className="font-medium">Recetas ({prescriptions.length})</span>
-              </div>
-              {showPrescriptions ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
-            </Button>
-
-            {showPrescriptions && (
-              <div className="p-4 border-t border-gray-100 space-y-4">
-                {prescriptions.map((rx, idx) => (
-                  <div key={idx} className="p-4 bg-gray-50 rounded-lg relative">
-                    <Button
-                      type="button"
-                      variant="danger-ghost"
-                      size="icon"
-                      onClick={() => removePrescription(idx)}
-                      className="absolute top-2 right-2 h-8 w-8"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="col-span-2">
-                        <label className="block text-xs font-medium mb-1">Medicamento</label>
-                        <InputWithVoice
-                          value={rx.medication_name}
-                          onChange={(e) => updatePrescription(idx, 'medication_name', e.target.value)}
-                          placeholder="Nombre del medicamento"
-                          language="es-ES"
-                          mode="append"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium mb-1">Dosis</label>
-                        <div className="flex gap-2">
-                          <Combobox
-                            options={DOSAGE_QUANTITIES.map((q) => ({ value: q, label: q }))}
-                            value={rx.dosage.split(' ')[0] || ''}
-                            onValueChange={(val) => {
-                              const unit = rx.dosage.split(' ').slice(1).join(' ') || '';
-                              updatePrescription(idx, 'dosage', unit ? `${val} ${unit}` : String(val));
-                            }}
-                            placeholder="Cant."
-                            searchPlaceholder="Buscar..."
-                            searchable
-                            creatable
-                            className="w-[45%]"
-                          />
-                          <Combobox
-                            options={DOSAGE_UNITS}
-                            value={rx.dosage.split(' ').slice(1).join(' ') || ''}
-                            onValueChange={(val) => {
-                              const qty = rx.dosage.split(' ')[0] || '';
-                              updatePrescription(idx, 'dosage', qty ? `${qty} ${val}` : String(val));
-                            }}
-                            placeholder="Unidad"
-                            searchPlaceholder="Buscar unidad..."
-                            searchable
-                            creatable
-                            className="w-[55%]"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium mb-1">Frecuencia</label>
-                        <Combobox
-                          groups={FREQUENCY_OPTIONS.map((g) => ({
-                            group: g.group,
-                            options: g.options.map((o) => ({ value: o.value, label: o.label })),
-                          }))}
-                          value={rx.frequency}
-                          onValueChange={(val) => updatePrescription(idx, 'frequency', String(val))}
-                          placeholder="Seleccionar frecuencia..."
-                          searchPlaceholder="Buscar frecuencia..."
-                          searchable
-                          creatable
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium mb-1">Vía</label>
-                        <Combobox
-                          options={ROUTE_OPTIONS}
-                          value={rx.route}
-                          onValueChange={(val) => updatePrescription(idx, 'route', String(val))}
-                          placeholder="Seleccionar vía..."
-                          searchPlaceholder="Buscar vía..."
-                          searchable
-                          creatable
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium mb-1">Duración</label>
-                        <div className="flex gap-2">
-                          <Combobox
-                            options={DURATION_QUANTITIES.map((q) => ({ value: q, label: q }))}
-                            value={rx.duration.split(' ')[0] || ''}
-                            onValueChange={(val) => {
-                              const unit = rx.duration.split(' ').slice(1).join(' ') || '';
-                              updatePrescription(idx, 'duration', unit ? `${val} ${unit}` : String(val));
-                            }}
-                            placeholder="Cant."
-                            searchPlaceholder="Buscar..."
-                            searchable
-                            creatable
-                            className="w-[40%]"
-                          />
-                          <Combobox
-                            options={DURATION_UNITS}
-                            value={rx.duration.split(' ').slice(1).join(' ') || ''}
-                            onValueChange={(val) => {
-                              const qty = rx.duration.split(' ')[0] || '';
-                              updatePrescription(idx, 'duration', qty ? `${qty} ${val}` : String(val));
-                            }}
-                            placeholder="Unidad"
-                            searchPlaceholder="Buscar..."
-                            searchable
-                            creatable
-                            className="w-[60%]"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium mb-1">Cantidad</label>
-                        <InputWithVoice
-                          value={rx.quantity}
-                          onChange={(e) => updatePrescription(idx, 'quantity', e.target.value)}
-                          placeholder="ej. 21 tabletas"
-                          language="es-ES"
-                          mode="append"
-                        />
-                      </div>
-                      <div className="col-span-2">
-                        <label className="block text-xs font-medium mb-1">Instrucciones</label>
-                        <InputWithVoice
-                          value={rx.instructions}
-                          onChange={(e) => updatePrescription(idx, 'instructions', e.target.value)}
-                          placeholder="Instrucciones adicionales"
-                          language="es-ES"
-                          mode="append"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-
-                <Button type="button" variant="outline" onClick={addPrescription} className="w-full">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Agregar Receta
-                </Button>
-              </div>
-            )}
-          </div>
+          {/* Prescriptions Accordion */}
+          <PrescriptionForm
+            prescriptions={prescriptions}
+            onChange={setPrescriptions}
+            defaultOpen={initialData?.prescriptions ? initialData.prescriptions.length > 0 : false}
+          />
 
           {/* Orders Accordion */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-100">

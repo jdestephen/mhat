@@ -16,6 +16,15 @@ interface CreateRecordPayload {
     status: string;
     notes?: string;
   }>;
+  prescriptions?: Array<{
+    medication_name: string;
+    dosage?: string;
+    frequency?: string;
+    duration?: string;
+    route?: string;
+    quantity?: string;
+    instructions?: string;
+  }>;
 }
 
 export function useCreateMedicalRecord() {
@@ -29,6 +38,7 @@ export function useCreateMedicalRecord() {
     onSuccess: () => {
       // Invalidate relevant queries to refetch records
       queryClient.invalidateQueries({ queryKey: ['medical-records'] });
+      queryClient.invalidateQueries({ queryKey: ['prescription-records'] });
     },
   });
 }

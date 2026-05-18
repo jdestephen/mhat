@@ -5,7 +5,8 @@ import { useQuery } from '@tanstack/react-query';
 import api, { getDocumentUrl } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { RecordSearchBar } from '@/components/search/RecordSearchBar';
-import { Plus, FileText, Calendar, Stethoscope, Paperclip, MoreVertical, Eye, Share2 } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Plus, FileText, Calendar, Stethoscope, Paperclip, MoreVertical, Eye, Share2, Pill } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { MedicalRecord, RecordStatus, UserRole } from '@/types';
@@ -82,6 +83,22 @@ export default function DashboardPage() {
     },
   });
 
+  // Prescriptions-only query
+  const { data: prescriptionRecords, isLoading: prescriptionsLoading } = useQuery<MedicalRecord[]>({
+    queryKey: ['prescription-records', debouncedQuery, searchFilters.dateFrom, searchFilters.dateTo, activeProfileId],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.append('has_prescriptions', 'true');
+      if (debouncedQuery) params.append('q', debouncedQuery);
+      if (searchFilters.dateFrom) params.append('date_from', searchFilters.dateFrom);
+      if (searchFilters.dateTo) params.append('date_to', searchFilters.dateTo);
+      if (activeProfileId) params.append('profile_id', activeProfileId);
+      
+      const res = await api.get(`/hx/?${params.toString()}`);
+      return res.data;
+    },
+  });
+
   // Paginated records
   const totalItems = records?.length ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
@@ -144,8 +161,19 @@ export default function DashboardPage() {
       <ProfileCompletionBanner />
       
       <div className="mb-6">
-        <h2 className="text-xl font-semibold text-slate-700 mb-4">Historial Clínico</h2>
-        
+        <Tabs defaultValue="historial">
+          <TabsList className="mb-4">
+            <TabsTrigger value="historial">
+              <Stethoscope className="w-4 h-4 mr-2" />
+              Historial Clínico
+            </TabsTrigger>
+            <TabsTrigger value="recetas">
+              <Pill className="w-4 h-4 mr-2" />
+              Recetas
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="historial">
         {isLoading ? (
           <div className="text-center py-10">Cargando registros...</div>
         ) : (
@@ -478,6 +506,84 @@ export default function DashboardPage() {
             )}
           </>
         )}
+          </TabsContent>
+
+          <TabsContent value="recetas">
+            {prescriptionsLoading ? (
+              <div className="text-center py-10">Cargando recetas...</div>
+            ) : (
+              <>
+                {(!prescriptionRecords || prescriptionRecords.length === 0) && (
+                  <div className="text-center py-12">
+                    <Pill className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                    <p className="text-slate-500 text-lg font-medium">No hay recetas registradas</p>
+                    <p className="text-slate-400 text-sm mt-1">Las recetas que agregues a tus registros aparecerán aquí</p>
+                  </div>
+                )}
+
+                {prescriptionRecords && prescriptionRecords.length > 0 && (
+                  <div className="space-y-4">
+                    {prescriptionRecords.map((record) => (
+                      <div key={record.id} className="bg-white rounded-lg border border-[var(--border-light)] shadow-sm overflow-hidden">
+                        {/* Record header */}
+                        <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                          <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 shrink-0">
+                              <Pill className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-slate-900 text-sm">{record.motive}</p>
+                              <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
+                                <Calendar size={11} />
+                                {new Date(record.record_date || record.created_at).toLocaleDateString('es-ES', {
+                                  day: 'numeric', month: 'short', year: 'numeric'
+                                })}
+                                {record.category && (
+                                  <span className="ml-2 text-[10px] font-bold uppercase tracking-wider text-emerald-700 px-1 py-0.5 rounded-md border border-emerald-200">
+                                    {record.category.name}
+                                  </span>
+                                )}
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => window.location.href = `/records/${record.id}`}
+                            className="text-slate-500 hover:text-slate-700"
+                          >
+                            Ver Detalle
+                          </Button>
+                        </div>
+
+                        {/* Prescription items */}
+                        <div className="divide-y divide-slate-50">
+                          {record.prescriptions?.map((rx) => (
+                            <div key={rx.id} className="px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-slate-900 text-sm">{rx.medication_name}</p>
+                                {rx.instructions && (
+                                  <p className="text-xs text-slate-500 mt-0.5 truncate">{rx.instructions}</p>
+                                )}
+                              </div>
+                              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600 shrink-0">
+                                {rx.dosage && <span>Dosis: <strong>{rx.dosage}</strong></span>}
+                                {rx.frequency && <span>Frecuencia: <strong>{rx.frequency}</strong></span>}
+                                {rx.duration && <span>Duración: <strong>{rx.duration}</strong></span>}
+                                {rx.route && <span>Vía: <strong className="capitalize">{rx.route}</strong></span>}
+                                {rx.quantity && <span>Cant: <strong>{rx.quantity}</strong></span>}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Share Dialog */}

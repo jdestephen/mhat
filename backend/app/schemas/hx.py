@@ -102,8 +102,20 @@ class Category(BaseModel):
     class Config:
         orm_mode = True
 
+class PrescriptionItemCreate(BaseModel):
+    """Inline prescription schema to avoid circular import with clinical.py."""
+    medication_name: str = Field(..., max_length=200)
+    dosage: Optional[str] = Field(None, max_length=100)
+    frequency: Optional[str] = Field(None, max_length=100)
+    duration: Optional[str] = Field(None, max_length=100)
+    route: Optional[str] = Field(None, max_length=50)
+    quantity: Optional[str] = Field(None, max_length=50)
+    instructions: Optional[str] = None
+
+
 class MedicalRecordCreate(MedicalRecordBase):
     diagnoses: Optional[List[MedicalDiagnosisCreate]] = Field(default_factory=list)
+    prescriptions: Optional[List[PrescriptionItemCreate]] = Field(default_factory=list)
 
 class MedicalRecordUpdate(BaseModel):
     motive: Optional[str] = None
