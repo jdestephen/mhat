@@ -1,6 +1,6 @@
 import uuid
 from typing import List, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Form, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -109,6 +109,7 @@ async def create_medical_record(
     medical_record = MedicalRecord(
         patient_id=patient_profile.id,
         motive=record_in.motive,
+        record_date=record_in.record_date or date.today(),
         notes=record_in.notes,
         category_id=record_in.category_id,
         tags=record_in.tags,

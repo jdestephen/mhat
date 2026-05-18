@@ -9,6 +9,7 @@ import { useCategories } from '@/hooks/queries/useCategories';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
 import { useMyPatients } from '@/hooks/queries/useMyPatients';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { InputWithVoice } from '@/components/ui/input-with-voice';
 import { TextareaWithVoice } from '@/components/ui/textarea-with-voice';
 import { TagInput } from '@/components/ui/tag-input';
@@ -43,6 +44,7 @@ import {
   ChevronRight,
   HeartPulse,
   XIcon,
+  CalendarDays,
 } from 'lucide-react';
 
 interface PrescriptionForm {
@@ -107,6 +109,9 @@ export default function NewDoctorRecordPage({
   const [notes, setNotes] = useState(initialData?.notes || '');
   const [categoryId, setCategoryId] = useState(
     initialData?.category_id?.toString() || initialData?.category?.id?.toString() || ''
+  );
+  const [recordDate, setRecordDate] = useState(
+    initialData?.record_date || new Date().toISOString().split('T')[0]
   );
   const [diagnoses, setDiagnoses] = useState<MedicalDiagnosis[]>(
     initialData?.diagnoses?.map(d => ({
@@ -275,6 +280,7 @@ export default function NewDoctorRecordPage({
   const buildPayload = () => ({
     patientId,
     motive,
+    record_date: recordDate,
     notes,
     category_id: categoryId ? parseInt(categoryId) : undefined,
     brief_history: briefHistory || undefined,
@@ -429,7 +435,7 @@ export default function NewDoctorRecordPage({
                   />
                 </div>
 
-                <div className="w-2/3">
+                <div className="flex-1">
                   <label className="block text-sm font-medium mb-1">
                     Motivo de Consulta <span className="text-red-500">*</span>
                   </label>
@@ -440,6 +446,19 @@ export default function NewDoctorRecordPage({
                     required
                     language="es-ES"
                     mode="append"
+                  />
+                </div>
+
+                <div className="w-44">
+                  <label className="block text-sm font-medium mb-1">
+                    <CalendarDays className="inline h-3.5 w-3.5 mr-1 -mt-0.5" />
+                    Fecha
+                  </label>
+                  <Input
+                    type="date"
+                    value={recordDate}
+                    onChange={(e) => setRecordDate(e.target.value)}
+                    max={new Date().toISOString().split('T')[0]}
                   />
                 </div>
               </div>  

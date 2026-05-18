@@ -4,7 +4,7 @@ Clinical Schemas
 Pydantic schemas for prescriptions, clinical orders, and doctor-created data.
 """
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, date
 from uuid import UUID
 from pydantic import BaseModel, Field
 from enum import Enum
@@ -190,6 +190,7 @@ class DoctorMedicalRecordCreate(BaseModel):
     """Schema for doctor creating a medical record."""
     # Core fields
     motive: str
+    record_date: Optional[date] = None
     notes: Optional[str] = None
     category_id: Optional[int] = None
     tags: Optional[List[str]] = Field(default_factory=list)
@@ -219,6 +220,7 @@ class DoctorMedicalRecordCreate(BaseModel):
 class DoctorMedicalRecordUpdate(BaseModel):
     """Schema for doctor updating a medical record."""
     motive: Optional[str] = None
+    record_date: Optional[date] = None
     notes: Optional[str] = None
     category_id: Optional[int] = None
     tags: Optional[List[str]] = None

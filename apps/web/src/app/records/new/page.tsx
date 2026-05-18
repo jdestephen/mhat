@@ -9,7 +9,7 @@ import { TextareaWithVoice } from '@/components/ui/textarea-with-voice';
 import { Combobox } from '@/components/ui/Combobox';
 import { Select, SelectOption } from '@/components/ui/select';
 import { DiagnosisRank, DiagnosisStatus, MedicalDiagnosis, UserRole } from '@/types';
-import { UploadCloud, FileText, X, GripVertical, Plus, Trash2 } from 'lucide-react';
+import { UploadCloud, FileText, X, GripVertical, Plus, Trash2, CalendarDays } from 'lucide-react';
 import { useCategories } from '@/hooks/queries/useCategories';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
 import { useCreateMedicalRecord } from '@/hooks/mutations/useCreateMedicalRecord';
@@ -27,6 +27,7 @@ export default function NewRecordPage() {
   
   // Record Details
   const [motive, setMotive] = useState('');
+  const [recordDate, setRecordDate] = useState(new Date().toISOString().split('T')[0]);
   const [diagnoses, setDiagnoses] = useState<MedicalDiagnosis[]>([]);
   const [notes, setNotes] = useState('');
   const [categoryId, setCategoryId] = useState<string>('');
@@ -107,6 +108,7 @@ export default function NewRecordPage() {
       // 1. Create Record using mutation hook
       const payload: any = {
         motive,
+        record_date: recordDate,
         notes,
         tags,
         diagnoses: diagnoses
@@ -172,7 +174,8 @@ export default function NewRecordPage() {
         <div className="bg-white p-6 rounded-lg shadow-sm border border-[var(--border-light)]">
           <h2 className="text-lg font-semibold text-emerald-900 mb-4 border-b pb-2">Detalles</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="col-span-2">
+            <div className="col-span-2 flex flex-col md:flex-row gap-4">
+              <div className="flex-1">
                 <label className="block text-sm font-medium mb-1">Categoría</label>
                 <Select
                   options={categories.map(c => ({ value: c.id, label: c.name }))}
@@ -180,6 +183,19 @@ export default function NewRecordPage() {
                   onChange={(val) => setCategoryId(val.toString())}
                   placeholder="Selecciona una categoría..."
                 />
+              </div>
+              <div className="w-full md:w-44">
+                <label className="block text-sm font-medium mb-1">
+                  <CalendarDays className="inline h-3.5 w-3.5 mr-1 -mt-0.5" />
+                  Fecha del Registro
+                </label>
+                <Input
+                  type="date"
+                  value={recordDate}
+                  onChange={(e) => setRecordDate(e.target.value)}
+                  max={new Date().toISOString().split('T')[0]}
+                />
+              </div>
             </div>
             <div className="col-span-2">
                 <label className="block text-sm font-medium mb-1">Motivo<span className="text-red-500">*</span></label>

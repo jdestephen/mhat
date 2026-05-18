@@ -1,5 +1,5 @@
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, date
 from uuid import UUID
 from pydantic import BaseModel, Field, model_validator
 from enum import Enum
@@ -87,6 +87,7 @@ class MedicalDiagnosis(MedicalDiagnosisBase):
 # Medical Records
 class MedicalRecordBase(BaseModel):
     motive: str
+    record_date: Optional[date] = None
     notes: Optional[str] = None
     category_id: Optional[int] = None
     tags: Optional[List[str]] = Field(default_factory=list)
@@ -106,6 +107,7 @@ class MedicalRecordCreate(MedicalRecordBase):
 
 class MedicalRecordUpdate(BaseModel):
     motive: Optional[str] = None
+    record_date: Optional[date] = None
     notes: Optional[str] = None
     category_id: Optional[int] = None
     tags: Optional[List[str]] = None
@@ -189,6 +191,7 @@ class VitalSignsInline(VitalSignsBase):
 class MedicalRecord(MedicalRecordBase):
     id: UUID
     patient_id: UUID
+    record_date: date
     status: RecordStatus
     created_by: UUID
     verified_by: Optional[UUID] = None

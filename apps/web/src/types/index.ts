@@ -268,6 +268,7 @@ export interface MedicalRecord {
   verified_by?: string;
   verified_at?: string;
   created_at: string;
+  record_date?: string;
   documents?: Document[];
   brief_history?: string;
   has_red_flags?: boolean;

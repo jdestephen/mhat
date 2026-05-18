@@ -1,11 +1,11 @@
-from sqlalchemy import Boolean, String, Integer, Float, ForeignKey, DateTime, Text, ARRAY, Enum
+from sqlalchemy import Boolean, String, Integer, Float, ForeignKey, DateTime, Date, Text, ARRAY, Enum
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from typing import Optional, List
 from uuid import UUID
 import uuid
-from datetime import datetime
+from datetime import datetime, date
 import enum
 
 from app.db.base_class import Base
@@ -85,6 +85,7 @@ class MedicalRecord(Base):
     
     # Core fields (used by both patient and doctor)
     motive: Mapped[str] = mapped_column(String, nullable=False)
+    record_date: Mapped[date] = mapped_column(Date, server_default=func.current_date(), nullable=False)
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # Global encounter notes
     tags: Mapped[Optional[List[str]]] = mapped_column(ARRAY(String), nullable=True)
     

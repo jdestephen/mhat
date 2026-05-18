@@ -5,7 +5,7 @@ Endpoints for doctor workflow: patient access, medical records, prescriptions, o
 """
 import uuid
 from typing import Any, List, Optional
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone, timedelta, date
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -542,6 +542,7 @@ async def create_patient_record(
         verified_at=datetime.utcnow(),
         # Core fields
         motive=record_in.motive,
+        record_date=record_in.record_date or date.today(),
         notes=record_in.notes,
         category_id=record_in.category_id,
         tags=record_in.tags,

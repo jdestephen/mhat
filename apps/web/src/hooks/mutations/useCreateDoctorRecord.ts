@@ -33,6 +33,7 @@ interface DiagnosisInput {
 export interface CreateDoctorRecordPayload {
   patientId: string;
   motive: string;
+  record_date?: string;
   notes?: string;
   category_id?: number;
   tags?: string[];

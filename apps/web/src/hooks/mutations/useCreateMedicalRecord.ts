@@ -4,6 +4,7 @@ import { MedicalRecord } from '@/types';
 
 interface CreateRecordPayload {
   motive: string;
+  record_date?: string;
   notes?: string;
   tags?: string[];
   category_id?: number;
