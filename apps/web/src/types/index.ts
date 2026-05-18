@@ -85,11 +85,16 @@ export interface Medication {
 export interface PatientProfile {
   id: string;
   user_id: string;
+  first_name?: string | null;
+  last_name?: string | null;
   date_of_birth?: string;
   blood_type?: string;
   dni?: string;
   phone?: string;
   address?: string;
+  sex?: string | null;
+  city?: string | null;
+  country?: string | null;
   medications?: Medication[];
   allergies?: Allergy[];
   conditions?: Condition[];

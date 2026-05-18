@@ -14,6 +14,7 @@ import {
 import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
 import { useProductTour } from '@/hooks/useProductTour';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
+import { useActiveProfile } from '@/hooks/useActiveProfile';
 
 interface ActionCard {
   icon: React.ElementType;
@@ -29,6 +30,7 @@ interface ActionCard {
 
 export function WelcomeCard() {
   const { data: user } = useCurrentUser();
+  const { activeProfile, isManagingOther } = useActiveProfile();
   const { isProfileComplete, isHealthHistoryStarted, hasCompletedTour } = useOnboardingStatus();
   const { startTour } = useProductTour();
 
@@ -75,8 +77,12 @@ export function WelcomeCard() {
     },
   ];
 
-  const greeting = user?.first_name
-    ? `¡Hola, ${user.first_name}!`
+  const displayName = isManagingOther
+    ? activeProfile?.first_name
+    : user?.first_name;
+
+  const greeting = displayName
+    ? `¡Hola, ${displayName}!`
     : '¡Bienvenido!';
 
   return (

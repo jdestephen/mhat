@@ -28,6 +28,8 @@ interface PatientProfileFormProps {
   user: User;
   profile: PatientProfile;
   onSaved: () => void;
+  profileId?: string;
+  isManaged?: boolean;
 }
 
 interface FormData {
@@ -43,19 +45,19 @@ interface FormData {
   country: string;
 }
 
-export function PatientProfileForm({ user, profile, onSaved }: PatientProfileFormProps) {
+export function PatientProfileForm({ user, profile, onSaved, profileId, isManaged }: PatientProfileFormProps) {
   const [saving, setSaving] = React.useState(false);
   const [formData, setFormData] = React.useState<FormData>({
-    firstName: user.first_name || '',
-    lastName: user.last_name || '',
-    sex: user.sex || '',
+    firstName: isManaged ? (profile.first_name || '') : (user.first_name || ''),
+    lastName: isManaged ? (profile.last_name || '') : (user.last_name || ''),
+    sex: isManaged ? ((profile.sex as Sex) || '') : (user.sex || ''),
     dob: profile.date_of_birth || '',
     bloodType: profile.blood_type || '',
     dni: profile.dni || '',
     phone: profile.phone || '',
     address: profile.address || '',
-    city: user.city || '',
-    country: user.country || '',
+    city: isManaged ? (profile.city || '') : (user.city || ''),
+    country: isManaged ? (profile.country || '') : (user.country || ''),
   });
 
   const updateField = <K extends keyof FormData>(field: K, value: FormData[K]) => {
@@ -67,21 +69,32 @@ export function PatientProfileForm({ user, profile, onSaved }: PatientProfileFor
     setSaving(true);
     try {
       const api = (await import('@/lib/api')).default;
+      const params = new URLSearchParams();
+      if (profileId) params.append('profile_id', profileId);
+      const qs = params.toString() ? '?' + params.toString() : '';
 
-      await api.put('/auth/me', {
+      if (!isManaged) {
+        // Only update auth user fields for own profile
+        await api.put('/auth/me', {
+          first_name: formData.firstName || null,
+          last_name: formData.lastName || null,
+          sex: formData.sex || null,
+          city: formData.city || null,
+          country: formData.country || null,
+        });
+      }
+
+      await api.put(`/profiles/patient${qs}`, {
         first_name: formData.firstName || null,
         last_name: formData.lastName || null,
-        sex: formData.sex || null,
-        city: formData.city || null,
-        country: formData.country || null,
-      });
-
-      await api.put('/profiles/patient', {
         date_of_birth: formData.dob || null,
         blood_type: formData.bloodType || null,
         dni: formData.dni || null,
         phone: formData.phone || null,
         address: formData.address || null,
+        sex: formData.sex || null,
+        city: formData.city || null,
+        country: formData.country || null,
       });
 
       alert('¡Perfil actualizado!');
@@ -96,13 +109,15 @@ export function PatientProfileForm({ user, profile, onSaved }: PatientProfileFor
 
   return (
     <form onSubmit={handleSave} className="space-y-4">
-      {/* Email (Read Only) */}
-      <div>
-        <label className="block text-sm font-medium text-slate-500 mb-1">Correo Electrónico</label>
-        <div className="p-2 bg-slate-50 rounded border border-slate-200 text-slate-800">
-          {user.email}
+      {/* Email (Read Only) — only for own profile */}
+      {!isManaged && (
+        <div>
+          <label className="block text-sm font-medium text-slate-500 mb-1">Correo Electrónico</label>
+          <div className="p-2 bg-slate-50 rounded border border-slate-200 text-slate-800">
+            {user.email}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
