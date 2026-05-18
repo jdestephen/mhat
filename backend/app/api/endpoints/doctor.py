@@ -622,6 +622,7 @@ async def create_patient_record(
                     setattr(existing_vital, key, value)
                 existing_vital.medical_record_id = record.id
                 existing_vital.status = VitalSignsStatus.VERIFIED
+                existing_vital.measured_at = datetime.combine(record.record_date, datetime.min.time())
                 existing_vital.updated_by = current_user.id
                 existing_vital.updated_at = datetime.now(timezone.utc)
             else:
@@ -631,7 +632,8 @@ async def create_patient_record(
                     medical_record_id=record.id,
                     created_by=current_user.id,
                     status=VitalSignsStatus.VERIFIED,
-                    **record_in.vital_signs.model_dump(exclude_none=True),
+                    measured_at=datetime.combine(record.record_date, datetime.min.time()),
+                    **record_in.vital_signs.model_dump(exclude_none=True, exclude={'measured_at'}),
                 )
                 db.add(vital)
         else:
@@ -640,7 +642,8 @@ async def create_patient_record(
                 medical_record_id=record.id,
                 created_by=current_user.id,
                 status=VitalSignsStatus.VERIFIED,
-                **record_in.vital_signs.model_dump(exclude_none=True),
+                measured_at=datetime.combine(record.record_date, datetime.min.time()),
+                **record_in.vital_signs.model_dump(exclude_none=True, exclude={'measured_at'}),
             )
             db.add(vital)
     
@@ -1168,7 +1171,8 @@ async def update_medical_record(
             medical_record_id=record.id,
             created_by=current_user.id,
             status=VitalSignsStatus.VERIFIED,
-            **record_in.vital_signs.model_dump(exclude_none=True),
+            measured_at=datetime.combine(record.record_date, datetime.min.time()),
+            **record_in.vital_signs.model_dump(exclude_none=True, exclude={'measured_at'}),
         )
         db.add(vital)
     
