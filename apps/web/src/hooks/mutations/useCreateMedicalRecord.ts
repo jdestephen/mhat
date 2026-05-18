@@ -4,6 +4,7 @@ import { MedicalRecord } from '@/types';
 
 interface CreateRecordPayload {
   motive: string;
+  record_date?: string;
   notes?: string;
   tags?: string[];
   category_id?: number;
@@ -14,6 +15,15 @@ interface CreateRecordPayload {
     rank: number;
     status: string;
     notes?: string;
+  }>;
+  prescriptions?: Array<{
+    medication_name: string;
+    dosage?: string;
+    frequency?: string;
+    duration?: string;
+    route?: string;
+    quantity?: string;
+    instructions?: string;
   }>;
 }
 
@@ -28,6 +38,7 @@ export function useCreateMedicalRecord() {
     onSuccess: () => {
       // Invalidate relevant queries to refetch records
       queryClient.invalidateQueries({ queryKey: ['medical-records'] });
+      queryClient.invalidateQueries({ queryKey: ['prescription-records'] });
     },
   });
 }

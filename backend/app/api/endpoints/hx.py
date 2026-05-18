@@ -1,6 +1,6 @@
 import uuid
 from typing import List, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Form, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -10,8 +10,9 @@ from app.api import deps
 from app.core.config import settings
 from app.db.session import get_db
 from app.models.hx import MedicalRecord, Document, RecordStatus, RecordSource, MedicalDiagnosis, DiagnosisStatus, VitalSigns, RecordViewLog, VitalSignsStatus
+from app.models.clinical import Prescription
 from app.models.user import User, UserRole
-from app.models.patient import PatientProfile
+from app.models.patient import PatientProfile, Medication, MedicationStatus, MedicationSource
 from app.models.family import FamilyMembership, RelationshipType
 from app.schemas import hx as hx_schema
 from app.services import ocr
@@ -109,6 +110,7 @@ async def create_medical_record(
     medical_record = MedicalRecord(
         patient_id=patient_profile.id,
         motive=record_in.motive,
+        record_date=record_in.record_date or date.today(),
         notes=record_in.notes,
         category_id=record_in.category_id,
         tags=record_in.tags,
@@ -149,6 +151,39 @@ async def create_medical_record(
             )
             db.add(diagnosis)
     
+    # Create prescriptions if provided
+    if record_in.prescriptions:
+        for rx_in in record_in.prescriptions:
+            # Create the Medication entry (NOT_TAKEN by default)
+            medication = Medication(
+                patient_profile_id=patient_profile.id,
+                name=rx_in.medication_name,
+                dosage=rx_in.dosage,
+                frequency=rx_in.frequency,
+                route=rx_in.route,
+                instructions=rx_in.instructions,
+                status=MedicationStatus.NOT_TAKEN,
+                source=MedicationSource.PRESCRIBED,
+                created_by_id=current_user.id,
+            )
+            db.add(medication)
+            await db.flush()  # Get medication id
+
+            # Create the Prescription linked to the record and medication
+            prescription = Prescription(
+                medical_record_id=medical_record.id,
+                medication_name=rx_in.medication_name,
+                dosage=rx_in.dosage,
+                frequency=rx_in.frequency,
+                duration=rx_in.duration,
+                route=rx_in.route,
+                quantity=rx_in.quantity,
+                instructions=rx_in.instructions,
+                created_by=current_user.id,
+                linked_medication_id=medication.id,
+            )
+            db.add(prescription)
+
     await db.commit()
     result = await db.execute(
         select(MedicalRecord)
@@ -294,6 +329,7 @@ async def read_medical_records(
     date_from: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
     date_to: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
     profile_id: Optional[str] = Query(None, description="Profile ID to view records for"),
+    has_prescriptions: Optional[bool] = Query(None, description="Filter to records with prescriptions"),
 ) -> Any:
     """
     Retrieve Medical Records with optional search filters.
@@ -311,6 +347,10 @@ async def read_medical_records(
     if q:
         stmt = stmt.filter(MedicalRecord.search_text.contains(q.lower()))
     
+    # Filter to records with prescriptions
+    if has_prescriptions:
+        stmt = stmt.filter(MedicalRecord.prescriptions.any())
+
     # Date range filters
     if date_from:
         try:
