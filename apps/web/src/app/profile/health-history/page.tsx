@@ -8,23 +8,30 @@ import { PatientHealthHistory } from '../components/patient-health-history';
 import { MedicationList } from '../components/medication-list';
 import { HabitsTab } from '../components/HabitsTab';
 import { FamilyHistoryTab } from '../components/FamilyHistoryTab';
+import { useActiveProfile } from '@/hooks/useActiveProfile';
 
 export default function HealthHistoryPage() {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<PatientProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const { activeProfileId } = useActiveProfile();
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [activeProfileId]);
 
   const fetchData = async () => {
     try {
+      setLoading(true);
       const userRes = await api.get<User>('/auth/me');
       setUser(userRes.data);
 
       if (userRes.data.role === UserRole.PATIENT) {
-        const profileRes = await api.get<PatientProfile>('/profiles/patient');
+        const params = new URLSearchParams();
+        if (activeProfileId) params.append('profile_id', activeProfileId);
+        const profileRes = await api.get<PatientProfile>(
+          `/profiles/patient${params.toString() ? '?' + params.toString() : ''}`
+        );
         setProfile(profileRes.data);
       }
     } catch (error) {
@@ -83,6 +90,7 @@ export default function HealthHistoryPage() {
               <PatientHealthHistory
                 profile={profile}
                 onRefresh={fetchData}
+                profileId={activeProfileId || undefined}
               />
             )}
           </div>
@@ -94,6 +102,7 @@ export default function HealthHistoryPage() {
               <MedicationList
                 profile={profile}
                 onRefresh={fetchData}
+                profileId={activeProfileId || undefined}
               />
             )}
           </div>
@@ -101,17 +110,22 @@ export default function HealthHistoryPage() {
 
         <TabsContent value="habits">
           <div className="bg-white p-3 sm:p-6 rounded-b-lg shadow-sm border border-[var(--border-light)]">
-            <HabitsTab onRefresh={fetchData} />
+            <HabitsTab
+              onRefresh={fetchData}
+              profileId={activeProfileId || undefined}
+            />
           </div>
         </TabsContent>
 
         <TabsContent value="family-history">
           <div className="bg-white p-3 sm:p-6 rounded-b-lg shadow-sm border border-[var(--border-light)]">
-            <FamilyHistoryTab onRefresh={fetchData} />
+            <FamilyHistoryTab
+              onRefresh={fetchData}
+              profileId={activeProfileId || undefined}
+            />
           </div>
         </TabsContent>
       </Tabs>
     </div>
   );
 }
-

@@ -11,6 +11,7 @@ export interface PatientProfileSummary {
   is_self: boolean;
   has_records: boolean;
   created_by_doctor_name: string | null;
+  profile_color: string | null;
 }
 
 export function usePatientProfiles() {

@@ -23,6 +23,7 @@ import { useState } from 'react';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
 import { UserRole } from '@/types';
 import { ProfileSwitcher } from '@/components/patient/ProfileSwitcher';
+import { DoctorModeToggle } from '@/components/layout/DoctorModeToggle';
 
 
 interface MenuItem {
@@ -308,6 +309,9 @@ export function Sidebar({ onClose }: SidebarProps = {}) {
 
       {/* Profile Switcher (patients only, multi-profile) */}
       {!effectiveCollapsed && isPatient && <ProfileSwitcher />}
+
+      {/* Doctor Mode Toggle */}
+      {!effectiveCollapsed && isDoctor && <DoctorModeToggle />}
 
       {/* Nav */}
       <div className="flex-1 overflow-auto py-6 px-2">

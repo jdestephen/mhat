@@ -330,6 +330,7 @@ class PatientProfileSummary(BaseModel):
     is_self: bool  # Whether this is the user's own profile
     has_records: bool = False  # Whether this profile has any medical records
     created_by_doctor_name: Optional[str] = None  # If doctor-created
+    profile_color: Optional[str] = None  # Hex color for UI differentiation
 
     class Config:
         from_attributes = True

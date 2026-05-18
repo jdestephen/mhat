@@ -61,3 +61,48 @@ async def require_admin(
     if not current_user.is_admin:
         raise HTTPException(status_code=403, detail="Se requieren permisos de administrador.")
     return current_user
+
+
+async def resolve_patient_profile(
+    db: AsyncSession,
+    current_user: User,
+    profile_id: Optional[str] = None,
+) -> "PatientProfile":
+    """
+    Resolve the patient profile to use for the current request.
+
+    If profile_id is provided, verifies the current user has an active
+    FamilyMembership granting access. Otherwise, falls back to the user's
+    own profile (via user_id).
+
+    Returns the resolved PatientProfile or raises 403/404.
+    """
+    from app.models.patient import PatientProfile
+    from app.models.family import FamilyMembership
+
+    if profile_id:
+        pid = UUID(profile_id)
+        result = await db.execute(
+            select(FamilyMembership, PatientProfile)
+            .join(PatientProfile, FamilyMembership.patient_profile_id == PatientProfile.id)
+            .where(
+                FamilyMembership.user_id == current_user.id,
+                FamilyMembership.patient_profile_id == pid,
+                FamilyMembership.is_active == True,
+            )
+        )
+        row = result.first()
+        if not row:
+            raise HTTPException(status_code=403, detail="No tienes acceso a este perfil")
+        _, profile = row
+        return profile
+
+    # Default: own SELF profile
+    result = await db.execute(
+        select(PatientProfile).filter(PatientProfile.user_id == current_user.id)
+    )
+    profile = result.scalars().first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+    return profile
+

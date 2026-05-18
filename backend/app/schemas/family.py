@@ -21,6 +21,7 @@ class CreateFamilyMemberRequest(BaseModel):
     date_of_birth: Optional[date] = None
     blood_type: Optional[str] = Field(None, max_length=10)
     access_level: AccessLevel = AccessLevel.FULL_ACCESS
+    profile_color: Optional[str] = Field(None, max_length=7, pattern=r'^#[0-9A-Fa-f]{6}$')
 
 
 class GrantFamilyAccessRequest(BaseModel):
@@ -34,7 +35,26 @@ class GrantFamilyAccessRequest(BaseModel):
 class LinkPatientToUserRequest(BaseModel):
     """Request to link an existing patient profile to a user account."""
     patient_profile_id: UUID
-    
+
+
+class UpdateMembershipRequest(BaseModel):
+    """Request to update a family membership (e.g., color, access level)."""
+    access_level: Optional[AccessLevel] = None
+    profile_color: Optional[str] = Field(None, max_length=7, pattern=r'^#[0-9A-Fa-f]{6}$')
+    can_manage_family: Optional[bool] = None
+
+
+class CreateFamilyInvitationRequest(BaseModel):
+    """Request to create an invitation code for another guardian."""
+    relationship_type: RelationshipType
+    access_level: AccessLevel = AccessLevel.FULL_ACCESS
+    can_manage_family: bool = False
+
+
+class ClaimFamilyInvitationRequest(BaseModel):
+    """Request to claim a family invitation code."""
+    code: str = Field(..., min_length=4, max_length=10)
+
 
 # Response Schemas
 
@@ -46,6 +66,7 @@ class FamilyMembershipResponse(BaseModel):
     relationship_type: RelationshipType
     access_level: AccessLevel
     can_manage_family: bool
+    profile_color: Optional[str] = None
     created_at: datetime
     created_by: UUID
     is_active: bool
@@ -74,6 +95,27 @@ class ManagedPatientResponse(PatientProfileResponse):
     relationship_type: RelationshipType
     access_level: AccessLevel
     can_manage_family: bool
+    profile_color: Optional[str] = None
     
     class Config:
         from_attributes = True
+
+
+class FamilyInvitationResponse(BaseModel):
+    """Response model for a family invitation."""
+    id: UUID
+    patient_profile_id: UUID
+    patient_name: Optional[str] = None
+    code: str
+    relationship_type: RelationshipType
+    access_level: AccessLevel
+    can_manage_family: bool
+    code_expires_at: datetime
+    claimed_by: Optional[UUID] = None
+    claimed_at: Optional[datetime] = None
+    is_revoked: bool
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
