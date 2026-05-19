@@ -68,7 +68,9 @@ export function VitalSignsForm({ data, onChange, disabled = false, compact = fal
 
   const parseNumber = (val: string, isFloat = false): number | undefined => {
     if (!val || val === '') return undefined;
-    const num = isFloat ? parseFloat(val) : parseInt(val, 10);
+    // Normalize comma decimal separator to period (handles EU locale inputs)
+    const normalized = val.replace(',', '.');
+    const num = isFloat ? parseFloat(normalized) : parseInt(normalized, 10);
     return isNaN(num) ? undefined : num;
   };
 

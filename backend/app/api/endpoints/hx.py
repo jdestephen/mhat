@@ -355,7 +355,7 @@ async def read_medical_records(
     if date_from:
         try:
             from_date = datetime.fromisoformat(date_from)
-            stmt = stmt.filter(MedicalRecord.created_at >= from_date)
+            stmt = stmt.filter(MedicalRecord.record_date >= from_date)
         except ValueError:
             pass  # Ignore invalid date format
     
@@ -363,7 +363,7 @@ async def read_medical_records(
         try:
             # Add one day to include entire end date
             to_date = datetime.fromisoformat(date_to) + timedelta(days=1)
-            stmt = stmt.filter(MedicalRecord.created_at < to_date)
+            stmt = stmt.filter(MedicalRecord.record_date < to_date)
         except ValueError:
             pass  # Ignore invalid date format
     
@@ -375,7 +375,7 @@ async def read_medical_records(
         selectinload(MedicalRecord.prescriptions),
         selectinload(MedicalRecord.clinical_orders),
         selectinload(MedicalRecord.vital_signs)
-    ).offset(skip).limit(limit).order_by(MedicalRecord.created_at.desc())
+    ).offset(skip).limit(limit).order_by(MedicalRecord.record_date.desc())
     
     result = await db.execute(stmt)
     return result.scalars().all()

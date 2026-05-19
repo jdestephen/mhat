@@ -248,16 +248,18 @@ async def list_my_patients(
     for access, profile, user in result.all():
         patients.append(clinical_schema.PatientAccessSummary(
             patient_id=profile.id,
-            first_name=user.first_name if user else profile.first_name or "Unknown",
-            last_name=user.last_name if user else profile.last_name or "Patient",
+            first_name=profile.first_name or (user.first_name if user else "Unknown"),
+            last_name=profile.last_name or (user.last_name if user else "Patient"),
             date_of_birth=profile.date_of_birth,
-            sex=user.sex.value if user and user.sex else None,
+            sex=profile.sex or (user.sex.value if user and user.sex else None),
             blood_type=profile.blood_type,
             email=profile.email or (user.email if user else None),
             phone=profile.phone,
             address=profile.address,
             has_account=user is not None,
             dni=profile.dni,
+            city=profile.city or (user.city if user else None),
+            country=profile.country or (user.country if user else None),
             access_level=access.access_level,
             granted_at=access.created_at
         ))
@@ -565,7 +567,7 @@ async def list_patient_records(
         selectinload(MedicalRecord.clinical_orders),
         selectinload(MedicalRecord.category),
         selectinload(MedicalRecord.vital_signs),
-    ).order_by(MedicalRecord.created_at.desc())
+    ).order_by(MedicalRecord.record_date.desc())
     
     if category_id:
         query = query.where(MedicalRecord.category_id == category_id)

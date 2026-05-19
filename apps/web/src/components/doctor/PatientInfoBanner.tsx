@@ -220,7 +220,7 @@ function DetailField({
 
 function QuickLinks({ patientId }: { patientId: string }) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="hidden sm:flex items-center gap-2">
       <Link
         href={`/doctor/patients/${patientId}/health-history`}
         className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-purple-700 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"

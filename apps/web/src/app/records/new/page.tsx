@@ -183,7 +183,7 @@ export default function NewRecordPage() {
   return (
     <div className="max-w-3xl mx-auto pb-12">
       <div className="mb-4">
-         <h1 className="text-3xl font-bold text-emerald-950">Nuevo Registro Médico</h1>
+         <h1 className="text-xl sm:text-3xl font-bold text-emerald-950">Nuevo Registro Médico</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">

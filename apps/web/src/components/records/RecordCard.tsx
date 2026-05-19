@@ -25,6 +25,7 @@ export interface RecordCardData {
   id: string;
   motive: string;
   created_at: string;
+  record_date?: string;
   category?: { id: number | string; name: string } | null;
   status: RecordStatus | string;
   diagnoses?: RecordCardDiagnosis[];
@@ -80,7 +81,7 @@ export function RecordCard({ record, index, onViewDetail }: RecordCardProps) {
             <div className="flex flex-col">
               <span className="flex items-center gap-1 text-blue-800 font-semibold">
                 <Calendar className="h-3.5 w-3.5" />
-                {formatDate(record.created_at)}
+                {formatDate(record.record_date || record.created_at)}
               </span>
               <span className="capitalize text-gray-700 text-xs">
                 {record.category && record.category.name}
