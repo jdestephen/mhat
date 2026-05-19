@@ -26,6 +26,7 @@ const MAX_REFERENCES = 3;
 interface PersonalReferencesTabProps {
   references: PersonalReference[];
   onRefresh: () => void;
+  profileId?: string;
 }
 
 interface RefFormData {
@@ -40,7 +41,12 @@ function getRelationshipLabel(type: RelationshipType): string {
   return RELATIONSHIP_OPTIONS.find((o) => o.value === type)?.label || type;
 }
 
-export function PersonalReferencesTab({ references, onRefresh }: PersonalReferencesTabProps) {
+export function PersonalReferencesTab({ references, onRefresh, profileId }: PersonalReferencesTabProps) {
+  const withProfile = (url: string) => {
+    if (!profileId) return url;
+    const sep = url.includes('?') ? '&' : '?';
+    return `${url}${sep}profile_id=${profileId}`;
+  };
   const [showForm, setShowForm] = React.useState(false);
   const [editId, setEditId] = React.useState<number | null>(null);
   const [formData, setFormData] = React.useState<RefFormData>(EMPTY_FORM);
@@ -81,9 +87,9 @@ export function PersonalReferencesTab({ references, onRefresh }: PersonalReferen
     setSaving(true);
     try {
       if (editId) {
-        await api.put(`/profiles/patient/references/${editId}`, formData);
+        await api.put(withProfile(`/profiles/patient/references/${editId}`), formData);
       } else {
-        await api.post('/profiles/patient/references', formData);
+        await api.post(withProfile('/profiles/patient/references'), formData);
       }
       closeForm();
       onRefresh();
@@ -100,7 +106,7 @@ export function PersonalReferencesTab({ references, onRefresh }: PersonalReferen
     if (!confirm('¿Estás seguro de eliminar esta referencia?')) return;
     setDeleting(refId);
     try {
-      await api.delete(`/profiles/patient/references/${refId}`);
+      await api.delete(withProfile(`/profiles/patient/references/${refId}`));
       onRefresh();
     } catch (error) {
       console.error(error);

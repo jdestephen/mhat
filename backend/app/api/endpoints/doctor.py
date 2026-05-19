@@ -363,17 +363,20 @@ async def get_patient_health_profile(
     Requires doctor access to the patient.
     """
     from app.models.patient import (
-        Medication, Allergy, Condition, MedicationStatus,
+        Medication, Allergy, Condition,
         HealthHabit, FamilyHistoryCondition,
     )
 
     await get_doctor_patient_access(patient_profile_id, db, current_user)
 
-    # Fetch active medications
+    # Fetch medications (all statuses, active first)
     meds_result = await db.execute(
         select(Medication).where(
             Medication.patient_profile_id == patient_profile_id,
-            Medication.status == MedicationStatus.ACTIVE,
+        ).order_by(
+            # ACTIVE first, then alphabetical by status, then by name
+            (Medication.status != 'ACTIVE').asc(),
+            Medication.name.asc(),
         )
     )
     medications = meds_result.scalars().all()
@@ -419,7 +422,16 @@ async def get_patient_health_profile(
                 "name": m.name,
                 "dosage": m.dosage,
                 "frequency": m.frequency,
+                "route": m.route,
+                "status": m.status.value if m.status else None,
+                "status_reason": m.status_reason,
+                "start_date": m.start_date.isoformat() if m.start_date else None,
+                "end_date": m.end_date.isoformat() if m.end_date else None,
+                "source": m.source.value if m.source else None,
+                "condition_id": m.condition_id,
                 "instructions": m.instructions,
+                "notes": m.notes,
+                "recorded_at": m.recorded_at.isoformat() if m.recorded_at else None,
             }
             for m in medications
         ],
@@ -476,6 +488,53 @@ async def get_patient_health_profile(
             }
             for fh in family_history
         ],
+    }
+
+
+# =====================
+# Patient Personal Info (Doctor)
+# =====================
+
+@router.put("/patients/{patient_profile_id}/personal-info")
+async def update_patient_personal_info(
+    patient_profile_id: uuid.UUID,
+    profile_in: patient_schema.PatientProfileUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> Any:
+    """
+    Update a patient's personal info (demographics) from the doctor side.
+    Requires WRITE access.
+    """
+    await get_doctor_patient_access(patient_profile_id, db, current_user, require_write=True)
+
+    result = await db.execute(
+        select(PatientProfile).where(PatientProfile.id == patient_profile_id)
+    )
+    profile = result.scalar_one_or_none()
+
+    if not profile:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+
+    update_data = profile_in.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(profile, field, value)
+
+    await db.commit()
+    await db.refresh(profile)
+
+    return {
+        "id": str(profile.id),
+        "first_name": profile.first_name,
+        "last_name": profile.last_name,
+        "date_of_birth": profile.date_of_birth.isoformat() if profile.date_of_birth else None,
+        "sex": profile.sex,
+        "blood_type": profile.blood_type,
+        "dni": profile.dni,
+        "phone": profile.phone,
+        "address": profile.address,
+        "city": profile.city,
+        "country": profile.country,
     }
 
 

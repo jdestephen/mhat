@@ -27,16 +27,18 @@ interface CreateRecordPayload {
   }>;
 }
 
-export function useCreateMedicalRecord() {
+export function useCreateMedicalRecord(profileId?: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (payload: CreateRecordPayload) => {
-      const res = await api.post<MedicalRecord>('/hx/', payload);
+      const params = new URLSearchParams();
+      if (profileId) params.append('profile_id', profileId);
+      const qs = params.toString() ? `?${params.toString()}` : '';
+      const res = await api.post<MedicalRecord>(`/hx/${qs}`, payload);
       return res.data;
     },
     onSuccess: () => {
-      // Invalidate relevant queries to refetch records
       queryClient.invalidateQueries({ queryKey: ['medical-records'] });
       queryClient.invalidateQueries({ queryKey: ['prescription-records'] });
     },

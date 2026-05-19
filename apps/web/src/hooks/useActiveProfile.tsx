@@ -1,24 +1,34 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
-import { UserRole } from '@/types';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import { usePatientProfiles, PatientProfileSummary } from '@/hooks/queries/usePatientProfiles';
 
 interface ActiveProfileContextType {
   activeProfileId: string | null;
   setActiveProfileId: (id: string | null) => void;
+  /** The full profile data for the currently active profile */
+  activeProfile: PatientProfileSummary | null;
+  /** Whether the user is currently viewing a managed (non-SELF) profile */
+  isManagingOther: boolean;
+  /** All available profiles for the user */
+  profiles: PatientProfileSummary[];
+  /** Whether profiles are loading */
+  isLoading: boolean;
 }
 
 const ActiveProfileContext = createContext<ActiveProfileContextType>({
   activeProfileId: null,
   setActiveProfileId: () => {},
+  activeProfile: null,
+  isManagingOther: false,
+  profiles: [],
+  isLoading: false,
 });
 
 const STORAGE_KEY = 'mhat_active_profile_id';
 
 export function ActiveProfileProvider({ children }: { children: React.ReactNode }) {
-  const { data: user } = useCurrentUser();
-  const isPatient = user?.role === UserRole.PATIENT;
+  const { data: profiles = [], isLoading, isFetching } = usePatientProfiles();
 
   const [activeProfileId, setActiveProfileIdState] = useState<string | null>(() => {
     if (typeof window === 'undefined') return null;
@@ -34,15 +44,51 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
     }
   }, []);
 
-  // Clear active profile when not a patient
-  useEffect(() => {
-    if (user && !isPatient) {
-      setActiveProfileId(null);
+  // Resolve the active profile from the profiles list
+  const activeProfile = useMemo(() => {
+    if (!profiles.length) return null;
+    // Try to find the stored profile
+    if (activeProfileId) {
+      const found = profiles.find((p) => p.id === activeProfileId);
+      if (found) return found;
     }
-  }, [user, isPatient, setActiveProfileId]);
+    // Fall back to SELF profile
+    return profiles.find((p) => p.is_self) || profiles[0];
+  }, [profiles, activeProfileId]);
+
+  const isManagingOther = useMemo(() => {
+    return !!activeProfile && !activeProfile.is_self;
+  }, [activeProfile]);
+
+  // Sync activeProfileId when profiles load (e.g., if stored ID is invalid)
+  useEffect(() => {
+    if (profiles.length && activeProfileId) {
+      const found = profiles.find((p) => p.id === activeProfileId);
+      if (!found) {
+        // Stored ID is stale, reset to SELF
+        const selfProfile = profiles.find((p) => p.is_self);
+        if (selfProfile) {
+          setActiveProfileId(selfProfile.id);
+        } else {
+          setActiveProfileId(null);
+        }
+      }
+    }
+  }, [profiles, activeProfileId, setActiveProfileId]);
+
+  const profilesLoading = isLoading || isFetching;
+
+  const value = useMemo(() => ({
+    activeProfileId: activeProfile?.id ?? null,
+    setActiveProfileId,
+    activeProfile,
+    isManagingOther,
+    profiles,
+    isLoading: profilesLoading,
+  }), [activeProfile, setActiveProfileId, isManagingOther, profiles, profilesLoading]);
 
   return (
-    <ActiveProfileContext.Provider value={{ activeProfileId, setActiveProfileId }}>
+    <ActiveProfileContext.Provider value={value}>
       {children}
     </ActiveProfileContext.Provider>
   );

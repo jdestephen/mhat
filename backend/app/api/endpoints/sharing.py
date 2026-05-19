@@ -6,7 +6,7 @@ from typing import Any, Optional
 from uuid import UUID
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Query
 from sqlalchemy import select, update, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -37,6 +37,7 @@ async def create_share_link(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(deps.get_current_user),
     share_request: sharing_schema.CreateShareRequest,
+    profile_id: Optional[str] = Query(None, description="Profile ID"),
 ) -> Any:
     """
     Create a secure, time-limited share link for medical records or summary.
@@ -52,16 +53,7 @@ async def create_share_link(
     - Sets time-based expiration
     """
     # Get patient profile
-    result = await db.execute(
-        select(PatientProfile).filter(PatientProfile.user_id == current_user.id)
-    )
-    patient_profile = result.scalars().first()
-    
-    if not patient_profile:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Patient profile not found"
-        )
+    patient_profile = await deps.resolve_patient_profile(db, current_user, profile_id)
     
     # For SPECIFIC_RECORDS, verify patient owns all requested records
     if share_request.share_type == "SPECIFIC_RECORDS":
@@ -141,6 +133,7 @@ async def list_my_shares(
     current_user: User = Depends(deps.get_current_user),
     include_expired: bool = False,
     include_revoked: bool = False,
+    profile_id: Optional[str] = Query(None, description="Profile ID"),
 ) -> Any:
     """
     List all share links created by the current user.
@@ -150,13 +143,7 @@ async def list_my_shares(
     - include_revoked: Include revoked tokens (default: False)
     """
     # Get patient profile
-    result = await db.execute(
-        select(PatientProfile).filter(PatientProfile.user_id == current_user.id)
-    )
-    patient_profile = result.scalars().first()
-    
-    if not patient_profile:
-        return sharing_schema.ShareTokenListResponse(shares=[])
+    patient_profile = await deps.resolve_patient_profile(db, current_user, profile_id)
     
     # Build query
     stmt = select(ShareToken).filter(
@@ -204,6 +191,7 @@ async def revoke_share_link(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(deps.get_current_user),
     token_id: UUID,
+    profile_id: Optional[str] = Query(None, description="Profile ID"),
 ) -> Any:
     """
     Revoke a share link.
@@ -211,16 +199,7 @@ async def revoke_share_link(
     Only the creator can revoke their own share links.
     """
     # Get patient profile
-    result = await db.execute(
-        select(PatientProfile).filter(PatientProfile.user_id == current_user.id)
-    )
-    patient_profile = result.scalars().first()
-    
-    if not patient_profile:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Patient profile not found"
-        )
+    patient_profile = await deps.resolve_patient_profile(db, current_user, profile_id)
     
     # Get share token
     result = await db.execute(

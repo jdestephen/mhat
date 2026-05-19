@@ -492,16 +492,13 @@ async def get_medical_record(
     record_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(deps.get_current_user),
+    profile_id: Optional[str] = Query(None, description="Profile ID"),
 ) -> Any:
     """
     Get a single medical record by ID.
     """
     # Resolve Patient Profile
-    result = await db.execute(select(PatientProfile).filter(PatientProfile.user_id == current_user.id))
-    patient_profile = result.scalars().first()
-    
-    if not patient_profile:
-        raise HTTPException(status_code=404, detail="Patient profile not found")
+    patient_profile = await resolve_patient_profile(db, current_user, profile_id)
 
     # Get record with eager loading
     stmt = select(MedicalRecord).filter(
@@ -531,6 +528,7 @@ async def update_medical_record(
     record_in: hx_schema.MedicalRecordUpdate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(deps.get_current_user),
+    profile_id: Optional[str] = Query(None, description="Profile ID"),
 ) -> Any:
     """
     Patient updates their own medical record.
@@ -540,10 +538,7 @@ async def update_medical_record(
       - No doctor has verified/edited it yet (verified_by is None)
     """
     # Resolve Patient Profile
-    result = await db.execute(select(PatientProfile).filter(PatientProfile.user_id == current_user.id))
-    patient_profile = result.scalars().first()
-    if not patient_profile:
-        raise HTTPException(status_code=404, detail="Patient profile not found")
+    patient_profile = await resolve_patient_profile(db, current_user, profile_id)
 
     # Load the record with relationships
     result = await db.execute(

@@ -17,16 +17,20 @@ export interface UpdatePatientRecordPayload {
   }[];
 }
 
-export function useUpdatePatientRecord() {
+export function useUpdatePatientRecord(profileId?: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ recordId, ...payload }: UpdatePatientRecordPayload) => {
-      const res = await api.put(`/hx/${recordId}`, payload);
+      const params = new URLSearchParams();
+      if (profileId) params.append('profile_id', profileId);
+      const qs = params.toString() ? `?${params.toString()}` : '';
+      const res = await api.put(`/hx/${recordId}${qs}`, payload);
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['medicalRecords'] });
+      queryClient.invalidateQueries({ queryKey: ['medical-records'] });
+      queryClient.invalidateQueries({ queryKey: ['medical-record'] });
     },
   });
 }

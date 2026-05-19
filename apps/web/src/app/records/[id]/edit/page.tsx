@@ -14,6 +14,7 @@ import { useCategories } from '@/hooks/queries/useCategories';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
 import { useUpdatePatientRecord } from '@/hooks/mutations/useUpdatePatientRecord';
 import api from '@/lib/api';
+import { useActiveProfile } from '@/hooks/useActiveProfile';
 
 export default function EditRecordPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: recordId } = use(params);
@@ -26,7 +27,8 @@ export default function EditRecordPage({ params }: { params: Promise<{ id: strin
 
   const { data: categories = [] } = useCategories();
   const { data: user } = useCurrentUser();
-  const updateRecord = useUpdatePatientRecord();
+  const { activeProfileId } = useActiveProfile();
+  const updateRecord = useUpdatePatientRecord(activeProfileId || undefined);
 
   // Form state
   const [motive, setMotive] = useState('');
@@ -45,7 +47,10 @@ export default function EditRecordPage({ params }: { params: Promise<{ id: strin
   useEffect(() => {
     const fetchRecord = async () => {
       try {
-        const res = await api.get(`/hx/${recordId}`);
+        const qp = new URLSearchParams();
+        if (activeProfileId) qp.append('profile_id', activeProfileId);
+        const qs = qp.toString() ? `?${qp.toString()}` : '';
+        const res = await api.get(`/hx/${recordId}${qs}`);
         const data: MedicalRecord = res.data;
         setRecord(data);
         // Pre-populate form

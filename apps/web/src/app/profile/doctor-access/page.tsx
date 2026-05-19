@@ -10,6 +10,7 @@ import { useCreateInvitation } from '@/hooks/mutations/useCreateInvitation';
 import { useRevokeInvitation } from '@/hooks/mutations/useRevokeInvitation';
 import { useRevokeDoctorAccess } from '@/hooks/mutations/useRevokeDoctorAccess';
 import { useUpdateAccessLevel } from '@/hooks/mutations/useUpdateAccessLevel';
+import { useActiveProfile } from '@/hooks/useActiveProfile';
 import { AccessLevel } from '@/types';
 import {
   UserPlus,
@@ -25,8 +26,9 @@ import {
 } from 'lucide-react';
 
 export default function DoctorAccessPage() {
-  const { data: doctors, isLoading: doctorsLoading } = useMyDoctors();
-  const { data: invitations, isLoading: invitationsLoading } = useMyInvitations();
+  const { activeProfileId } = useActiveProfile();
+  const { data: doctors, isLoading: doctorsLoading } = useMyDoctors(activeProfileId);
+  const { data: invitations, isLoading: invitationsLoading } = useMyInvitations(activeProfileId);
   const createInvitation = useCreateInvitation();
   const revokeInvitation = useRevokeInvitation();
   const revokeDoctorAccess = useRevokeDoctorAccess();
@@ -45,6 +47,7 @@ export default function DoctorAccessPage() {
         access_level: accessLevel,
         access_type: accessType,
         expires_in_days: accessType === 'TEMPORARY' ? expiresInDays : undefined,
+        profile_id: activeProfileId || undefined,
       });
       setGeneratedCode(result.code);
     } catch {

@@ -15,6 +15,7 @@ import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
 import { useCreateMedicalRecord } from '@/hooks/mutations/useCreateMedicalRecord';
 import { useUploadDocument } from '@/hooks/mutations/useUploadDocument';
 import { PrescriptionForm, PrescriptionFormData } from '@/components/clinical/PrescriptionForm';
+import { useActiveProfile } from '@/hooks/useActiveProfile';
 
 
 export default function NewRecordPage() {
@@ -23,7 +24,8 @@ export default function NewRecordPage() {
   // React Query hooks
   const { data: categories = [], isLoading: categoriesLoading } = useCategories();
   const { data: user, isLoading: userLoading } = useCurrentUser();
-  const createRecord = useCreateMedicalRecord();
+  const { activeProfileId } = useActiveProfile();
+  const createRecord = useCreateMedicalRecord(activeProfileId || undefined);
   const uploadDocument = useUploadDocument();
   
   // Record Details

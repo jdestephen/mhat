@@ -53,10 +53,12 @@ interface DialogHeaderProps {
 export function DialogHeader({ children, onOpenChange }: DialogHeaderProps) {
   return (
     <div className="flex flex-row justify-between items-center mb-2 border-b border-gray-200 pb-2">
-      {children}
+      <div className="flex flex-col mr-1">
+        {children}
+      </div>
       <div className="flex items-center">
         <X className="h-7 w-7 text-gray-500 cursor-pointer" onClick={() => onOpenChange(false)} />
-      </div>  
+      </div>
     </div>
   );
 }

@@ -16,16 +16,21 @@ import {
   ClipboardList,
   Tag,
 } from 'lucide-react';
+import { useActiveProfile } from '@/hooks/useActiveProfile';
 
 export default function ViewRecordPage() {
   const params = useParams();
   const router = useRouter();
   const recordId = params.id as string;
+  const { activeProfileId } = useActiveProfile();
 
   const { data: record, isLoading } = useQuery<MedicalRecord>({
-    queryKey: ['medical-record', recordId],
+    queryKey: ['medical-record', recordId, activeProfileId],
     queryFn: async () => {
-      const res = await api.get(`/hx/${recordId}`);
+      const qp = new URLSearchParams();
+      if (activeProfileId) qp.append('profile_id', activeProfileId);
+      const qs = qp.toString() ? `?${qp.toString()}` : '';
+      const res = await api.get(`/hx/${recordId}${qs}`);
       return res.data;
     },
   });

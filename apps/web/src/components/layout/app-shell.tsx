@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Sidebar } from './sidebar';
 import { MobileHeader } from './MobileHeader';
+import { ProfileBanner } from '@/components/patient/ProfileBanner';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -74,6 +75,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Main content area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {!sidebarOpen && <MobileHeader onMenuToggle={() => setSidebarOpen(true)} />}
+        <ProfileBanner />
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           {children}
         </main>
