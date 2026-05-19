@@ -402,6 +402,8 @@ export interface PatientAccess {
   address?: string;
   has_account: boolean;
   dni?: string;
+  city?: string;
+  country?: string;
   access_level: AccessLevel;
   granted_at: string;
 }

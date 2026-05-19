@@ -140,7 +140,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
             recordId: r.id,
             recordMotive: r.motive,
             recordCategory: r.category?.name,
-            recordDate: r.created_at,
+            recordDate: r.record_date || r.created_at,
           })),
         )
         .sort((a, b) => new Date(b.recordDate).getTime() - new Date(a.recordDate).getTime()),

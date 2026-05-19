@@ -205,7 +205,7 @@ export default function DashboardPage() {
                           <td className="px-4 py-4 whitespace-nowrap">
                             <div className="flex items-center text-sm text-slate-600">
                               <Calendar size={14} className="mr-2 text-slate-400" />
-                              {new Date(record.created_at).toLocaleDateString('en-US', { 
+                              {new Date(record.record_date || record.created_at).toLocaleDateString('en-US', { 
                                 month: 'short', 
                                 day: 'numeric', 
                                 year: 'numeric' 
@@ -373,7 +373,7 @@ export default function DashboardPage() {
                             <div className="flex flex-row items-center text-xs text-slate-500 gap-2 mt-1 flex-wrap">
                               <span className="flex items-center">
                                 <Calendar size={12} className="mr-1" />
-                                {new Date(record.created_at).toLocaleDateString()}
+                                {new Date(record.record_date || record.created_at).toLocaleDateString()}
                               </span>
                               {record.category && (
                                 <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 px-1 py-1 rounded-md border border-emerald-200 shadow-sm whitespace-nowrap">

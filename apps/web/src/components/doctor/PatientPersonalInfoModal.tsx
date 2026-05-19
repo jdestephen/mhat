@@ -73,13 +73,13 @@ export function PatientPersonalInfoModal({
         first_name: patient.first_name || '',
         last_name: patient.last_name || '',
         sex: patient.sex || '',
-        date_of_birth: patient.date_of_birth || '',
+        date_of_birth: patient.date_of_birth?.slice(0, 10) || '',
         blood_type: patient.blood_type || '',
         dni: patient.dni || '',
         phone: patient.phone || '',
         address: patient.address || '',
-        city: '',
-        country: '',
+        city: patient.city || '',
+        country: patient.country || '',
       });
     }
   }, [open, patient]);
