@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { X, Copy, Check, Clock, User, Mail, FileText } from 'lucide-react';
 import api from '@/lib/api';
+import { useActiveProfile } from '@/hooks/useActiveProfile';
 
 interface ShareRecordDialogProps {
   open: boolean;
@@ -21,6 +22,7 @@ export function ShareRecordDialog({
   recordIds,
   recordTitles = []
 }: ShareRecordDialogProps) {
+  const { activeProfileId } = useActiveProfile();
   const [expiration, setExpiration] = useState('20');
   const [recipientName, setRecipientName] = useState('');
   const [recipientEmail, setRecipientEmail] = useState('');
@@ -44,7 +46,10 @@ export function ShareRecordDialog({
   const handleGenerate = async () => {
     setIsGenerating(true);
     try {
-      const response = await api.post('/hx/share', {
+      const params = new URLSearchParams();
+      if (activeProfileId) params.append('profile_id', activeProfileId);
+      const qs = params.toString() ? `?${params.toString()}` : '';
+      const response = await api.post(`/hx/share${qs}`, {
         record_ids: recordIds,
         expiration_minutes: parseInt(expiration),
         is_single_use: isSingleUse,

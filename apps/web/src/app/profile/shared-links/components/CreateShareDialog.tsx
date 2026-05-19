@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Copy, Check, Clock, User, Mail, FileHeart, FileText } from 'lucide-react';
 import api from '@/lib/api';
+import { useActiveProfile } from '@/hooks/useActiveProfile';
 
 interface CreateShareDialogProps {
   open: boolean;
@@ -15,6 +16,7 @@ interface CreateShareDialogProps {
 }
 
 export function CreateShareDialog({ open, onOpenChange, onSuccess }: CreateShareDialogProps) {
+  const { activeProfileId } = useActiveProfile();
   const [shareType, setShareType] = useState<'SUMMARY' | 'SPECIFIC_RECORDS'>('SUMMARY');
   const [expiration, setExpiration] = useState('60');
   const [recipientName, setRecipientName] = useState('');
@@ -56,7 +58,10 @@ export function CreateShareDialog({ open, onOpenChange, onSuccess }: CreateShare
         return;
       }
 
-      const response = await api.post('/hx/share', payload);
+      const params = new URLSearchParams();
+      if (activeProfileId) params.append('profile_id', activeProfileId);
+      const qs = params.toString() ? `?${params.toString()}` : '';
+      const response = await api.post(`/hx/share${qs}`, payload);
 
       setShareUrl(response.data.share_url);
       setExpiresAt(response.data.expires_at);
