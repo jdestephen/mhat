@@ -6,6 +6,7 @@ import { Plus } from 'lucide-react';
 import api from '@/lib/api';
 import { ShareLinkCard } from './components/ShareLinkCard';
 import { CreateShareDialog } from './components/CreateShareDialog';
+import { useActiveProfile } from '@/hooks/useActiveProfile';
 
 interface ShareLink {
   id: string;
@@ -28,6 +29,7 @@ export default function SharedLinksPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'active' | 'expired' | 'all'>('active');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const { activeProfileId } = useActiveProfile();
 
   const fetchShares = async () => {
     try {
@@ -38,6 +40,8 @@ export default function SharedLinksPage() {
         params.append('include_expired', 'true');
         params.append('include_revoked', 'true');
       }
+
+      if (activeProfileId) params.append('profile_id', activeProfileId);
 
       const response = await api.get(`/hx/shares?${params.toString()}`);
       setShares(response.data.shares || []);
@@ -50,7 +54,7 @@ export default function SharedLinksPage() {
 
   useEffect(() => {
     fetchShares();
-  }, [filter]);
+  }, [filter, activeProfileId]);
 
   const handleRevoke = async (tokenId: string) => {
     if (!confirm('¿Estás seguro de que deseas revocar este enlace?')) {
@@ -58,7 +62,10 @@ export default function SharedLinksPage() {
     }
 
     try {
-      await api.delete(`/hx/share/${tokenId}`);
+      const params = new URLSearchParams();
+      if (activeProfileId) params.append('profile_id', activeProfileId);
+      const qs = params.toString() ? `?${params.toString()}` : '';
+      await api.delete(`/hx/share/${tokenId}${qs}`);
       fetchShares(); // Refresh list
     } catch (error) {
       console.error('Failed to revoke share:', error);

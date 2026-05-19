@@ -95,6 +95,12 @@ class FamilyMembership(Base):
         nullable=False
     )
     
+    # UI color for distinguishing profiles (hex, e.g. "#4F46E5")
+    profile_color: Mapped[Optional[str]] = mapped_column(
+        String(7),
+        nullable=True
+    )
+    
     # Audit fields
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

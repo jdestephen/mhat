@@ -399,7 +399,7 @@ function ExtendedBanner({
   const headerContent = (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <SexAvatar sex={patient.sex} size="lg" />
+        <SexAvatar sex={patient.sex} size="md" />
         <div>
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-lg font-bold text-gray-900">

@@ -138,7 +138,7 @@ export function DocumentUploadModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[550px] max-h-[85vh] min-w-[550px] overflow-y-auto">
+      <DialogContent className="w-[90%] sm:max-w-[550px] max-h-[85vh] sm:min-w-[550px] overflow-y-auto">
         <DialogHeader onOpenChange={handleClose}>
           <DialogTitle>
             <span className="text-xl font-bold text-gray-900">

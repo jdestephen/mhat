@@ -25,11 +25,17 @@ interface MedicationListProps {
   profile: PatientProfile;
   onRefresh: () => void;
   apiPrefix?: string;
+  profileId?: string;
 }
 
 type FormMode = 'view' | 'add' | 'edit';
 
-export function MedicationList({ profile, onRefresh, apiPrefix = '/profiles/patient' }: MedicationListProps) {
+export function MedicationList({ profile, onRefresh, apiPrefix = '/profiles/patient', profileId }: MedicationListProps) {
+  const withProfile = (url: string) => {
+    if (!profileId) return url;
+    const sep = url.includes('?') ? '&' : '?';
+    return `${url}${sep}profile_id=${profileId}`;
+  };
   const [formMode, setFormMode] = useState<FormMode>('view');
   const [editingMedication, setEditingMedication] = useState<Medication | null>(null);
   const [formData, setFormData] = useState<Partial<Medication>>({
@@ -73,9 +79,9 @@ export function MedicationList({ profile, onRefresh, apiPrefix = '/profiles/pati
     setSaving(true);
     try {
       if (formMode === 'add') {
-        await api.post(`${apiPrefix}/medications`, formData);
+        await api.post(withProfile(`${apiPrefix}/medications`), formData);
       } else if (formMode === 'edit' && editingMedication) {
-        await api.patch(`${apiPrefix}/medications/${editingMedication.id}`, formData);
+        await api.patch(withProfile(`${apiPrefix}/medications/${editingMedication.id}`), formData);
       }
       
       setFormMode('view');
@@ -99,7 +105,7 @@ export function MedicationList({ profile, onRefresh, apiPrefix = '/profiles/pati
     }
 
     try {
-      await api.delete(`${apiPrefix}/medications/${medicationId}`);
+      await api.delete(withProfile(`${apiPrefix}/medications/${medicationId}`));
       onRefresh();
     } catch (error) {
       console.error(error);

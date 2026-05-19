@@ -24,6 +24,7 @@ interface PatientHealthHistoryProps {
   profile: PatientProfile;
   onRefresh: () => void;
   apiPrefix?: string;
+  profileId?: string;
 }
 
 type FormMode = 'view' | 'add' | 'edit';
@@ -32,7 +33,13 @@ export function PatientHealthHistory({
   profile,
   onRefresh,
   apiPrefix = '/profiles/patient',
+  profileId,
 }: PatientHealthHistoryProps) {
+  const withProfile = (url: string) => {
+    if (!profileId) return url;
+    const sep = url.includes('?') ? '&' : '?';
+    return `${url}${sep}profile_id=${profileId}`;
+  };
   const capitalize = (str: string) => {
     if (!str) return '';
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
@@ -116,9 +123,9 @@ export function PatientHealthHistory({
     setSavingCond(true);
     try {
       if (condMode === 'add') {
-        await api.post(`${apiPrefix}/conditions`, newCondition);
+        await api.post(withProfile(`${apiPrefix}/conditions`), newCondition);
       } else if (condMode === 'edit' && editingCondition) {
-        await api.patch(`${apiPrefix}/conditions/${editingCondition.id}`, newCondition);
+        await api.patch(withProfile(`${apiPrefix}/conditions/${editingCondition.id}`), newCondition);
       }
       handleCancelCondition();
       onRefresh();
@@ -133,7 +140,7 @@ export function PatientHealthHistory({
   const handleDeleteCondition = async (condId: number) => {
     if (!confirm('¿Estás seguro de que deseas eliminar esta condición?')) return;
     try {
-      await api.delete(`${apiPrefix}/conditions/${condId}`);
+      await api.delete(withProfile(`${apiPrefix}/conditions/${condId}`));
       onRefresh();
     } catch (error) {
       console.error(error);
@@ -183,9 +190,9 @@ export function PatientHealthHistory({
     setSavingAllergy(true);
     try {
       if (allergyMode === 'add') {
-        await api.post(`${apiPrefix}/allergies`, newAllergy);
+        await api.post(withProfile(`${apiPrefix}/allergies`), newAllergy);
       } else if (allergyMode === 'edit' && editingAllergy) {
-        await api.patch(`${apiPrefix}/allergies/${editingAllergy.id}`, newAllergy);
+        await api.patch(withProfile(`${apiPrefix}/allergies/${editingAllergy.id}`), newAllergy);
       }
       handleCancelAllergy();
       onRefresh();
@@ -200,7 +207,7 @@ export function PatientHealthHistory({
   const handleDeleteAllergy = async (allergyId: number) => {
     if (!confirm('¿Estás seguro de que deseas eliminar esta alergia?')) return;
     try {
-      await api.delete(`${apiPrefix}/allergies/${allergyId}`);
+      await api.delete(withProfile(`${apiPrefix}/allergies/${allergyId}`));
       onRefresh();
     } catch (error) {
       console.error(error);

@@ -74,6 +74,7 @@ async def list_my_profiles(
             is_self=membership.relationship_type == RelationshipType.SELF,
             has_records=record_count > 0,
             created_by_doctor_name=doctor_name,
+            profile_color=membership.profile_color,
         ))
 
     return profiles

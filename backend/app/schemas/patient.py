@@ -291,16 +291,22 @@ class PatientProfileBase(BaseModel):
     dni: Optional[str] = None
     phone: Optional[str] = None
     address: Optional[str] = None
+    sex: Optional[str] = None
+    city: Optional[str] = None
+    country: Optional[str] = None
 
 class PatientProfileCreate(PatientProfileBase):
     pass
 
 class PatientProfileUpdate(PatientProfileBase):
-    pass
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
 
 class PatientProfile(PatientProfileBase):
     id: UUID
-    user_id: UUID
+    user_id: Optional[UUID] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     medications: List[Medication] = []
     allergies: List[Allergy] = []
     conditions: List[Condition] = []

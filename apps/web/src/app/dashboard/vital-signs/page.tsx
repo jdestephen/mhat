@@ -17,27 +17,33 @@ import {
   Droplets,
   Activity,
 } from 'lucide-react';
+import { useActiveProfile } from '@/hooks/useActiveProfile';
 
 export default function VitalSignsPage() {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState<VitalSignsFormData>({});
+  const { activeProfileId } = useActiveProfile();
 
   const { data: vitalSigns, isLoading } = useQuery<VitalSigns[]>({
-    queryKey: ['vital-signs'],
+    queryKey: ['vital-signs', activeProfileId],
     queryFn: async () => {
-      const res = await api.get('/hx/vital-signs');
+      const params = new URLSearchParams();
+      if (activeProfileId) params.append('profile_id', activeProfileId);
+      const res = await api.get(`/hx/vital-signs${params.toString() ? '?' + params.toString() : ''}`);
       return res.data;
     },
   });
 
   const createMutation = useMutation({
     mutationFn: async (data: VitalSignsFormData) => {
-      const res = await api.post('/hx/vital-signs', data);
+      const params = new URLSearchParams();
+      if (activeProfileId) params.append('profile_id', activeProfileId);
+      const res = await api.post(`/hx/vital-signs${params.toString() ? '?' + params.toString() : ''}`, data);
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vital-signs'] });
+      queryClient.invalidateQueries({ queryKey: ['vital-signs', activeProfileId] });
       setShowForm(false);
       setFormData({});
     },
