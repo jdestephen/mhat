@@ -26,6 +26,7 @@ import {
   HeartPulse,
   ArrowLeft,
   Activity,
+  UserCircle,
 } from 'lucide-react';
 import { RecordDetailModal, RecordDetailData } from '@/components/records/RecordDetailModal';
 import { RecordCard, RecordCardData } from '@/components/records/RecordCard';
@@ -36,13 +37,14 @@ import { Pagination } from '@/components/ui/Pagination';
 import { VitalSignsModal } from '@/components/clinical/VitalSignsModal';
 import { getVitalColor, getBpColor } from '@/lib/vitalSignsRanges';
 import api, { getDocumentUrl } from '@/lib/api';
+import { PatientPersonalInfoModal } from '@/components/doctor/PatientPersonalInfoModal';
 
 
 export default function PatientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: patientId } = use(params);
   const router = useRouter();
   const { data: user, isLoading: userLoading } = useCurrentUser();
-  const { data: patients = [] } = useMyPatients();
+  const { data: patients = [], refetch: refetchPatients } = useMyPatients();
   const { data: records = [], isLoading: recordsLoading, refetch } = usePatientRecords(patientId);
   const { data: health } = usePatientHealth(patientId);
   const verifyRecord = useVerifyRecord();
@@ -51,6 +53,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [actionMenuOpen, setActionMenuOpen] = useState(false);
   const [vitalModalOpen, setVitalModalOpen] = useState(false);
+  const [personalInfoModalOpen, setPersonalInfoModalOpen] = useState(false);
   const actionMenuRef = useRef<HTMLDivElement>(null);
   const fabMenuRef = useRef<HTMLDivElement>(null);
   const [vsPage, setVsPage] = useState(1);
@@ -289,6 +292,18 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                           >
                             <Activity className="h-4 w-4 text-rose-600" />
                             Signos Vitales
+                          </button>
+                          <div className="border-t border-gray-100 my-1" />
+                          <button
+                            type="button"
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                            onClick={() => {
+                              setActionMenuOpen(false);
+                              setPersonalInfoModalOpen(true);
+                            }}
+                          >
+                            <UserCircle className="h-4 w-4 text-slate-600" />
+                            Datos Personales
                           </button>
                         </div>
                       )}
@@ -657,6 +672,15 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                   <Activity className="h-4 w-4 text-rose-600" />
                   Signos Vitales
                 </button>
+                <div className="border-t border-gray-100 my-1" />
+                <button
+                  type="button"
+                  className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                  onClick={() => { setActionMenuOpen(false); setPersonalInfoModalOpen(true); }}
+                >
+                  <UserCircle className="h-4 w-4 text-slate-600" />
+                  Datos Personales
+                </button>
               </div>
             )}
             <button
@@ -696,6 +720,16 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
         patientId={patientId}
         patientName={patientName}
       />
+
+      {/* Patient Personal Info Modal */}
+      {patient && (
+        <PatientPersonalInfoModal
+          open={personalInfoModalOpen}
+          onOpenChange={setPersonalInfoModalOpen}
+          patient={patient}
+          onSuccess={() => refetchPatients()}
+        />
+      )}
     </div>
   );
 }

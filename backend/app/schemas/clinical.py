@@ -157,6 +157,8 @@ class PatientAccessSummary(BaseModel):
     address: Optional[str] = None
     has_account: bool = False
     dni: Optional[str] = None
+    city: Optional[str] = None
+    country: Optional[str] = None
     access_level: AccessLevel
     granted_at: Optional[datetime] = None
 

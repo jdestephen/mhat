@@ -28,7 +28,7 @@ const ActiveProfileContext = createContext<ActiveProfileContextType>({
 const STORAGE_KEY = 'mhat_active_profile_id';
 
 export function ActiveProfileProvider({ children }: { children: React.ReactNode }) {
-  const { data: profiles = [], isLoading } = usePatientProfiles();
+  const { data: profiles = [], isLoading, isFetching } = usePatientProfiles();
 
   const [activeProfileId, setActiveProfileIdState] = useState<string | null>(() => {
     if (typeof window === 'undefined') return null;
@@ -76,14 +76,16 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
     }
   }, [profiles, activeProfileId, setActiveProfileId]);
 
+  const profilesLoading = isLoading || isFetching;
+
   const value = useMemo(() => ({
     activeProfileId: activeProfile?.id ?? null,
     setActiveProfileId,
     activeProfile,
     isManagingOther,
     profiles,
-    isLoading,
-  }), [activeProfile, setActiveProfileId, isManagingOther, profiles, isLoading]);
+    isLoading: profilesLoading,
+  }), [activeProfile, setActiveProfileId, isManagingOther, profiles, profilesLoading]);
 
   return (
     <ActiveProfileContext.Provider value={value}>

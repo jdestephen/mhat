@@ -11,12 +11,17 @@ import { MedicationList } from '@/app/profile/components/medication-list';
 import { HabitsTab } from '@/app/profile/components/HabitsTab';
 import { FamilyHistoryTab } from '@/app/profile/components/FamilyHistoryTab';
 import { ArrowLeft } from 'lucide-react';
+import { PatientInfoBanner } from '@/components/doctor/PatientInfoBanner';
+import { useMyPatients } from '@/hooks/queries/useMyPatients';
 
 export default function DoctorHealthHistoryPage() {
   const params = useParams();
   const router = useRouter();
   const patientId = params.id as string;
   const apiPrefix = `/doctor/patients/${patientId}`;
+
+  const { data: patients = [] } = useMyPatients();
+  const patient = patients.find((p) => p.patient_id === patientId);
 
   const [profile, setProfile] = useState<PatientProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -91,8 +96,20 @@ export default function DoctorHealthHistoryPage() {
         <Button variant="ghost" size="sm" onClick={() => router.push(`/doctor/patients/${patientId}`)}>
           <ArrowLeft className="w-4 h-4" />
         </Button>
-        <h1 className="text-3xl font-bold text-emerald-950">Historial de Salud del Paciente</h1>
+        <h1 className="text-2xl font-bold text-emerald-950">Historial de Salud del Paciente</h1>
       </div>
+
+      {patient && (
+        <div className="mb-6">
+          <PatientInfoBanner
+            patient={patient}
+            variant='extended'
+            layout="row"
+            collapsible
+            defaultCollapsed
+          />
+        </div>
+      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-0 w-full flex-wrap">

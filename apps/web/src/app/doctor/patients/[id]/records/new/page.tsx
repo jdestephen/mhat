@@ -16,14 +16,8 @@ import { TagInput } from '@/components/ui/tag-input';
 import { Select } from '@/components/ui/select';
 import { Combobox } from '@/components/ui/Combobox';
 import { VitalSignsForm, VitalSignsFormData } from '@/components/clinical/VitalSignsForm';
-import { PrescriptionForm, PrescriptionFormData, EMPTY_PRESCRIPTION } from '@/components/clinical/PrescriptionForm';
+import { PrescriptionForm, PrescriptionFormData } from '@/components/clinical/PrescriptionForm';
 import { PatientInfoBanner } from '@/components/doctor/PatientInfoBanner';
-import {
-  DOSAGE_QUANTITIES,
-  DOSAGE_UNITS,
-  FREQUENCY_OPTIONS,
-  ROUTE_OPTIONS,
-} from '@/lib/prescriptionOptions';
 import { 
   UserRole, 
   DiagnosisStatus, 
