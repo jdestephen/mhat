@@ -92,11 +92,13 @@ export default function DoctorHealthHistoryPage() {
 
   return (
     <div className="max-w-4xl mx-auto pb-20">
-      <div className="flex items-center gap-3 mb-8">
+      <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-8">
         <Button variant="ghost" size="sm" onClick={() => router.push(`/doctor/patients/${patientId}`)}>
           <ArrowLeft className="w-4 h-4" />
         </Button>
-        <h1 className="text-2xl font-bold text-emerald-950">Historial de Salud del Paciente</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-emerald-950">
+          Historial de Salud
+        </h1>
       </div>
 
       {patient && (

@@ -312,9 +312,9 @@ export default function NewDoctorRecordPage({
     <div className="max-w-6xl mx-auto pb-12">
       {/* Header */}
       <div className="flex flex-col justify-start lg:pr-30">
-        <div className="flex justify-between mb-2">
+        <div className="flex justify-between items-center mb-3 sm:mb-5">
           <div>
-            <h1 className="text-3xl font-bold text-emerald-950">
+            <h1 className="text-xl sm:text-3xl font-bold text-emerald-950">
               {isEditMode ? 'Editar Registro Clínico' : 'Nuevo Registro Clínico'}
             </h1>
           </div>  
@@ -322,9 +322,9 @@ export default function NewDoctorRecordPage({
             <Button
               variant="ghost"
               onClick={() => router.back()}
-              className="mb-3 text-gray-600 hover:text-gray-900 gap-2"
+              className="mb-0 text-gray-600 hover:text-gray-900 gap-2"
             >
-              <XIcon className="h-8 w-8" />
+              <XIcon className="h-6 sm:h-8 w-6 sm:w-8" />
             </Button>
           </div>
         </div>
@@ -379,14 +379,14 @@ export default function NewDoctorRecordPage({
           </div>
           
           {/* Basic Info Card */}
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+          <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-100">
             <h2 className="text-lg font-semibold text-emerald-900 mb-4 border-b pb-2">
               Evaluación Clínica
             </h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="col-span-2 flex flex-row gap-4">
-                <div className="w-1/3">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 col-span-2">
+                <div className="order-1 lg:order-none ">
                   <label className="block text-sm font-medium mb-1">Categoría</label>
                   <Select
                     options={categories.map(c => ({ value: c.id, label: c.name }))}
@@ -396,7 +396,7 @@ export default function NewDoctorRecordPage({
                   />
                 </div>
 
-                <div className="flex-1">
+                <div className="order-3 lg:order-none col-span-2">
                   <label className="block text-sm font-medium mb-1">
                     Motivo de Consulta <span className="text-red-500">*</span>
                   </label>
@@ -410,7 +410,7 @@ export default function NewDoctorRecordPage({
                   />
                 </div>
 
-                <div className="w-44">
+                <div className="order-2 lg:order-none">
                   <label className="block text-sm font-medium mb-1">
                     <CalendarDays className="inline h-3.5 w-3.5 mr-1 -mt-0.5" />
                     Fecha
