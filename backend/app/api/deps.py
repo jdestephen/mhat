@@ -25,26 +25,25 @@ async def get_current_user(
     db: AsyncSession = Depends(get_db),
     token: str = Depends(reusable_oauth2)
 ) -> User:
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
     try:
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
         token_data = token_schema.TokenPayload(**payload)
     except (JWTError, ValidationError):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Could not validate credentials",
-        )
+        raise credentials_exception
     
     try:
         user_id = UUID(token_data.sub)
         result = await db.execute(select(User).filter(User.id == user_id))
         user = result.scalars().first()
     except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Could not validate credentials",
-        )
+        raise credentials_exception
         
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
