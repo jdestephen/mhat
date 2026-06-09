@@ -19,6 +19,7 @@ import {
   AllergyType
 } from '@/types';
 import { X, Plus, Pencil } from 'lucide-react';
+import { useToast } from '@/components/ui/Toast';
 
 interface PatientHealthHistoryProps {
   profile: PatientProfile;
@@ -35,6 +36,7 @@ export function PatientHealthHistory({
   apiPrefix = '/profiles/patient',
   profileId,
 }: PatientHealthHistoryProps) {
+  const { toast } = useToast();
   const withProfile = (url: string) => {
     if (!profileId) return url;
     const sep = url.includes('?') ? '&' : '?';
@@ -144,7 +146,7 @@ export function PatientHealthHistory({
       onRefresh();
     } catch (error) {
       console.error(error);
-      alert('Error al eliminar condición');
+      toast.error('Error al eliminar condición');
     }
   };
 
@@ -211,7 +213,7 @@ export function PatientHealthHistory({
       onRefresh();
     } catch (error) {
       console.error(error);
-      alert('Error al eliminar alergia');
+      toast.error('Error al eliminar alergia');
     }
   };
 

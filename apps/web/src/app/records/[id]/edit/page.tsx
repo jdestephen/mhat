@@ -15,8 +15,10 @@ import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
 import { useUpdatePatientRecord } from '@/hooks/mutations/useUpdatePatientRecord';
 import api from '@/lib/api';
 import { useActiveProfile } from '@/hooks/useActiveProfile';
+import { useToast } from '@/components/ui/Toast';
 
 export default function EditRecordPage({ params }: { params: Promise<{ id: string }> }) {
+  const { toast } = useToast();
   const { id: recordId } = use(params);
   const router = useRouter();
 
@@ -127,7 +129,7 @@ export default function EditRecordPage({ params }: { params: Promise<{ id: strin
       setTimeout(() => router.push('/dashboard'), 500);
     } catch (err) {
       console.error(err);
-      alert('Error al actualizar registro');
+      toast.error('Error al actualizar registro');
       setIsSubmitting(false);
       setSubmissionStatus('');
     }

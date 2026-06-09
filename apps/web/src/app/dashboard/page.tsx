@@ -6,13 +6,16 @@ import api, { getDocumentUrl } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { RecordSearchBar } from '@/components/search/RecordSearchBar';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Plus, FileText, Calendar, Stethoscope, Paperclip, MoreVertical, Eye, Share2, Pill } from 'lucide-react';
+import { Plus, Calendar, Stethoscope, Paperclip, Pill } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { MedicalRecord, RecordStatus, UserRole } from '@/types';
 import { ShareRecordDialog } from '@/components/share/ShareRecordDialog';
 import { RecordViewLogModal } from '@/components/records/RecordViewLogModal';
 import { Pagination } from '@/components/ui/Pagination';
+import { StatusBadge } from '@/components/ui/StatusBadge';
+import { DropdownMenu } from '@/components/ui/DropdownMenu';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
 import { ClaimRequestBanner } from '@/components/patient/ClaimRequestBanner';
 import { useActiveProfile } from '@/hooks/useActiveProfile';
@@ -41,7 +44,6 @@ export default function DashboardPage() {
     }
   }, [user, userLoading, isNewUser, hasCompletedSetup, onboardingLoading, router]);
   
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [viewLogOpen, setViewLogOpen] = useState(false);
   const [viewLogRecordId, setViewLogRecordId] = useState<string | null>(null);
@@ -112,22 +114,31 @@ export default function DashboardPage() {
     setCurrentPage(1);
   }, [debouncedQuery, searchFilters.dateFrom, searchFilters.dateTo]);
 
-  const getStatusBadge = (status: RecordStatus) => {
-    const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-    const formatted = status.replace(/_/g, ' ').split(' ').map(capitalize).join(' ');
-    
-    const styles = {
-      [RecordStatus.UNVERIFIED]: 'bg-slate-200 text-slate-700',
-      [RecordStatus.BACKED_BY_DOCUMENT]: 'bg-blue-100 text-blue-800',
-      [RecordStatus.VERIFIED]: 'bg-emerald-100 text-emerald-800'
-    };
-    
-    return (
-      <span className={`px-2 py-1 text-xs rounded font-medium ${styles[status]}`}>
-        {formatted}
-      </span>
-    );
-  };
+  const getRecordMenuItems = (record: MedicalRecord) => [
+    {
+      label: 'Ver Detalles',
+      onClick: () => router.push(`/records/${record.id}`),
+    },
+    {
+      label: 'Editar',
+      onClick: () => router.push(`/records/${record.id}/edit`),
+      visible: !record.verified_by,
+    },
+    {
+      label: 'Compartir',
+      onClick: () => {
+        setSelectedRecords({ ids: [String(record.id)], titles: [record.motive] });
+        setShareDialogOpen(true);
+      },
+    },
+    {
+      label: 'Historial de Acceso',
+      onClick: () => {
+        setViewLogRecordId(String(record.id));
+        setViewLogOpen(true);
+      },
+    },
+  ];
 
   const getPrimaryDiagnosis = (record: MedicalRecord) => {
     if (!record.diagnoses || record.diagnoses.length === 0) return null;
@@ -268,85 +279,12 @@ export default function DashboardPage() {
 
                           {/* Status */}
                           <td className="px-4 py-4 whitespace-nowrap">
-                            {getStatusBadge(record.status)}
+                            <StatusBadge status={record.status} />
                           </td>
 
                           {/* Actions Menu */}
                           <td className="px-6 py-4 text-right">
-                            <div className="relative">
-                              <button 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setOpenDropdown(openDropdown === record.id ? null : record.id);
-                                }}
-                                className="text-slate-400 hover:text-slate-600 hover:cursor-pointer"
-                              >
-                                <MoreVertical className="h-5 w-5" />
-                              </button>
-                              
-                              {openDropdown === record.id && (
-                                <>
-                                  {/* Backdrop */}
-                                  <div 
-                                    className="fixed inset-0 z-10" 
-                                    onClick={() => setOpenDropdown(null)}
-                                  />
-                                  
-                                  {/* Dropdown Menu */}
-                                  <div className="fixed z-20 mt-0 w-48 rounded-md shadow-lg bg-white ring-1 ring-slate-200 ring-opacity-5"
-                                       style={{
-                                         top: `${(document.getElementById(`row-${record.id}`) as HTMLElement)?.getBoundingClientRect().bottom - 20}px`,
-                                         right: `${window.innerWidth - (document.getElementById(`row-${record.id}`) as HTMLElement)?.getBoundingClientRect().right + 20}px`
-                                       }}>
-                                    <div className="py-1">
-                                      <button
-                                        className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
-                                        onClick={() => {
-                                          setOpenDropdown(null);
-                                          window.location.href = `/records/${record.id}`;
-                                        }}
-                                      >
-                                        Ver Detalles
-                                      </button>
-                                      {!record.verified_by && (
-                                        <button
-                                          className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
-                                          onClick={() => {
-                                            setOpenDropdown(null);
-                                            router.push(`/records/${record.id}/edit`);
-                                          }}
-                                        >
-                                          Editar
-                                        </button>
-                                      )}
-                                      <button
-                                        className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
-                                        onClick={() => {
-                                          setOpenDropdown(null);
-                                          setSelectedRecords({ 
-                                            ids: [String(record.id)], 
-                                            titles: [record.motive] 
-                                          });
-                                          setShareDialogOpen(true);
-                                        }}
-                                      >
-                                        Compartir
-                                      </button>
-                                      <button
-                                        className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
-                                        onClick={() => {
-                                          setOpenDropdown(null);
-                                          setViewLogRecordId(String(record.id));
-                                          setViewLogOpen(true);
-                                        }}
-                                      >
-                                        Historial de Acceso
-                                      </button>
-                                    </div>
-                                  </div>
-                                </>
-                              )}
-                            </div>
+                            <DropdownMenu items={getRecordMenuItems(record)} />
                           </td>
                         </tr>
                       );
@@ -420,74 +358,8 @@ export default function DashboardPage() {
                         )}
                       </div>
                       <div className="flex flex-row gap-2 items-center justify-end">
-                        {getStatusBadge(record.status)}
-                        <div className="relative">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setOpenDropdown(openDropdown === record.id ? null : record.id);
-                            }}
-                            className="text-slate-400 hover:text-slate-600 hover:cursor-pointer p-1"
-                          >
-                            <MoreVertical className="h-5 w-5" />
-                          </button>
-
-                          {openDropdown === record.id && (
-                            <>
-                              <div
-                                className="fixed inset-0 z-10"
-                                onClick={() => setOpenDropdown(null)}
-                              />
-                              <div className="absolute right-0 bottom-full mb-1 w-48 rounded-md shadow-lg bg-white ring-1 ring-slate-200 ring-opacity-5 z-20">
-                                <div className="py-1">
-                                  <button
-                                    className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
-                                    onClick={() => {
-                                      setOpenDropdown(null);
-                                      window.location.href = `/records/${record.id}`;
-                                    }}
-                                  >
-                                    Ver Detalles
-                                  </button>
-                                  {!record.verified_by && (
-                                    <button
-                                      className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
-                                      onClick={() => {
-                                        setOpenDropdown(null);
-                                        router.push(`/records/${record.id}/edit`);
-                                      }}
-                                    >
-                                      Editar
-                                    </button>
-                                  )}
-                                  <button
-                                    className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
-                                    onClick={() => {
-                                      setOpenDropdown(null);
-                                      setSelectedRecords({
-                                        ids: [String(record.id)],
-                                        titles: [record.motive],
-                                      });
-                                      setShareDialogOpen(true);
-                                    }}
-                                  >
-                                    Compartir
-                                  </button>
-                                  <button
-                                    className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
-                                    onClick={() => {
-                                      setOpenDropdown(null);
-                                      setViewLogRecordId(String(record.id));
-                                      setViewLogOpen(true);
-                                    }}
-                                  >
-                                    Historial de Acceso
-                                  </button>
-                                </div>
-                              </div>
-                            </>
-                          )}
-                        </div>
+                        <StatusBadge status={record.status} />
+                        <DropdownMenu items={getRecordMenuItems(record)} />
                       </div>
                     </div>
                   );
@@ -514,12 +386,12 @@ export default function DashboardPage() {
             ) : (
               <>
                 {(!prescriptionRecords || prescriptionRecords.length === 0) && (
-                  <div className="text-center py-12">
-                    <Pill className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                    <p className="text-slate-500 text-lg font-medium">No hay recetas registradas</p>
-                    <p className="text-slate-400 text-sm mt-1">Las recetas que agregues a tus registros aparecerán aquí</p>
-                  </div>
-                )}
+                  <EmptyState
+                    icon={<Pill className="w-12 h-12" />}
+                    title="No hay recetas registradas"
+                    description="Las recetas que agregues a tus registros aparecerán aquí"
+                  />
+                 )}
 
                 {prescriptionRecords && prescriptionRecords.length > 0 && (
                   <div className="space-y-4">

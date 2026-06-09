@@ -16,9 +16,11 @@ import { useCreateMedicalRecord } from '@/hooks/mutations/useCreateMedicalRecord
 import { useUploadDocument } from '@/hooks/mutations/useUploadDocument';
 import { PrescriptionForm, PrescriptionFormData } from '@/components/clinical/PrescriptionForm';
 import { useActiveProfile } from '@/hooks/useActiveProfile';
+import { useToast } from '@/components/ui/Toast';
 
 
 export default function NewRecordPage() {
+  const { toast } = useToast();
   const router = useRouter();
   
   // React Query hooks
@@ -168,7 +170,7 @@ export default function NewRecordPage() {
 
     } catch (error) {
       console.error(error);
-      alert('Error al crear registro');
+      toast.error('Error al crear registro');
       setIsSubmitting(false);
       setSubmissionStatus('');
     }

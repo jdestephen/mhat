@@ -20,6 +20,7 @@ import {
   MedicationSource,
 } from '@/types';
 import { X, Plus, Pill, Pencil } from 'lucide-react';
+import { useToast } from '@/components/ui/Toast';
 
 interface MedicationListProps {
   profile: PatientProfile;
@@ -31,6 +32,7 @@ interface MedicationListProps {
 type FormMode = 'view' | 'add' | 'edit';
 
 export function MedicationList({ profile, onRefresh, apiPrefix = '/profiles/patient', profileId }: MedicationListProps) {
+  const { toast } = useToast();
   const withProfile = (url: string) => {
     if (!profileId) return url;
     const sep = url.includes('?') ? '&' : '?';
@@ -72,7 +74,7 @@ export function MedicationList({ profile, onRefresh, apiPrefix = '/profiles/pati
 
   const handleSave = async () => {
     if (!formData.name) {
-      alert('Por favor ingresa el nombre del medicamento');
+      toast.warning('Por favor ingresa el nombre del medicamento');
       return;
     }
 
@@ -93,7 +95,7 @@ export function MedicationList({ profile, onRefresh, apiPrefix = '/profiles/pati
       onRefresh();
     } catch (error) {
       console.error(error);
-      alert('Error al guardar medicamento');
+      toast.error('Error al guardar medicamento');
     } finally {
       setSaving(false);
     }
@@ -109,7 +111,7 @@ export function MedicationList({ profile, onRefresh, apiPrefix = '/profiles/pati
       onRefresh();
     } catch (error) {
       console.error(error);
-      alert('Error al eliminar medicamento');
+      toast.error('Error al eliminar medicamento');
     }
   };
 

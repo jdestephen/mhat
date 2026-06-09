@@ -30,6 +30,8 @@ import {
 import { VitalSignsModal } from '@/components/clinical/VitalSignsModal';
 import { CreatePatientModal } from '@/components/doctor/CreatePatientModal';
 import { ClaimRequestsPanel } from '@/components/doctor/ClaimRequestsPanel';
+import { Avatar } from '@/components/ui/Avatar';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export default function DoctorDashboardPage() {
   const router = useRouter();
@@ -209,17 +211,13 @@ export default function DoctorDashboardPage() {
         </div>
 
         {filteredPatients.length === 0 ? (
-          <div className="p-12 text-center">
-            <Users className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {searchTerm ? 'No se encontraron pacientes' : 'Sin pacientes aún'}
-            </h3>
-            <p className="text-gray-500 mb-6">
-              {searchTerm 
-                ? 'Intenta con otro término de búsqueda'
-                : 'Los pacientes aparecerán aquí cuando les otorgues acceso'}
-            </p>
-          </div>
+          <EmptyState
+            icon={<Users className="h-12 w-12" />}
+            title={searchTerm ? 'No se encontraron pacientes' : 'Sin pacientes aún'}
+            description={searchTerm 
+              ? 'Intenta con otro término de búsqueda'
+              : 'Los pacientes aparecerán aquí cuando les otorgues acceso'}
+          />
         ) : (
           <div className="divide-y divide-gray-100">
             {filteredPatients.map((patient) => (
@@ -229,11 +227,7 @@ export default function DoctorDashboardPage() {
               >
                 {/* Left: Avatar + Info */}
                 <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                  <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                    <span className="text-lg font-semibold text-emerald-700">
-                      {patient.first_name[0]}{patient.last_name[0]}
-                    </span>
-                  </div>
+                  <Avatar firstName={patient.first_name} lastName={patient.last_name} />
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="font-medium text-gray-900">

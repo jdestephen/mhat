@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import api from '@/lib/api';
 import { PatientAccess, Sex } from '@/types';
+import { useToast } from '@/components/ui/Toast';
 
 const BLOOD_TYPE_OPTIONS = [
   { value: '', label: 'Selecciona...' },
@@ -52,6 +53,7 @@ export function PatientPersonalInfoModal({
   patient,
   onSuccess,
 }: PatientPersonalInfoModalProps) {
+  const { toast } = useToast();
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     first_name: '',
@@ -91,7 +93,7 @@ export function PatientPersonalInfoModal({
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.first_name || !formData.last_name) {
-      alert('Nombre y apellido son obligatorios');
+      toast.warning('Nombre y apellido son obligatorios');
       return;
     }
 
@@ -114,7 +116,7 @@ export function PatientPersonalInfoModal({
       onOpenChange(false);
     } catch (error) {
       console.error('Error updating patient info:', error);
-      alert('Error al actualizar la información del paciente');
+      toast.error('Error al actualizar la información del paciente');
     } finally {
       setSaving(false);
     }

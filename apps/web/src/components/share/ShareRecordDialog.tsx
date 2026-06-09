@@ -8,6 +8,7 @@ import { Select } from '@/components/ui/select';
 import { X, Copy, Check, Clock, User, Mail, FileText } from 'lucide-react';
 import api from '@/lib/api';
 import { useActiveProfile } from '@/hooks/useActiveProfile';
+import { useToast } from '@/components/ui/Toast';
 
 interface ShareRecordDialogProps {
   open: boolean;
@@ -22,6 +23,7 @@ export function ShareRecordDialog({
   recordIds,
   recordTitles = []
 }: ShareRecordDialogProps) {
+  const { toast } = useToast();
   const { activeProfileId } = useActiveProfile();
   const [expiration, setExpiration] = useState('20');
   const [recipientName, setRecipientName] = useState('');
@@ -62,7 +64,7 @@ export function ShareRecordDialog({
       setExpiresAt(response.data.expires_at);
     } catch (error) {
       console.error('Failed to generate share link:', error);
-      alert('Error al generar enlace para compartir. Por favor, inténtalo de nuevo.');
+      toast.error('Error al generar enlace para compartir. Por favor, inténtalo de nuevo.');
     } finally {
       setIsGenerating(false);
     }

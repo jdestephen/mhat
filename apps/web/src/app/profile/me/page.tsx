@@ -8,6 +8,7 @@ import { PatientProfileForm } from './PatientProfileForm';
 import { DoctorProfileForm } from './DoctorProfileForm';
 import { PersonalReferencesTab } from './PersonalReferencesTab';
 import { ChangePasswordForm } from './ChangePasswordForm';
+import { LocationManager } from '@/components/patient/LocationManager';
 import { useProductTour } from '@/hooks/useProductTour';
 import { useActiveProfile } from '@/hooks/useActiveProfile';
 import { Compass } from 'lucide-react';
@@ -87,6 +88,10 @@ export default function PersonalInfoPage() {
               <span className="hidden sm:inline">Contactos de Emergencia</span>
               <span className="sm:hidden">Emergencia</span>
             </TabsTrigger>
+            <TabsTrigger value="locations">
+              <span className="hidden sm:inline">Ubicaciones</span>
+              <span className="sm:hidden">Ubic.</span>
+            </TabsTrigger>
             {!isManagingOther && (
               <TabsTrigger value="security">Seguridad</TabsTrigger>
             )}
@@ -110,6 +115,15 @@ export default function PersonalInfoPage() {
                 references={(profile as PatientProfile).personal_references || []}
                 onRefresh={fetchData}
                 profileId={activeProfileId || undefined}
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="locations">
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-[var(--border-light)]">
+              <LocationManager
+                locations={(profile as PatientProfile).locations || []}
+                onRefresh={fetchData}
               />
             </div>
           </TabsContent>

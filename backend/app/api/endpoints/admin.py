@@ -39,6 +39,12 @@ class DoctorApplicationSummary(BaseModel):
     registered_at: datetime
     approved_at: Optional[datetime] = None
     rejection_reason: Optional[str] = None
+    # Document verification fields
+    identity_document_url: Optional[str] = None
+    college_document_url: Optional[str] = None
+    ocr_extracted_data: Optional[dict] = None
+    ocr_processed: bool = False
+    verification_notes: Optional[str] = None
 
 
 class ApproveRequest(BaseModel):
@@ -74,6 +80,7 @@ async def list_doctor_applications(
     result = await db.execute(query)
     applications = []
     for profile, user in result.all():
+        from app.services.storage import get_presigned_url
         applications.append(DoctorApplicationSummary(
             profile_id=profile.id,
             user_id=user.id,
@@ -86,6 +93,11 @@ async def list_doctor_applications(
             registered_at=user.created_at,
             approved_at=profile.approved_at,
             rejection_reason=profile.rejection_reason,
+            identity_document_url=get_presigned_url(profile.identity_document_key) if profile.identity_document_key else None,
+            college_document_url=get_presigned_url(profile.college_document_key) if profile.college_document_key else None,
+            ocr_extracted_data=profile.ocr_extracted_data,
+            ocr_processed=profile.ocr_processed,
+            verification_notes=profile.verification_notes,
         ))
 
     return applications
@@ -108,6 +120,7 @@ async def get_doctor_application(
         raise HTTPException(status_code=404, detail="Perfil de médico no encontrado.")
 
     profile, user = row
+    from app.services.storage import get_presigned_url
     return DoctorApplicationSummary(
         profile_id=profile.id,
         user_id=user.id,
@@ -120,6 +133,11 @@ async def get_doctor_application(
         registered_at=user.created_at,
         approved_at=profile.approved_at,
         rejection_reason=profile.rejection_reason,
+        identity_document_url=get_presigned_url(profile.identity_document_key) if profile.identity_document_key else None,
+        college_document_url=get_presigned_url(profile.college_document_key) if profile.college_document_key else None,
+        ocr_extracted_data=profile.ocr_extracted_data,
+        ocr_processed=profile.ocr_processed,
+        verification_notes=profile.verification_notes,
     )
 
 

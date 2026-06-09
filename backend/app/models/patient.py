@@ -164,6 +164,7 @@ class PatientProfile(Base):
     family_history: Mapped[List["FamilyHistoryCondition"]] = relationship("FamilyHistoryCondition", back_populates="patient_profile", cascade="all, delete-orphan")
     # Who manages this patient profile (family members with access)
     managed_by: Mapped[List["FamilyMembership"]] = relationship("FamilyMembership", back_populates="patient_profile")
+    locations: Mapped[List["PatientLocation"]] = relationship("PatientLocation", back_populates="patient_profile", cascade="all, delete-orphan")
 
 class Medication(Base):
     __tablename__ = "medications"

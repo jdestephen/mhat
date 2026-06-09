@@ -24,8 +24,10 @@ import {
   Trash2,
   KeyRound,
 } from 'lucide-react';
+import { useToast } from '@/components/ui/Toast';
 
 export default function DoctorAccessPage() {
+  const { toast } = useToast();
   const { activeProfileId } = useActiveProfile();
   const { data: doctors, isLoading: doctorsLoading } = useMyDoctors(activeProfileId);
   const { data: invitations, isLoading: invitationsLoading } = useMyInvitations(activeProfileId);
@@ -51,7 +53,7 @@ export default function DoctorAccessPage() {
       });
       setGeneratedCode(result.code);
     } catch {
-      alert('Error al crear la invitación');
+      toast.error('Error al crear la invitación');
     }
   };
 
@@ -66,7 +68,7 @@ export default function DoctorAccessPage() {
     try {
       await revokeInvitation.mutateAsync(id);
     } catch {
-      alert('Error al revocar la invitación');
+      toast.error('Error al revocar la invitación');
     }
   };
 
@@ -75,7 +77,7 @@ export default function DoctorAccessPage() {
     try {
       await revokeDoctorAccess.mutateAsync(accessId);
     } catch {
-      alert('Error al revocar el acceso');
+      toast.error('Error al revocar el acceso');
     }
   };
 

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { DocumentUpload } from '@/components/ui/DocumentUpload';
 import api from '@/lib/api';
 
 import { PasswordStrengthBar, isPasswordStrong } from '@/components/ui/PasswordStrengthBar';
@@ -19,10 +20,19 @@ export default function RegisterPage() {
   // Doctor-specific fields
   const [collegeNumber, setCollegeNumber] = useState('');
   const [verificationPhone, setVerificationPhone] = useState('');
+  const [identityFile, setIdentityFile] = useState<File | null>(null);
+  const [collegeFile, setCollegeFile] = useState<File | null>(null);
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [registered, setRegistered] = useState(false);
+
+  // OCR auto-fill state
+  const [ocrSuggestions, setOcrSuggestions] = useState<{
+    dni?: string;
+    college_number?: string;
+  }>({});
+  const [uploadingDocs, setUploadingDocs] = useState(false);
 
   const isDoctor = role === UserRole.DOCTOR;
   const passwordValid = isPasswordStrong(password);
@@ -44,7 +54,8 @@ export default function RegisterPage() {
     setError('');
 
     try {
-      await api.post('/auth/register', {
+      // Step 1: Register user
+      const registerRes = await api.post('/auth/register', {
         email,
         password,
         first_name: firstName,
@@ -55,6 +66,43 @@ export default function RegisterPage() {
           verification_phone: verificationPhone.trim(),
         }),
       });
+
+      // Step 2: If doctor has documents, upload them
+      if (isDoctor && (identityFile || collegeFile)) {
+        try {
+          // Login to get token for document upload
+          const loginRes = await api.post('/auth/login', new URLSearchParams({
+            username: email,
+            password: password,
+          }), {
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          });
+
+          const token = loginRes.data.access_token;
+          setUploadingDocs(true);
+
+          const formData = new FormData();
+          if (identityFile) formData.append('identity_document', identityFile);
+          if (collegeFile) formData.append('college_document', collegeFile);
+
+          const ocrRes = await api.post('/auth/doctor/upload-documents', formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (ocrRes.data.auto_filled) {
+            setOcrSuggestions(ocrRes.data.auto_filled);
+          }
+        } catch (uploadErr) {
+          // Document upload is non-blocking — registration still succeeds
+          console.error('Document upload failed:', uploadErr);
+        } finally {
+          setUploadingDocs(false);
+        }
+      }
+
       setRegistered(true);
     } catch (err: unknown) {
       const apiError = err as { response?: { data?: { detail?: string } } };
@@ -80,12 +128,30 @@ export default function RegisterPage() {
             Haz clic en el enlace para activar tu cuenta.
           </p>
           {isDoctor && (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-left">
-              <p className="text-amber-800 text-sm font-medium">⏳ Aprobación pendiente</p>
-              <p className="text-amber-700 text-xs mt-1">
-                Después de verificar tu correo, un administrador revisará tu información
-                y recibirás una notificación cuando tu cuenta sea aprobada.
-              </p>
+            <div className="space-y-3">
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-left">
+                <p className="text-amber-800 text-sm font-medium">⏳ Aprobación pendiente</p>
+                <p className="text-amber-700 text-xs mt-1">
+                  Después de verificar tu correo, un administrador revisará tu información
+                  y recibirás una notificación cuando tu cuenta sea aprobada.
+                </p>
+              </div>
+              {(identityFile || collegeFile) && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 text-left">
+                  <p className="text-emerald-800 text-sm font-medium">📄 Documentos recibidos</p>
+                  <p className="text-emerald-700 text-xs mt-1">
+                    Tus documentos de verificación han sido procesados y estarán disponibles
+                    para el administrador durante la revisión.
+                  </p>
+                  {Object.keys(ocrSuggestions).length > 0 && (
+                    <div className="mt-2 text-xs text-emerald-600">
+                      <p className="font-medium">Datos extraídos automáticamente:</p>
+                      {ocrSuggestions.dni && <p>• DNI: {ocrSuggestions.dni}</p>}
+                      {ocrSuggestions.college_number && <p>• Colegiación: {ocrSuggestions.college_number}</p>}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
           <p className="text-slate-400 text-xs">
@@ -103,7 +169,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
+    <div className="flex min-h-screen items-center justify-center py-6">
       <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md border border-[var(--border-light)]">
         <h1 className="text-2xl font-bold text-center text-slate-800">Crear Cuenta</h1>
         {error && <p className="text-red-500 text-center text-sm">{error}</p>}
@@ -197,11 +263,44 @@ export default function RegisterPage() {
                   Un administrador podrá contactarte para verificar tu información.
                 </p>
               </div>
+
+              {/* Document uploads */}
+              <div className="border-t border-gray-100 pt-4 space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-slate-700 mb-1">
+                    Documentos de Verificación
+                  </p>
+                  <p className="text-xs text-gray-400 mb-3">
+                    Sube fotos de tu documento de identidad y constancia de colegiación.
+                    Los datos se extraerán automáticamente si no los ingresaste manualmente.
+                  </p>
+                </div>
+                <DocumentUpload
+                  label="Documento de Identidad (DNI/DPI)"
+                  description="Foto clara del frente de tu documento de identidad"
+                  selectedFile={identityFile}
+                  onFileSelect={setIdentityFile}
+                />
+                <DocumentUpload
+                  label="Constancia de Colegiación"
+                  description="Foto o escaneo de tu constancia o carné de colegiación"
+                  selectedFile={collegeFile}
+                  onFileSelect={setCollegeFile}
+                />
+              </div>
             </div>
           )}
 
-          <Button type="submit" className="w-full" disabled={loading || !formValid}>
-            {loading ? 'Registrando...' : 'Registrarse'}
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={loading || uploadingDocs || !formValid}
+          >
+            {uploadingDocs
+              ? 'Procesando documentos...'
+              : loading
+                ? 'Registrando...'
+                : 'Registrarse'}
           </Button>
         </form>
         <p className="text-center text-sm">
@@ -211,6 +310,7 @@ export default function RegisterPage() {
     </div>
   );
 }
+
 
 /** Small inline component for resending verification */
 function ResendButton({ email }: { email: string }) {

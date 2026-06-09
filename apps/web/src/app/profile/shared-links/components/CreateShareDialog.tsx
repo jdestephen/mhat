@@ -8,6 +8,7 @@ import { Select } from '@/components/ui/select';
 import { Copy, Check, Clock, User, Mail, FileHeart, FileText } from 'lucide-react';
 import api from '@/lib/api';
 import { useActiveProfile } from '@/hooks/useActiveProfile';
+import { useToast } from '@/components/ui/Toast';
 
 interface CreateShareDialogProps {
   open: boolean;
@@ -16,6 +17,7 @@ interface CreateShareDialogProps {
 }
 
 export function CreateShareDialog({ open, onOpenChange, onSuccess }: CreateShareDialogProps) {
+  const { toast } = useToast();
   const { activeProfileId } = useActiveProfile();
   const [shareType, setShareType] = useState<'SUMMARY' | 'SPECIFIC_RECORDS'>('SUMMARY');
   const [expiration, setExpiration] = useState('60');
@@ -53,7 +55,7 @@ export function CreateShareDialog({ open, onOpenChange, onSuccess }: CreateShare
       // For now, we're focusing on SUMMARY type
       if (shareType === 'SPECIFIC_RECORDS') {
         // This would require a record selector component
-        alert('La selección de registros específicos se implementará próximamente');
+        toast.info('La selección de registros específicos se implementará próximamente');
         setIsGenerating(false);
         return;
       }
@@ -67,7 +69,7 @@ export function CreateShareDialog({ open, onOpenChange, onSuccess }: CreateShare
       setExpiresAt(response.data.expires_at);
     } catch (error) {
       console.error('Failed to generate share link:', error);
-      alert('Error al generar enlace para compartir. Por favor, inténtalo de nuevo.');
+      toast.error('Error al generar enlace para compartir. Por favor, inténtalo de nuevo.');
     } finally {
       setIsGenerating(false);
     }

@@ -122,6 +122,9 @@ Primary goals:
 - Use `next/image` for images when appropriate.
 - Create reusable components in `src/components`.
 - Add metadata (title/description) for main routes where it matters.
+- Tables on web app: create tables always using <div> tags instead for <table> tags.
+- Always check the directory `src/components` to analyze if you can reuse components before create anew one.
+- When creating new components, think if they can be reusable on the future to have it prepare for it.
 
 ## Env & secrets
 - Never expose secrets to the client.
@@ -238,4 +241,3 @@ When generating code, always:
   - token refresh flow
   - offline-friendly endpoints where possible
   - idempotent writes when reasonable
-

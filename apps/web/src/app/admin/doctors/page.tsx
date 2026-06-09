@@ -12,6 +12,9 @@ import {
   Calendar,
   Shield,
   Loader2,
+  FileText,
+  Eye,
+  Cpu,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -31,6 +34,25 @@ interface DoctorApplication {
   registered_at: string;
   approved_at: string | null;
   rejection_reason: string | null;
+  // Document verification
+  identity_document_url: string | null;
+  college_document_url: string | null;
+  ocr_extracted_data: {
+    identity?: {
+      extracted_dni?: string | null;
+      extracted_name?: string | null;
+      confidence?: number;
+      raw_text?: string;
+    };
+    college?: {
+      extracted_college_number?: string | null;
+      extracted_name?: string | null;
+      confidence?: number;
+      raw_text?: string;
+    };
+  } | null;
+  ocr_processed: boolean;
+  verification_notes: string | null;
 }
 
 const STATUS_CONFIG = {
@@ -260,6 +282,99 @@ export default function AdminDoctorsPage() {
                           <span className="font-medium">Razón de rechazo:</span>{' '}
                           {app.rejection_reason}
                         </p>
+                      </div>
+                    )}
+
+                    {/* Document Verification Section */}
+                    {(app.identity_document_url || app.college_document_url || app.ocr_processed) && (
+                      <div className="mt-3 border border-slate-200 rounded-lg p-3 bg-slate-50/50">
+                        <p className="text-xs font-semibold text-slate-700 mb-2 flex items-center gap-1">
+                          <FileText className="w-3.5 h-3.5" />
+                          Documentos de Verificación
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {/* Identity Document */}
+                          {app.identity_document_url && (
+                            <a
+                              href={app.identity_document_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 p-2 bg-white border border-slate-200 rounded-md hover:border-emerald-300 hover:bg-emerald-50/50 transition-colors group"
+                            >
+                              <div className="w-10 h-10 bg-blue-50 rounded flex items-center justify-center flex-shrink-0">
+                                <Eye className="w-5 h-5 text-blue-500" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-xs font-medium text-slate-700 group-hover:text-emerald-700">
+                                  Doc. de Identidad
+                                </p>
+                                <p className="text-[10px] text-slate-400">Clic para ver</p>
+                              </div>
+                            </a>
+                          )}
+
+                          {/* College Document */}
+                          {app.college_document_url && (
+                            <a
+                              href={app.college_document_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 p-2 bg-white border border-slate-200 rounded-md hover:border-emerald-300 hover:bg-emerald-50/50 transition-colors group"
+                            >
+                              <div className="w-10 h-10 bg-purple-50 rounded flex items-center justify-center flex-shrink-0">
+                                <Eye className="w-5 h-5 text-purple-500" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-xs font-medium text-slate-700 group-hover:text-emerald-700">
+                                  Constancia Colegiación
+                                </p>
+                                <p className="text-[10px] text-slate-400">Clic para ver</p>
+                              </div>
+                            </a>
+                          )}
+                        </div>
+
+                        {/* OCR Results */}
+                        {app.ocr_processed && app.ocr_extracted_data && (
+                          <div className="mt-2 p-2 bg-white border border-slate-200 rounded-md">
+                            <p className="text-[10px] font-semibold text-slate-600 mb-1 flex items-center gap-1">
+                              <Cpu className="w-3 h-3" />
+                              Datos extraídos por OCR
+                            </p>
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                              {app.ocr_extracted_data.identity?.extracted_dni && (
+                                <div>
+                                  <span className="text-slate-400">DNI:</span>{' '}
+                                  <span className="font-medium text-slate-700">
+                                    {app.ocr_extracted_data.identity.extracted_dni}
+                                  </span>
+                                  {app.college_number && app.ocr_extracted_data.identity.extracted_dni !== app.college_number && (
+                                    <span className="text-amber-500 ml-1" title="Difiere del dato manual">⚠</span>
+                                  )}
+                                </div>
+                              )}
+                              {app.ocr_extracted_data.identity?.extracted_name && (
+                                <div>
+                                  <span className="text-slate-400">Nombre:</span>{' '}
+                                  <span className="font-medium text-slate-700">
+                                    {app.ocr_extracted_data.identity.extracted_name}
+                                  </span>
+                                </div>
+                              )}
+                              {app.ocr_extracted_data.college?.extracted_college_number && (
+                                <div>
+                                  <span className="text-slate-400">Colegiación:</span>{' '}
+                                  <span className="font-medium text-slate-700">
+                                    {app.ocr_extracted_data.college.extracted_college_number}
+                                  </span>
+                                  {app.college_number && app.ocr_extracted_data.college.extracted_college_number !== app.college_number && (
+                                    <span className="text-amber-500 ml-1" title="Difiere del dato manual">⚠</span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

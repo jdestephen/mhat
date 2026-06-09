@@ -313,8 +313,14 @@ class PatientProfile(PatientProfileBase):
     personal_references: List[PersonalReference] = []
     health_habit: Optional[HealthHabit] = None
     family_history: List[FamilyHistoryConditionResponse] = []
+    locations: List["PatientLocationResponse"] = []
 
     class Config:
         from_attributes = True
+
+
+# Avoid circular import — import at end
+from app.schemas.patient_location import PatientLocationResponse  # noqa: E402
+PatientProfile.model_rebuild()
 
 

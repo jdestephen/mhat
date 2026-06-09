@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import api, { getDocumentUrl } from '@/lib/api';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import { Clock, User, FileText, Calendar, Paperclip, AlertCircle, ExternalLink } from 'lucide-react';
 
 interface SharedRecord {
@@ -62,21 +63,7 @@ export default function SharedRecordPage() {
     });
   };
 
-  const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { label: string; className: string }> = {
-      UNVERIFIED: { label: 'Sin Verificar', className: 'bg-slate-200 text-slate-700' },
-      BACKED_BY_DOCUMENT: { label: 'Respaldado por Documento', className: 'bg-blue-100 text-blue-800' },
-      VERIFIED: { label: 'Verificado', className: 'bg-emerald-100 text-emerald-800' },
-    };
 
-    const statusInfo = statusMap[status] || statusMap.UNVERIFIED;
-
-    return (
-      <span className={`px-2 py-1 text-xs rounded font-medium ${statusInfo.className}`}>
-        {statusInfo.label}
-      </span>
-    );
-  };
 
   if (loading) {
     return (
@@ -160,7 +147,7 @@ export default function SharedRecordPage() {
                       <Calendar className="h-3 w-3" />
                       {formatDate(record.created_at)}
                     </span>
-                    {getStatusBadge(record.status)}
+                    <StatusBadge status={record.status} />
                   </div>
                 </div>
               </div>
