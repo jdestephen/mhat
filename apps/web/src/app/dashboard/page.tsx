@@ -405,17 +405,19 @@ export default function DashboardPage() {
                             </div>
                             <div>
                               <p className="font-semibold text-slate-900 text-sm">{record.motive}</p>
-                              <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                                <Calendar size={11} />
-                                {new Date(record.record_date || record.created_at).toLocaleDateString('es-ES', {
-                                  day: 'numeric', month: 'short', year: 'numeric'
-                                })}
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                <span className='flex flex-row items-center gap-1 text-xs text-slate-500'>
+                                  <Calendar size={11} />
+                                  {new Date(record.record_date || record.created_at).toLocaleDateString('es-ES', {
+                                    day: 'numeric', month: 'short', year: 'numeric'
+                                  })}
+                                </span>
                                 {record.category && (
-                                  <span className="ml-2 text-[10px] font-bold uppercase tracking-wider text-emerald-700 px-1 py-0.5 rounded-md border border-emerald-200">
+                                  <span className="sm:ml-2 text-[10px] font-bold uppercase tracking-wider text-emerald-700 px-1 py-0.5 rounded-md border border-emerald-200">
                                     {record.category.name}
                                   </span>
                                 )}
-                              </p>
+                              </div>
                             </div>
                           </div>
                           <Button

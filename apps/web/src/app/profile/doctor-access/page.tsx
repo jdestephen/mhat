@@ -105,8 +105,10 @@ export default function DoctorAccessPage() {
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-emerald-950">Acceso Médico</h1>
-          <p className="text-slate-500 mt-1">Gestiona qué doctores tienen acceso a tus registros</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-emerald-950">Acceso Médico</h1>
+          <p className="text-slate-500 mt-1 text-xs sm:text-sm">
+            Gestiona qué doctores tienen acceso a tus registros
+          </p>
         </div>
         <Button onClick={() => { setShowCreateForm(true); setGeneratedCode(null); }} compact>
           <UserPlus className="w-4 h-4" />
@@ -153,7 +155,7 @@ export default function DoctorAccessPage() {
               <div className="flex justify-center gap-3 mt-4">
                 <span className="inline-flex items-center gap-1 text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded-full">
                   {accessLevel === AccessLevel.WRITE ? (
-                    <><ShieldAlert className="w-3 h-3" /> Lectura y Escritura</>
+                    <><ShieldAlert className="w-3 h-3" /> Escritura</>
                   ) : (
                     <><ShieldCheck className="w-3 h-3" /> Solo Lectura</>
                   )}

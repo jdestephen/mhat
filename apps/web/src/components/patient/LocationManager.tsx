@@ -347,7 +347,7 @@ export function LocationManager({
           <div className="mb-4">
             <div className="flex items-center justify-between mb-2">
               <label className="block text-sm font-medium">
-                Ubicación en Mapa *
+                Ubicación *
                 {form.latitude && form.longitude ? (
                   <span className="text-xs text-slate-400 ml-2">
                     ({form.latitude.toFixed(6)}, {form.longitude.toFixed(6)})

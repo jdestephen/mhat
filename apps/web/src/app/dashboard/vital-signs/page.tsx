@@ -67,15 +67,15 @@ export default function VitalSignsPage() {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1 sm:gap-3">
           <div className="h-10 w-10 bg-rose-50 rounded-full flex items-center justify-center">
             <HeartPulse className="h-5 w-5 text-rose-500" />
           </div>
-          <h1 className="text-3xl font-bold text-slate-900">Signos Vitales</h1>
+          <h1 className="text-xl sm:text-3xl font-bold text-slate-900">Signos Vitales</h1>
         </div>
         {!showForm && (
           <Button onClick={() => setShowForm(true)}>
-            <Plus className="w-4 h-4 mr-2" /> Nuevo Registro
+            <Plus className="w-4 h-4 mr-2" /> Nuevo
           </Button>
         )}
       </div>
