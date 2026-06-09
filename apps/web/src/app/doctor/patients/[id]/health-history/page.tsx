@@ -115,10 +115,16 @@ export default function DoctorHealthHistoryPage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-0 w-full flex-wrap">
-          <TabsTrigger value="history" className="flex-1 rounded-tl-lg">Condiciones y Alergías</TabsTrigger>
+          <TabsTrigger value="history" className="flex-1 rounded-tl-lg">
+            <span className="hidden md:block">Condiciones y Alergías</span>
+            <span className="block md:hidden">Cond. y Alerg.</span>
+          </TabsTrigger>
           <TabsTrigger value="medications" className="flex-1">Medicamentos</TabsTrigger>
           <TabsTrigger value="habits" className="flex-1">Hábitos</TabsTrigger>
-          <TabsTrigger value="family-history" className="flex-1 rounded-tr-lg">Antecedentes Familiares</TabsTrigger>
+          <TabsTrigger value="family-history" className="flex-1 rounded-tr-lg">
+            <span className="hidden md:block">Antecedentes Familiares</span>
+            <span className="block md:hidden">Familiares</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="history">

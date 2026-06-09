@@ -14,7 +14,7 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-1">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/50 animate-in fade-in"
@@ -37,7 +37,7 @@ interface DialogContentProps {
 export function DialogContent({ children, className }: DialogContentProps) {
   return (
     <div className={cn(
-      "relative bg-white rounded-lg shadow-lg p-6 w-full max-w-lg mx-4",
+      "relative bg-white rounded-lg shadow-lg py-6 px-4 w-full max-w-lg sm:mx-3",
       className
     )}>
       {children}
