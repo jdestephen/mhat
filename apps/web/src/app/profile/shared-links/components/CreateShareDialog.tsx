@@ -113,7 +113,7 @@ export function CreateShareDialog({ open, onOpenChange, onSuccess }: CreateShare
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[550px]">
-        <DialogHeader onOpenChange={() => {}}>
+        <DialogHeader onOpenChange={handleClose}>
           <DialogTitle>Compartir Historial Médico</DialogTitle>
           <DialogDescription>
             Genera un enlace seguro y de tiempo limitado para compartir tu información médica
