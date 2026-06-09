@@ -421,7 +421,7 @@ export default function DashboardPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => window.location.href = `/records/${record.id}`}
+                            onClick={() => router.push(`/records/${record.id}`)}
                             className="text-slate-500 hover:text-slate-700"
                           >
                             Ver Detalle

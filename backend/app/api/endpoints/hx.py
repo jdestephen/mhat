@@ -1,6 +1,6 @@
 import uuid
 from typing import List, Any, Optional
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Form, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -121,7 +121,7 @@ async def create_medical_record(
     
     if current_user.role == UserRole.DOCTOR:
         medical_record.verified_by = current_user.id
-        medical_record.verified_at = datetime.utcnow()
+        medical_record.verified_at = datetime.now(timezone.utc)
     
     db.add(medical_record)
     await db.flush()

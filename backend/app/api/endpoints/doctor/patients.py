@@ -9,6 +9,7 @@ from sqlalchemy.future import select
 from app.api.deps import get_db
 from app.models.user import User, DoctorPatientAccess, DoctorAccessLevel
 from app.models.patient import PatientProfile
+from app.models.patient_location import PatientLocation
 from app.schemas import clinical as clinical_schema
 from app.schemas import patient as patient_schema
 from app.schemas import patient_location as loc_schema
@@ -174,7 +175,6 @@ async def get_patient_health_profile(
     )
     family_history = fh_result.scalars().all()
 
-    from app.models.patient_location import PatientLocation
     loc_result = await db.execute(
         select(PatientLocation).where(
             PatientLocation.patient_profile_id == patient_profile_id
@@ -307,7 +307,6 @@ async def get_patient_locations(
     """Get saved locations for a patient (doctor view)."""
     await get_doctor_patient_access(patient_profile_id, db, current_user)
 
-    from app.models.patient_location import PatientLocation
     result = await db.execute(
         select(PatientLocation)
         .where(PatientLocation.patient_profile_id == patient_profile_id)

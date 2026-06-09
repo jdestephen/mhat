@@ -1,6 +1,6 @@
 """Health history CRUD: conditions, allergies, medications, habits, family history."""
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -9,6 +9,13 @@ from sqlalchemy.future import select
 
 from app.api.deps import get_db
 from app.models.user import User
+from app.models.patient import (
+    Condition as ConditionModel,
+    Allergy as AllergyModel,
+    Medication as MedicationModel,
+    HealthHabit,
+    FamilyHistoryCondition,
+)
 from app.schemas import patient as patient_schema
 
 from ._helpers import require_doctor_role, get_doctor_patient_access
@@ -27,7 +34,6 @@ async def doctor_add_condition(
 ) -> Any:
     """Doctor adds a condition to a patient's profile."""
     await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
-    from app.models.patient import Condition as ConditionModel
     condition = ConditionModel(patient_profile_id=patient_id, **condition_in.model_dump())
     db.add(condition)
     await db.commit()
@@ -45,7 +51,6 @@ async def doctor_update_condition(
 ) -> Any:
     """Doctor updates a condition on a patient's profile."""
     await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
-    from app.models.patient import Condition as ConditionModel
     result = await db.execute(
         select(ConditionModel).filter(
             ConditionModel.id == condition_id,
@@ -72,7 +77,6 @@ async def doctor_delete_condition(
 ) -> None:
     """Doctor soft-deletes a condition from patient's profile."""
     await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
-    from app.models.patient import Condition as ConditionModel
     result = await db.execute(
         select(ConditionModel).filter(
             ConditionModel.id == condition_id,
@@ -84,7 +88,7 @@ async def doctor_delete_condition(
     if not condition:
         raise HTTPException(status_code=404, detail="Condition not found")
     condition.deleted = True
-    condition.deleted_at = datetime.utcnow()
+    condition.deleted_at = datetime.now(timezone.utc)
     await db.commit()
 
 
@@ -99,7 +103,6 @@ async def doctor_add_allergy(
 ) -> Any:
     """Doctor adds an allergy to a patient's profile."""
     await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
-    from app.models.patient import Allergy as AllergyModel
     allergy = AllergyModel(patient_profile_id=patient_id, **allergy_in.model_dump())
     db.add(allergy)
     await db.commit()
@@ -117,7 +120,6 @@ async def doctor_update_allergy(
 ) -> Any:
     """Doctor updates an allergy on a patient's profile."""
     await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
-    from app.models.patient import Allergy as AllergyModel
     result = await db.execute(
         select(AllergyModel).filter(
             AllergyModel.id == allergy_id,
@@ -144,7 +146,6 @@ async def doctor_delete_allergy(
 ) -> None:
     """Doctor soft-deletes an allergy from patient's profile."""
     await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
-    from app.models.patient import Allergy as AllergyModel
     result = await db.execute(
         select(AllergyModel).filter(
             AllergyModel.id == allergy_id,
@@ -156,7 +157,7 @@ async def doctor_delete_allergy(
     if not allergy:
         raise HTTPException(status_code=404, detail="Allergy not found")
     allergy.deleted = True
-    allergy.deleted_at = datetime.utcnow()
+    allergy.deleted_at = datetime.now(timezone.utc)
     await db.commit()
 
 
@@ -171,7 +172,6 @@ async def doctor_add_medication(
 ) -> Any:
     """Doctor adds a medication to a patient's profile."""
     await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
-    from app.models.patient import Medication as MedicationModel
     med = MedicationModel(patient_profile_id=patient_id, created_by_id=current_user.id, **med_in.model_dump())
     db.add(med)
     await db.commit()
@@ -189,7 +189,6 @@ async def doctor_update_medication(
 ) -> Any:
     """Doctor updates a medication on patient's profile."""
     await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
-    from app.models.patient import Medication as MedicationModel
     result = await db.execute(
         select(MedicationModel).filter(
             MedicationModel.id == med_id,
@@ -215,7 +214,6 @@ async def doctor_delete_medication(
 ) -> None:
     """Doctor deletes a medication from patient's profile."""
     await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
-    from app.models.patient import Medication as MedicationModel
     result = await db.execute(
         select(MedicationModel).filter(
             MedicationModel.id == med_id,
@@ -239,7 +237,6 @@ async def doctor_get_habits(
 ) -> Any:
     """Doctor gets a patient's health habits."""
     await get_doctor_patient_access(patient_id, db, current_user)
-    from app.models.patient import HealthHabit
     result = await db.execute(
         select(HealthHabit).filter(HealthHabit.patient_profile_id == patient_id)
     )
@@ -255,7 +252,6 @@ async def doctor_upsert_habits(
 ) -> Any:
     """Doctor creates/updates a patient's health habits."""
     await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
-    from app.models.patient import HealthHabit
     result = await db.execute(
         select(HealthHabit).filter(HealthHabit.patient_profile_id == patient_id)
     )
@@ -285,7 +281,6 @@ async def doctor_get_family_history(
 ) -> Any:
     """Doctor gets a patient's family history conditions."""
     await get_doctor_patient_access(patient_id, db, current_user)
-    from app.models.patient import FamilyHistoryCondition
     result = await db.execute(
         select(FamilyHistoryCondition).filter(
             FamilyHistoryCondition.patient_profile_id == patient_id
@@ -303,7 +298,6 @@ async def doctor_add_family_history(
 ) -> Any:
     """Doctor adds a family history condition."""
     await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
-    from app.models.patient import FamilyHistoryCondition
     condition = FamilyHistoryCondition(
         patient_profile_id=patient_id,
         condition_name=fh_in.condition_name,
@@ -326,7 +320,6 @@ async def doctor_update_family_history(
 ) -> Any:
     """Doctor updates a family history condition."""
     await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
-    from app.models.patient import FamilyHistoryCondition
     result = await db.execute(
         select(FamilyHistoryCondition).filter(
             FamilyHistoryCondition.id == condition_id,
@@ -352,7 +345,6 @@ async def doctor_delete_family_history(
 ) -> None:
     """Doctor deletes a family history condition."""
     await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
-    from app.models.patient import FamilyHistoryCondition
     result = await db.execute(
         select(FamilyHistoryCondition).filter(
             FamilyHistoryCondition.id == condition_id,

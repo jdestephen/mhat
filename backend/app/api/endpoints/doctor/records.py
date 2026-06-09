@@ -74,7 +74,7 @@ async def create_patient_record(
         record_source=RecordSource.DOCTOR,
         status=RecordStatus.VERIFIED,
         verified_by=current_user.id,
-        verified_at=datetime.utcnow(),
+        verified_at=datetime.now(timezone.utc),
         motive=record_in.motive,
         record_date=record_in.record_date or date.today(),
         notes=record_in.notes,
@@ -256,7 +256,7 @@ async def verify_patient_record(
 
     record.status = RecordStatus.VERIFIED
     record.verified_by = current_user.id
-    record.verified_at = datetime.utcnow()
+    record.verified_at = datetime.now(timezone.utc)
 
     if verification.notes:
         record.notes = (record.notes or "") + f"\n\n[Verified: {verification.notes}]"

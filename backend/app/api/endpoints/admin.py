@@ -18,6 +18,7 @@ from app.db.session import get_db
 from app.models.user import User, UserRole
 from app.models.doctor import DoctorProfile, DoctorApprovalStatus
 from app.services.email import send_doctor_approval_email, send_doctor_rejection_email
+from app.services.storage import get_presigned_url
 
 router = APIRouter()
 
@@ -80,7 +81,6 @@ async def list_doctor_applications(
     result = await db.execute(query)
     applications = []
     for profile, user in result.all():
-        from app.services.storage import get_presigned_url
         applications.append(DoctorApplicationSummary(
             profile_id=profile.id,
             user_id=user.id,
@@ -120,7 +120,6 @@ async def get_doctor_application(
         raise HTTPException(status_code=404, detail="Perfil de médico no encontrado.")
 
     profile, user = row
-    from app.services.storage import get_presigned_url
     return DoctorApplicationSummary(
         profile_id=profile.id,
         user_id=user.id,
