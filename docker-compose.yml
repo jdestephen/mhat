@@ -25,7 +25,7 @@ services:
       - POSTGRES_SERVER=db
       - POSTGRES_DB=mhat_db
       - SECRET_KEY=${SECRET_KEY}
-      - EMAIL_ENABLED=true
+      - EMAIL_ENABLED=false
       - RESEND_API_KEY=${RESEND_API_KEY}
       - STORAGE_LOCAL_MODE=false
       - STORAGE_ENDPOINT=https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com

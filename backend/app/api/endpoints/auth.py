@@ -76,6 +76,19 @@ async def _validate_token(db: AsyncSession, token_value: str, token_type: TokenT
     return token
 
 
+@router.get("/config")
+async def get_auth_config():
+    """
+    Public endpoint: returns auth configuration for the frontend.
+    No authentication required.
+    """
+    return {
+        "dev_mode": not settings.EMAIL_ENABLED,
+        "require_strong_password": settings.EMAIL_ENABLED,
+        "email_verification_required": settings.EMAIL_ENABLED,
+    }
+
+
 @router.post("/login", response_model=token_schema.Token)
 async def login_access_token(
     request: Request,
@@ -235,8 +248,9 @@ async def register_user(
         last_name=user_in.last_name,
         city=user_in.city,
         country=user_in.country,
-        is_active=False,
-        is_email_verified=False,
+        # In dev mode (EMAIL_ENABLED=false), auto-verify and activate
+        is_active=not settings.EMAIL_ENABLED,
+        is_email_verified=not settings.EMAIL_ENABLED,
         role=user_in.role,
     )
     db.add(user)

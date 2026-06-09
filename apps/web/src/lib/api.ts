@@ -20,6 +20,7 @@ api.interceptors.request.use((config) => {
 
 // Response interceptor — auto-refresh on 401/403
 let isRefreshing = false;
+let isRedirecting = false;
 let failedQueue: Array<{
   resolve: (value: unknown) => void;
   reject: (reason: unknown) => void;
@@ -67,7 +68,10 @@ api.interceptors.response.use(
         // No refresh token — force logout
         localStorage.removeItem('token');
         localStorage.removeItem('refreshToken');
-        window.location.href = '/auth/login';
+        if (!isRedirecting) {
+          isRedirecting = true;
+          window.location.href = '/auth/login';
+        }
         return Promise.reject(error);
       }
 
@@ -88,7 +92,10 @@ api.interceptors.response.use(
         processQueue(refreshError, null);
         localStorage.removeItem('token');
         localStorage.removeItem('refreshToken');
-        window.location.href = '/auth/login';
+        if (!isRedirecting) {
+          isRedirecting = true;
+          window.location.href = '/auth/login';
+        }
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

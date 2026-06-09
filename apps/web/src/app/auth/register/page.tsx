@@ -7,6 +7,7 @@ import { DocumentUpload } from '@/components/ui/DocumentUpload';
 import api from '@/lib/api';
 
 import { PasswordStrengthBar, isPasswordStrong } from '@/components/ui/PasswordStrengthBar';
+import { useAuthConfig } from '@/hooks/queries/useAuthConfig';
 
 import { UserRole } from '@/types';
 
@@ -34,8 +35,11 @@ export default function RegisterPage() {
   }>({});
   const [uploadingDocs, setUploadingDocs] = useState(false);
 
+  const { data: authConfig } = useAuthConfig();
+  const devMode = authConfig?.dev_mode ?? false;
+
   const isDoctor = role === UserRole.DOCTOR;
-  const passwordValid = isPasswordStrong(password);
+  const passwordValid = isPasswordStrong(password, devMode);
 
   const collegeNumberValid =
     !isDoctor || (collegeNumber.trim().length >= 5 && collegeNumber.trim().length <= 15);
@@ -122,11 +126,20 @@ export default function RegisterPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-slate-800">¡Revisa tu correo!</h1>
-          <p className="text-slate-600">
-            Hemos enviado un enlace de verificación a <span className="font-medium">{email}</span>.
-            Haz clic en el enlace para activar tu cuenta.
-          </p>
+          <h1 className="text-2xl font-bold text-slate-800">
+            {devMode ? '¡Registro exitoso!' : '¡Revisa tu correo!'}
+          </h1>
+          {devMode ? (
+            <p className="text-slate-600">
+              Tu cuenta ha sido creada y activada automáticamente.
+              Ya puedes iniciar sesión.
+            </p>
+          ) : (
+            <p className="text-slate-600">
+              Hemos enviado un enlace de verificación a <span className="font-medium">{email}</span>.
+              Haz clic en el enlace para activar tu cuenta.
+            </p>
+          )}
           {isDoctor && (
             <div className="space-y-3">
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-left">
@@ -154,11 +167,13 @@ export default function RegisterPage() {
               )}
             </div>
           )}
-          <p className="text-slate-400 text-xs">
-            Si no encuentras el correo, revisa tu carpeta de spam.
-          </p>
+          {!devMode && (
+            <p className="text-slate-400 text-xs">
+              Si no encuentras el correo, revisa tu carpeta de spam.
+            </p>
+          )}
           <div className="space-y-3 pt-2">
-            <ResendButton email={email} />
+            {!devMode && <ResendButton email={email} />}
             <a href="/auth/login">
               <Button variant="outline" className="w-full">Ir al inicio de sesión</Button>
             </a>
@@ -196,7 +211,7 @@ export default function RegisterPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-            <PasswordStrengthBar password={password} />
+            <PasswordStrengthBar password={password} relaxed={devMode} />
           </div>
           
           <div>

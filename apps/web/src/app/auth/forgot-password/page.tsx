@@ -4,12 +4,15 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import api from '@/lib/api';
+import { useAuthConfig } from '@/hooks/queries/useAuthConfig';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { data: authConfig } = useAuthConfig();
+  const devMode = authConfig?.dev_mode ?? false;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,14 +72,31 @@ export default function ForgotPasswordPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
             </div>
-            <h2 className="text-xl font-bold text-slate-800">Revisa tu correo</h2>
-            <p className="text-slate-600 text-sm">
-              Si el correo <span className="font-medium">{email}</span> está registrado,
-              recibirás un enlace para restablecer tu contraseña.
-            </p>
-            <p className="text-slate-400 text-xs">
-              Revisa también tu carpeta de spam.
-            </p>
+            <h2 className="text-xl font-bold text-slate-800">
+              {devMode ? 'Enlace generado' : 'Revisa tu correo'}
+            </h2>
+            {devMode ? (
+              <>
+                <p className="text-slate-600 text-sm">
+                  El enlace de restablecimiento ha sido generado.
+                </p>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <p className="text-amber-800 text-xs font-medium">
+                    🛠 Dev mode: revisa la consola del backend para obtener el enlace de restablecimiento.
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-slate-600 text-sm">
+                  Si el correo <span className="font-medium">{email}</span> está registrado,
+                  recibirás un enlace para restablecer tu contraseña.
+                </p>
+                <p className="text-slate-400 text-xs">
+                  Revisa también tu carpeta de spam.
+                </p>
+              </>
+            )}
             <a href="/auth/login">
               <Button variant="outline" className="w-full mt-4">Volver al inicio de sesión</Button>
             </a>
