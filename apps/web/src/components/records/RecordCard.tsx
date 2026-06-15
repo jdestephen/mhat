@@ -3,12 +3,11 @@
 import React from 'react';
 import {
   Calendar,
-  CheckCircle,
-  AlertTriangle,
   Paperclip,
   Eye,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import { RecordStatus } from '@/types';
 
 export interface RecordCardDiagnosis {
@@ -48,27 +47,7 @@ const formatDate = (dateStr: string) => {
   });
 };
 
-const getStatusBadge = (status: RecordStatus | string) => {
-  if (status === RecordStatus.VERIFIED || status === 'VERIFIED') {
-    return (
-      <span className="flex items-center px-2.5 py-0.75 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 border border-emerald-200 gap-1">
-        <CheckCircle className="h-3 w-3" /> Verificado
-      </span>
-    );
-  }
-  if (status === RecordStatus.BACKED_BY_DOCUMENT || status === 'BACKED_BY_DOCUMENT') {
-    return (
-      <span className="flex items-center px-2.5 py-0.75 rounded-full text-xs font-medium bg-blue-100 text-blue-700 border border-blue-200 gap-1">
-        Con Documento
-      </span>
-    );
-  }
-  return (
-    <span className="flex items-center px-2.5 py-0.75 rounded-full text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200 gap-1">
-      <AlertTriangle className="h-3 w-3" /> Sin Verificar
-    </span>
-  );
-};
+
 
 export function RecordCard({ record, index, onViewDetail }: RecordCardProps) {
   return (
@@ -94,7 +73,7 @@ export function RecordCard({ record, index, onViewDetail }: RecordCardProps) {
                   {record.documents.length}
                 </span>
               )}
-              {getStatusBadge(record.status)}
+              <StatusBadge status={record.status} />
             </div>
           </div>
           <div className="flex flex-col mt-3 sm:mt-5">

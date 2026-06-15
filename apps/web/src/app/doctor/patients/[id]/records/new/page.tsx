@@ -38,6 +38,7 @@ import {
   XIcon,
   CalendarDays,
 } from 'lucide-react';
+import { useToast } from '@/components/ui/Toast';
 
 
 interface OrderForm {
@@ -76,6 +77,7 @@ export default function NewDoctorRecordPage({
   params: Promise<{ id: string }>;
   initialData?: MedicalRecord;
 }) {
+  const { toast } = useToast();
   const { id: patientId } = use(params);
   const router = useRouter();
   const { data: categories = [] } = useCategories();
@@ -302,7 +304,7 @@ export default function NewDoctorRecordPage({
       router.push(`/doctor/patients/${patientId}`);
     } catch (error) {
       console.error(isEditMode ? 'Error updating record:' : 'Error creating record:', error);
-      alert(isEditMode ? 'Error al actualizar registro' : 'Error al crear registro');
+      toast.error(isEditMode ? 'Error al actualizar registro' : 'Error al crear registro');
     } finally {
       setIsSubmitting(false);
     }

@@ -81,9 +81,9 @@ export function ShareLinkCard({ share, onRevoke, onRefresh }: ShareLinkCardProps
     <div className={`bg-white p-6 rounded-lg shadow-sm border ${
       isActive ? 'border-slate-200' : 'border-slate-150 bg-slate-50'
     }`}>
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
+      <div className="flex flex-col sm:flex-row items-start justify-between mb-4 gap-4 sm:gap-0">
+        <div className="flex flex-col w-full">
+          <div className="flex items-center gap-2 mb-0 sm:mb-2">
             <Link2 className="w-5 h-5 text-emerald-600" />
             <h3 className="font-semibold text-slate-900">
               {share.share_type === 'SUMMARY' ? 'Resumen Completo' : `${share.record_count} Registro${share.record_count > 1 ? 's' : ''}`}

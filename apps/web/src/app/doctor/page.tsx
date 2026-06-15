@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useMyPatients } from '@/hooks/queries/useMyPatients';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
 import { useClaimInvitation } from '@/hooks/mutations/useClaimInvitation';
@@ -9,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { UserRole, AccessLevel } from '@/types';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import api from '@/lib/api';
 import { 
   Users, 
   Search, 
@@ -26,10 +28,15 @@ import {
   Droplets,
   Activity,
   Mail,
+  UserCircle,
+  Navigation,
 } from 'lucide-react';
 import { VitalSignsModal } from '@/components/clinical/VitalSignsModal';
 import { CreatePatientModal } from '@/components/doctor/CreatePatientModal';
 import { ClaimRequestsPanel } from '@/components/doctor/ClaimRequestsPanel';
+import { Avatar } from '@/components/ui/Avatar';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { PatientPersonalInfoModal } from '@/components/doctor/PatientPersonalInfoModal';
 
 export default function DoctorDashboardPage() {
   const router = useRouter();
@@ -45,7 +52,27 @@ export default function DoctorDashboardPage() {
   const [vitalModalPatientId, setVitalModalPatientId] = useState<string>('');
   const [vitalModalPatientName, setVitalModalPatientName] = useState<string>('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [personalInfoModalOpen, setPersonalInfoModalOpen] = useState(false);
+  const [selectedPatientForInfo, setSelectedPatientForInfo] = useState<typeof patients[number] | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Fetch locations for whichever patient's menu is currently open
+  interface PatientLocation {
+    id: number;
+    label: string;
+    latitude: number;
+    longitude: number;
+    address: string | null;
+    is_default: boolean;
+  }
+  const { data: menuPatientLocations = [] } = useQuery<PatientLocation[]>({
+    queryKey: ['patient-locations', openMenuId],
+    queryFn: async () => {
+      const res = await api.get<PatientLocation[]>(`/doctor/patients/${openMenuId}/locations`);
+      return res.data;
+    },
+    enabled: !!openMenuId && patients.find(p => p.patient_id === openMenuId)?.access_level === AccessLevel.WRITE,
+  });
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -60,8 +87,13 @@ export default function DoctorDashboardPage() {
   }, [openMenuId]);
 
   // Redirect non-doctors
+  useEffect(() => {
+    if (!userLoading && user?.role !== UserRole.DOCTOR) {
+      router.replace('/dashboard');
+    }
+  }, [userLoading, user?.role, router]);
+
   if (!userLoading && user?.role !== UserRole.DOCTOR) {
-    router.push('/dashboard');
     return null;
   }
 
@@ -209,17 +241,13 @@ export default function DoctorDashboardPage() {
         </div>
 
         {filteredPatients.length === 0 ? (
-          <div className="p-12 text-center">
-            <Users className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {searchTerm ? 'No se encontraron pacientes' : 'Sin pacientes aún'}
-            </h3>
-            <p className="text-gray-500 mb-6">
-              {searchTerm 
-                ? 'Intenta con otro término de búsqueda'
-                : 'Los pacientes aparecerán aquí cuando les otorgues acceso'}
-            </p>
-          </div>
+          <EmptyState
+            icon={<Users className="h-12 w-12" />}
+            title={searchTerm ? 'No se encontraron pacientes' : 'Sin pacientes aún'}
+            description={searchTerm 
+              ? 'Intenta con otro término de búsqueda'
+              : 'Los pacientes aparecerán aquí cuando les otorgues acceso'}
+          />
         ) : (
           <div className="divide-y divide-gray-100">
             {filteredPatients.map((patient) => (
@@ -229,11 +257,7 @@ export default function DoctorDashboardPage() {
               >
                 {/* Left: Avatar + Info */}
                 <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                  <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                    <span className="text-lg font-semibold text-emerald-700">
-                      {patient.first_name[0]}{patient.last_name[0]}
-                    </span>
-                  </div>
+                  <Avatar firstName={patient.first_name} lastName={patient.last_name} />
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="font-medium text-gray-900">
@@ -339,6 +363,46 @@ export default function DoctorDashboardPage() {
                           <Activity className="h-4 w-4 text-rose-600" />
                           Signos Vitales
                         </button>
+                        <div className="border-t border-gray-100 my-1" />
+                        <button
+                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                          onClick={() => {
+                            setOpenMenuId(null);
+                            setSelectedPatientForInfo(patient);
+                            setPersonalInfoModalOpen(true);
+                          }}
+                        >
+                          <UserCircle className="h-4 w-4 text-slate-600" />
+                          Datos Personales
+                        </button>
+                        {menuPatientLocations.length > 0 && (
+                          <>
+                            <div className="border-t border-gray-100 my-1" />
+                            <div className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                              Ubicaciones
+                            </div>
+                            {menuPatientLocations.map((loc) => (
+                              <button
+                                key={loc.id}
+                                type="button"
+                                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                                onClick={() => {
+                                  setOpenMenuId(null);
+                                  window.open(
+                                    `https://www.google.com/maps/dir/?api=1&destination=${loc.latitude},${loc.longitude}`,
+                                    '_blank',
+                                  );
+                                }}
+                              >
+                                <Navigation className="h-4 w-4 text-blue-500" />
+                                <span className="truncate">{loc.label}</span>
+                                {loc.is_default && (
+                                  <span className="ml-auto text-[10px] text-emerald-600 font-medium">Principal</span>
+                                )}
+                              </button>
+                            ))}
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
@@ -364,6 +428,16 @@ export default function DoctorDashboardPage() {
       onOpenChange={setShowCreateModal}
       onSuccess={(patientId) => router.push(`/doctor/patients/${patientId}`)}
     />
+
+    {/* Patient Personal Info Modal */}
+    {selectedPatientForInfo && (
+      <PatientPersonalInfoModal
+        open={personalInfoModalOpen}
+        onOpenChange={setPersonalInfoModalOpen}
+        patient={selectedPatientForInfo}
+        onSuccess={() => {}}
+      />
+    )}
     </>
   );
 }

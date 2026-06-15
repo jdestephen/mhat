@@ -1,5 +1,5 @@
-from sqlalchemy import String, ForeignKey, Date, Text, ARRAY, DateTime, Enum
-from sqlalchemy.dialects.postgresql import UUID as PGUUID
+from sqlalchemy import String, ForeignKey, Date, Text, ARRAY, DateTime, Enum, Boolean
+from sqlalchemy.dialects.postgresql import UUID as PGUUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import Optional, List
 from uuid import UUID
@@ -33,6 +33,13 @@ class DoctorProfile(Base):
     
     # Hospitals/Clinics where they work
     workplaces: Mapped[Optional[List[str]]] = mapped_column(ARRAY(String), nullable=True)
+
+    # Verification documents
+    identity_document_key: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    college_document_key: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    ocr_extracted_data: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    verification_notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    ocr_processed: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
 
     # Approval workflow
     approval_status: Mapped[DoctorApprovalStatus] = mapped_column(

@@ -27,6 +27,8 @@ import {
   ArrowLeft,
   Activity,
   UserCircle,
+  MapPin,
+  Navigation,
 } from 'lucide-react';
 import { RecordDetailModal, RecordDetailData } from '@/components/records/RecordDetailModal';
 import { RecordCard, RecordCardData } from '@/components/records/RecordCard';
@@ -104,9 +106,32 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
 
   const isReadOnly = patient?.access_level === AccessLevel.READ_ONLY;
 
+  // Fetch patient locations (only when doctor has write access)
+  interface PatientLocation {
+    id: number;
+    label: string;
+    latitude: number;
+    longitude: number;
+    address: string | null;
+    is_default: boolean;
+  }
+  const { data: patientLocations = [] } = useQuery<PatientLocation[]>({
+    queryKey: ['patient-locations', patientId],
+    queryFn: async () => {
+      const res = await api.get<PatientLocation[]>(`/doctor/patients/${patientId}/locations`);
+      return res.data;
+    },
+    enabled: !isReadOnly,
+  });
+
   // Redirect non-doctors
+  useEffect(() => {
+    if (!userLoading && user?.role !== UserRole.DOCTOR) {
+      router.replace('/dashboard');
+    }
+  }, [userLoading, user?.role, router]);
+
   if (!userLoading && user?.role !== UserRole.DOCTOR) {
-    router.push('/dashboard');
     return null;
   }
 
@@ -183,6 +208,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
             medications={health?.medications ?? []}
             conditions={health?.conditions ?? []}
             allergies={health?.allergies ?? []}
+            surgeries={health?.surgeries ?? []}
             healthHabit={health?.health_habit ?? null}
             familyHistory={health?.family_history ?? []}
           />
@@ -194,6 +220,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
             medications={health?.medications ?? []}
             conditions={health?.conditions ?? []}
             allergies={health?.allergies ?? []}
+            surgeries={health?.surgeries ?? []}
             healthHabit={health?.health_habit ?? null}
             familyHistory={health?.family_history ?? []}
           />
@@ -241,7 +268,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                             variant="default"
                           >
                             <Plus className="h-4 w-4" />
-                            Nuevo Registro
+                            <span className="sm:hidden md:inline">Nuevo Registro</span>
                           </Button>
                         </Link>
                         <Button
@@ -305,6 +332,34 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                             <UserCircle className="h-4 w-4 text-slate-600" />
                             Datos Personales
                           </button>
+                          {patientLocations.length > 0 && (
+                            <>
+                              <div className="border-t border-gray-100 my-1" />
+                              <div className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                                Ubicaciones
+                              </div>
+                              {patientLocations.map((loc) => (
+                                <button
+                                  key={loc.id}
+                                  type="button"
+                                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                                  onClick={() => {
+                                    setActionMenuOpen(false);
+                                    window.open(
+                                      `https://www.google.com/maps/dir/?api=1&destination=${loc.latitude},${loc.longitude}`,
+                                      '_blank',
+                                    );
+                                  }}
+                                >
+                                  <Navigation className="h-4 w-4 text-blue-500" />
+                                  <span className="truncate">{loc.label}</span>
+                                  {loc.is_default && (
+                                    <span className="ml-auto text-[10px] text-emerald-600 font-medium">Principal</span>
+                                  )}
+                                </button>
+                              ))}
+                            </>
+                          )}
                         </div>
                       )}
                     </div>
@@ -681,6 +736,34 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                   <UserCircle className="h-4 w-4 text-slate-600" />
                   Datos Personales
                 </button>
+                {patientLocations.length > 0 && (
+                  <>
+                    <div className="border-t border-gray-100 my-1" />
+                    <div className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                      Ubicaciones
+                    </div>
+                    {patientLocations.map((loc) => (
+                      <button
+                        key={loc.id}
+                        type="button"
+                        className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                        onClick={() => {
+                          setActionMenuOpen(false);
+                          window.open(
+                            `https://www.google.com/maps/dir/?api=1&destination=${loc.latitude},${loc.longitude}`,
+                            '_blank',
+                          );
+                        }}
+                      >
+                        <Navigation className="h-4 w-4 text-blue-500" />
+                        <span className="truncate">{loc.label}</span>
+                        {loc.is_default && (
+                          <span className="ml-auto text-[10px] text-emerald-600 font-medium">Principal</span>
+                        )}
+                      </button>
+                    ))}
+                  </>
+                )}
               </div>
             )}
             <button

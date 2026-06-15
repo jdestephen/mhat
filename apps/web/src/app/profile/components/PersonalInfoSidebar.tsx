@@ -7,6 +7,7 @@ import { Select } from '@/components/ui/select';
 import { User, UserRole, Sex, PatientProfile, DoctorProfile } from '@/types';
 import api from '@/lib/api';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useToast } from '@/components/ui/Toast';
 
 interface PersonalInfoSidebarProps {
   user: User;
@@ -15,6 +16,7 @@ interface PersonalInfoSidebarProps {
 }
 
 export function PersonalInfoSidebar({ user, profile, onUpdate }: PersonalInfoSidebarProps) {
+  const { toast } = useToast();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [saving, setSaving] = useState(false);
   
@@ -66,11 +68,11 @@ export function PersonalInfoSidebar({ user, profile, onUpdate }: PersonalInfoSid
         });
       }
 
-      alert('¡Perfil actualizado!');
+      toast.success('¡Perfil actualizado!');
       onUpdate();
     } catch (error) {
       console.error(error);
-      alert('Error al actualizar el perfil');
+      toast.error('Error al actualizar el perfil');
     } finally {
       setSaving(false);
     }

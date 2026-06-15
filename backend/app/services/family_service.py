@@ -3,7 +3,7 @@ Family Service
 
 Business logic for managing family accounts and access control.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 from uuid import UUID
 from sqlalchemy.orm import Session
@@ -294,7 +294,7 @@ class FamilyService:
         
         # Soft delete
         membership.is_active = False
-        membership.revoked_at = datetime.utcnow()
+        membership.revoked_at = datetime.now(timezone.utc)
         membership.revoked_by = revoker_user_id
         
         db.commit()

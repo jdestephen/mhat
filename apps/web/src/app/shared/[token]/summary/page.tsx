@@ -7,6 +7,7 @@ import { Clock, User, FileText } from 'lucide-react';
 import { RecordDetailModal, RecordDetailData } from '@/components/records/RecordDetailModal';
 import { RecordCard, RecordCardData } from '@/components/records/RecordCard';
 import { HealthSidebar } from '@/components/patient/HealthSidebar';
+import { useToast } from '@/components/ui/Toast';
 
 interface RecentRecord {
   id: string;
@@ -53,6 +54,7 @@ interface SummaryData {
 }
 
 export default function SummaryPage() {
+  const { toast } = useToast();
   const params = useParams();
   const token = params.token as string;
   const [data, setData] = useState<SummaryData | null>(null);
@@ -71,7 +73,7 @@ export default function SummaryPage() {
       setModalOpen(true);
     } catch (err: unknown) {
       console.error('Failed to load record:', err);
-      alert('Error al cargar el registro');
+      toast.error('Error al cargar el registro');
     } finally {
       setLoadingRecord(false);
     }

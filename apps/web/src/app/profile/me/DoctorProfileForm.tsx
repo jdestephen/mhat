@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { User, Sex, DoctorProfile } from '@/types';
+import { useToast } from '@/components/ui/Toast';
 
 const SEX_OPTIONS = [
   { value: '', label: 'Selecciona...' },
@@ -34,6 +35,7 @@ interface FormData {
 }
 
 export function DoctorProfileForm({ user, profile, onSaved }: DoctorProfileFormProps) {
+  const { toast } = useToast();
   const [saving, setSaving] = React.useState(false);
   const [formData, setFormData] = React.useState<FormData>({
     firstName: user.first_name || '',
@@ -78,11 +80,11 @@ export function DoctorProfileForm({ user, profile, onSaved }: DoctorProfileFormP
         address: formData.address || null,
       });
 
-      alert('¡Perfil actualizado!');
+      toast.success('¡Perfil actualizado!');
       onSaved();
     } catch (error) {
       console.error(error);
-      alert('Error al actualizar el perfil');
+      toast.error('Error al actualizar el perfil');
     } finally {
       setSaving(false);
     }

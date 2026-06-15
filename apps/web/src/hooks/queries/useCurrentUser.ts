@@ -3,6 +3,8 @@ import api from '@/lib/api';
 import { User } from '@/types';
 
 export function useCurrentUser() {
+  const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('token');
+
   return useQuery({
     queryKey: ['auth', 'me'],
     queryFn: async () => {
@@ -10,5 +12,6 @@ export function useCurrentUser() {
       return res.data;
     },
     staleTime: 1000 * 60 * 10, // 10 minutes - user info changes infrequently
+    enabled: hasToken,
   });
 }

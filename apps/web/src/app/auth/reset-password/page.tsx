@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import api from '@/lib/api';
 import { PasswordStrengthBar, isPasswordStrong } from '@/components/ui/PasswordStrengthBar';
+import { useAuthConfig } from '@/hooks/queries/useAuthConfig';
 
 export default function ResetPasswordPage() {
   return (
@@ -29,6 +30,8 @@ function ResetPasswordContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const { data: authConfig } = useAuthConfig();
+  const devMode = authConfig?.dev_mode ?? false;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +42,7 @@ function ResetPasswordContent() {
       return;
     }
 
-    if (!isPasswordStrong(newPassword)) {
+    if (!isPasswordStrong(newPassword, devMode)) {
       setError('La contraseña no cumple con los requisitos de seguridad.');
       return;
     }
@@ -126,7 +129,7 @@ function ResetPasswordContent() {
               onChange={(e) => setNewPassword(e.target.value)}
               required
             />
-            <PasswordStrengthBar password={newPassword} />
+            <PasswordStrengthBar password={newPassword} relaxed={devMode} />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Confirmar Contraseña</label>
@@ -140,7 +143,7 @@ function ResetPasswordContent() {
               <p className="text-red-500 text-xs mt-1">Las contraseñas no coinciden.</p>
             )}
           </div>
-          <Button type="submit" className="w-full" disabled={loading || !isPasswordStrong(newPassword)}>
+          <Button type="submit" className="w-full" disabled={loading || !isPasswordStrong(newPassword, devMode)}>
             {loading ? 'Guardando...' : 'Restablecer Contraseña'}
           </Button>
         </form>

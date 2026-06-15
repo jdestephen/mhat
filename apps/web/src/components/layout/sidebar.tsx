@@ -144,8 +144,18 @@ export function Sidebar({ onClose }: SidebarProps = {}) {
     ],
   });
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (refreshToken) {
+      try {
+        const { default: api } = await import('@/lib/api');
+        await api.post('/auth/logout', { refresh_token: refreshToken });
+      } catch {
+        // Silent — still proceed with local cleanup
+      }
+    }
     localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
     router.push('/auth/login');
   };
 

@@ -1,7 +1,7 @@
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Any
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -9,6 +9,7 @@ from sqlalchemy.future import select
 from app.api import deps
 from app.core import security
 from app.core.config import settings
+from app.core.rate_limit import rate_limiter, get_client_ip
 from app.db.session import get_db
 from app.models.user import User, UserRole
 from app.models.patient import PatientProfile
@@ -75,11 +76,26 @@ async def _validate_token(db: AsyncSession, token_value: str, token_type: TokenT
     return token
 
 
+@router.get("/config")
+async def get_auth_config():
+    """
+    Public endpoint: returns auth configuration for the frontend.
+    No authentication required.
+    """
+    return {
+        "dev_mode": not settings.EMAIL_ENABLED,
+        "require_strong_password": settings.EMAIL_ENABLED,
+        "email_verification_required": settings.EMAIL_ENABLED,
+    }
+
+
 @router.post("/login", response_model=token_schema.Token)
 async def login_access_token(
+    request: Request,
     db: AsyncSession = Depends(get_db),
     form_data: OAuth2PasswordRequestForm = Depends()
 ) -> Any:
+    rate_limiter.check(get_client_ip(request), "login", max_requests=5, window_seconds=60)
     result = await db.execute(select(User).filter(User.email == form_data.username))
     user = result.scalars().first()
 
@@ -111,21 +127,112 @@ async def login_access_token(
                 detail=f"Tu solicitud de cuenta de médico fue rechazada. Razón: {reason}",
             )
 
+    # Create access token
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = security.create_access_token(
+        user.id, expires_delta=access_token_expires
+    )
+
+    # Create refresh token
+    from app.models.refresh_token import RefreshToken
+
+    raw_refresh = security.create_refresh_token_value()
+    refresh_expires = datetime.now(timezone.utc) + timedelta(
+        days=settings.REFRESH_TOKEN_EXPIRE_DAYS
+    )
+    refresh_token = RefreshToken(
+        user_id=user.id,
+        token_hash=security.hash_refresh_token(raw_refresh),
+        expires_at=refresh_expires,
+        device_info=request.headers.get("user-agent", "")[:200],
+    )
+    db.add(refresh_token)
+    await db.commit()
+
     return {
-        "access_token": security.create_access_token(
-            user.id, expires_delta=access_token_expires
-        ),
+        "access_token": access_token,
+        "refresh_token": raw_refresh,
         "token_type": "bearer",
     }
+
+
+@router.post("/refresh", response_model=token_schema.Token)
+async def refresh_access_token(
+    *,
+    db: AsyncSession = Depends(get_db),
+    body: token_schema.RefreshTokenRequest,
+) -> Any:
+    """Exchange a valid refresh token for a new access + refresh token pair."""
+    from app.models.refresh_token import RefreshToken
+
+    token_hash = security.hash_refresh_token(body.refresh_token)
+    result = await db.execute(
+        select(RefreshToken).filter(RefreshToken.token_hash == token_hash)
+    )
+    stored_token = result.scalars().first()
+
+    if not stored_token or not stored_token.is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token inválido o expirado. Inicia sesión de nuevo.",
+        )
+
+    # Revoke old refresh token (rotation)
+    stored_token.revoked_at = datetime.now(timezone.utc)
+
+    # Issue new pair
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    new_access = security.create_access_token(
+        stored_token.user_id, expires_delta=access_token_expires
+    )
+    new_raw_refresh = security.create_refresh_token_value()
+    refresh_expires = datetime.now(timezone.utc) + timedelta(
+        days=settings.REFRESH_TOKEN_EXPIRE_DAYS
+    )
+    new_refresh_token = RefreshToken(
+        user_id=stored_token.user_id,
+        token_hash=security.hash_refresh_token(new_raw_refresh),
+        expires_at=refresh_expires,
+    )
+    db.add(new_refresh_token)
+    await db.commit()
+
+    return {
+        "access_token": new_access,
+        "refresh_token": new_raw_refresh,
+        "token_type": "bearer",
+    }
+
+
+@router.post("/logout")
+async def logout(
+    *,
+    db: AsyncSession = Depends(get_db),
+    body: token_schema.RefreshTokenRequest,
+) -> Any:
+    """Revoke a refresh token (logout)."""
+    from app.models.refresh_token import RefreshToken
+
+    token_hash = security.hash_refresh_token(body.refresh_token)
+    result = await db.execute(
+        select(RefreshToken).filter(RefreshToken.token_hash == token_hash)
+    )
+    stored_token = result.scalars().first()
+    if stored_token and stored_token.revoked_at is None:
+        stored_token.revoked_at = datetime.now(timezone.utc)
+        await db.commit()
+
+    return {"message": "Sesión cerrada exitosamente."}
 
 
 @router.post("/register", response_model=user_schema.User)
 async def register_user(
     *,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     user_in: user_schema.UserCreate,
 ) -> Any:
+    rate_limiter.check(get_client_ip(request), "register", max_requests=3, window_seconds=60)
     result = await db.execute(select(User).filter(User.email == user_in.email))
     existing_user = result.scalars().first()
     if existing_user:
@@ -141,8 +248,9 @@ async def register_user(
         last_name=user_in.last_name,
         city=user_in.city,
         country=user_in.country,
-        is_active=False,
-        is_email_verified=False,
+        # In dev mode (EMAIL_ENABLED=false), auto-verify and activate
+        is_active=not settings.EMAIL_ENABLED,
+        is_email_verified=not settings.EMAIL_ENABLED,
         role=user_in.role,
     )
     db.add(user)
@@ -264,10 +372,12 @@ async def resend_verification(
 @router.post("/forgot-password")
 async def forgot_password(
     *,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     body: user_schema.ForgotPasswordRequest,
 ) -> Any:
     """Send password reset email. Always returns 200 to prevent email enumeration."""
+    rate_limiter.check(get_client_ip(request), "forgot_password", max_requests=3, window_seconds=60)
     result = await db.execute(select(User).filter(User.email == body.email))
     user = result.scalars().first()
 
@@ -347,3 +457,120 @@ async def update_current_user(
     await db.commit()
     await db.refresh(current_user)
     return current_user
+
+
+# =====================
+# Doctor Document Upload
+# =====================
+
+from fastapi import File, Form, UploadFile as FastAPIUpload
+from typing import Optional as OptionalType
+
+
+@router.post("/doctor/upload-documents-registration")
+async def upload_doctor_documents_registration(
+    *,
+    db: AsyncSession = Depends(get_db),
+    email: str = Form(...),
+    password: str = Form(...),
+    identity_document: OptionalType[FastAPIUpload] = File(None),
+    college_document: OptionalType[FastAPIUpload] = File(None),
+):
+    """
+    Upload verification documents immediately after registration.
+    Uses email/password instead of token because the doctor is pending and cannot login.
+    """
+    if not identity_document and not college_document:
+        raise HTTPException(status_code=400, detail="Debes subir al menos un documento.")
+
+    result = await db.execute(select(User).filter(User.email == email))
+    user = result.scalars().first()
+
+    if not user or not security.verify_password(password, user.password):
+        raise HTTPException(status_code=400, detail="Credenciales inválidas para subir documentos.")
+    
+    if user.role != UserRole.DOCTOR:
+        raise HTTPException(status_code=403, detail="Solo los médicos pueden subir documentos.")
+
+    result_dp = await db.execute(select(DoctorProfile).where(DoctorProfile.user_id == user.id))
+    profile = result_dp.scalars().first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Perfil de médico no encontrado.")
+
+    from app.services.document_verification import (
+        verify_doctor_documents,
+        DocumentValidationError,
+    )
+
+    try:
+        verification_result = await verify_doctor_documents(
+            db=db,
+            profile=profile,
+            identity_file=identity_document,
+            college_file=college_document,
+        )
+    except DocumentValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return {
+        "message": "Documentos procesados exitosamente.",
+        "profile": {
+            "dni": profile.dni,
+            "college_number": profile.college_number,
+        },
+        **verification_result,
+    }
+
+
+@router.post("/doctor/upload-documents")
+async def upload_doctor_documents(
+    *,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+    identity_document: OptionalType[FastAPIUpload] = File(None),
+    college_document: OptionalType[FastAPIUpload] = File(None),
+):
+    """
+    Upload verification documents for a doctor profile.
+
+    Accepts identity document (DNI/DPI photo) and/or college registration document.
+    Runs OCR to extract fields and auto-fills profile if values weren't manually set.
+    """
+    if current_user.role != UserRole.DOCTOR:
+        raise HTTPException(status_code=403, detail="Solo los médicos pueden subir documentos de verificación.")
+
+    if not identity_document and not college_document:
+        raise HTTPException(status_code=400, detail="Debes subir al menos un documento.")
+
+    # Get doctor profile
+    result = await db.execute(
+        select(DoctorProfile).where(DoctorProfile.user_id == current_user.id)
+    )
+    profile = result.scalars().first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Perfil de médico no encontrado.")
+
+    from app.services.document_verification import (
+        verify_doctor_documents,
+        DocumentValidationError,
+    )
+
+    try:
+        verification_result = await verify_doctor_documents(
+            db=db,
+            profile=profile,
+            identity_file=identity_document,
+            college_file=college_document,
+        )
+    except DocumentValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return {
+        "message": "Documentos procesados exitosamente.",
+        "profile": {
+            "dni": profile.dni,
+            "college_number": profile.college_number,
+        },
+        **verification_result,
+    }
+

@@ -7,6 +7,7 @@ import { Select } from '@/components/ui/select';
 import { PersonalReference, RelationshipType } from '@/types';
 import api from '@/lib/api';
 import { Trash2, Pencil, X, Plus } from 'lucide-react';
+import { useToast } from '@/components/ui/Toast';
 
 const RELATIONSHIP_OPTIONS = [
   { value: RelationshipType.PADRE, label: 'Padre' },
@@ -42,6 +43,7 @@ function getRelationshipLabel(type: RelationshipType): string {
 }
 
 export function PersonalReferencesTab({ references, onRefresh, profileId }: PersonalReferencesTabProps) {
+  const { toast } = useToast();
   const withProfile = (url: string) => {
     if (!profileId) return url;
     const sep = url.includes('?') ? '&' : '?';
@@ -80,7 +82,7 @@ export function PersonalReferencesTab({ references, onRefresh, profileId }: Pers
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.phone || !formData.relationship_type) {
-      alert('Todos los campos son requeridos');
+      toast.warning('Todos los campos son requeridos');
       return;
     }
 
@@ -96,7 +98,7 @@ export function PersonalReferencesTab({ references, onRefresh, profileId }: Pers
     } catch (error: unknown) {
       console.error(error);
       const axiosError = error as { response?: { data?: { detail?: string } } };
-      alert(axiosError?.response?.data?.detail || 'Error al guardar referencia');
+      toast.error(axiosError?.response?.data?.detail || 'Error al guardar referencia');
     } finally {
       setSaving(false);
     }
@@ -110,7 +112,7 @@ export function PersonalReferencesTab({ references, onRefresh, profileId }: Pers
       onRefresh();
     } catch (error) {
       console.error(error);
-      alert('Error al eliminar referencia');
+      toast.error('Error al eliminar referencia');
     } finally {
       setDeleting(null);
     }

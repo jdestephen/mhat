@@ -20,6 +20,7 @@ import {
   MedicationSource,
 } from '@/types';
 import { X, Plus, Pill, Pencil } from 'lucide-react';
+import { useToast } from '@/components/ui/Toast';
 
 interface MedicationListProps {
   profile: PatientProfile;
@@ -31,6 +32,7 @@ interface MedicationListProps {
 type FormMode = 'view' | 'add' | 'edit';
 
 export function MedicationList({ profile, onRefresh, apiPrefix = '/profiles/patient', profileId }: MedicationListProps) {
+  const { toast } = useToast();
   const withProfile = (url: string) => {
     if (!profileId) return url;
     const sep = url.includes('?') ? '&' : '?';
@@ -72,7 +74,7 @@ export function MedicationList({ profile, onRefresh, apiPrefix = '/profiles/pati
 
   const handleSave = async () => {
     if (!formData.name) {
-      alert('Por favor ingresa el nombre del medicamento');
+      toast.warning('Por favor ingresa el nombre del medicamento');
       return;
     }
 
@@ -93,7 +95,7 @@ export function MedicationList({ profile, onRefresh, apiPrefix = '/profiles/pati
       onRefresh();
     } catch (error) {
       console.error(error);
-      alert('Error al guardar medicamento');
+      toast.error('Error al guardar medicamento');
     } finally {
       setSaving(false);
     }
@@ -109,7 +111,7 @@ export function MedicationList({ profile, onRefresh, apiPrefix = '/profiles/pati
       onRefresh();
     } catch (error) {
       console.error(error);
-      alert('Error al eliminar medicamento');
+      toast.error('Error al eliminar medicamento');
     }
   };
 
@@ -358,7 +360,7 @@ export function MedicationList({ profile, onRefresh, apiPrefix = '/profiles/pati
                 <div className="flex-1">Nombre</div>
                 <div className="w-28">Dosis</div>
                 <div className="w-36">Frecuencia</div>
-                <div className="w-34">Vía</div>
+                <div className="w-34 sm:hidden lg:flex">Vía</div>
                 <div className="w-28">Estado</div>
                 <div className="w-14 text-center">Acciones</div>
               </div>
@@ -374,17 +376,17 @@ export function MedicationList({ profile, onRefresh, apiPrefix = '/profiles/pati
                   </div>
                   
                   <div className="w-full md:w-28">
-                    <span className="md:hidden font-medium text-slate-500">Dosis: </span>
+                    <span className="md:hidden font-medium text-sm text-slate-500">Dosis: </span>
                     <span className="text-slate-700 text-sm">{med.dosage || '—'}</span>
                   </div>
                   
                   <div className="w-full md:w-36">
-                    <span className="md:hidden font-medium text-slate-500">Frecuencia: </span>
+                    <span className="md:hidden font-medium text-sm text-slate-500">Frecuencia: </span>
                     <span className="text-slate-700 text-sm">{med.frequency || '—'}</span>
                   </div>
 
-                  <div className="w-full md:w-34">
-                    <span className="md:hidden font-medium text-slate-500">Vía: </span>
+                  <div className="w-full md:w-34 sm:hidden lg:flex">
+                    <span className="md:hidden font-medium text-sm text-slate-500">Vía: </span>
                     <span className="text-slate-700 capitalize text-sm truncate">{med.route ? ROUTE_OPTIONS.find(r => r.value === med.route)?.label || med.route : '—'}</span>
                   </div>
                   
@@ -394,12 +396,12 @@ export function MedicationList({ profile, onRefresh, apiPrefix = '/profiles/pati
                     </span>
                   </div>
                   
-                  <div className="w-full md:w-14 flex gap-1 justify-start md:justify-center">
+                  <div className="w-full md:w-14 flex gap-1 sm:gap-0 justify-end md:justify-center">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleEdit(med)}
-                      className="text-emerald-700 hover:text-emerald-900 hover:bg-emerald-50"
+                      className="border border-slate-200 md:border-0 text-emerald-700 hover:text-emerald-900 hover:bg-emerald-50 px-3 sm:px-2" 
                     >
                       <Pencil className="w-4 h-4" />
                       <span className="md:hidden ml-1">Editar</span>
@@ -408,7 +410,7 @@ export function MedicationList({ profile, onRefresh, apiPrefix = '/profiles/pati
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDelete(med.id)}
-                      className="text-red-600 hover:text-red-900 hover:bg-red-50"
+                      className="border border-red-200 md:border-0 text-red-600 hover:text-red-900 hover:bg-red-50 px-3 sm:px-2"
                     >
                       <X className="w-4 h-4" />
                       <span className="md:hidden ml-1">Eliminar</span>
