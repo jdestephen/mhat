@@ -463,8 +463,63 @@ async def update_current_user(
 # Doctor Document Upload
 # =====================
 
-from fastapi import File, UploadFile as FastAPIUpload
+from fastapi import File, Form, UploadFile as FastAPIUpload
 from typing import Optional as OptionalType
+
+
+@router.post("/doctor/upload-documents-registration")
+async def upload_doctor_documents_registration(
+    *,
+    db: AsyncSession = Depends(get_db),
+    email: str = Form(...),
+    password: str = Form(...),
+    identity_document: OptionalType[FastAPIUpload] = File(None),
+    college_document: OptionalType[FastAPIUpload] = File(None),
+):
+    """
+    Upload verification documents immediately after registration.
+    Uses email/password instead of token because the doctor is pending and cannot login.
+    """
+    if not identity_document and not college_document:
+        raise HTTPException(status_code=400, detail="Debes subir al menos un documento.")
+
+    result = await db.execute(select(User).filter(User.email == email))
+    user = result.scalars().first()
+
+    if not user or not security.verify_password(password, user.password):
+        raise HTTPException(status_code=400, detail="Credenciales inválidas para subir documentos.")
+    
+    if user.role != UserRole.DOCTOR:
+        raise HTTPException(status_code=403, detail="Solo los médicos pueden subir documentos.")
+
+    result_dp = await db.execute(select(DoctorProfile).where(DoctorProfile.user_id == user.id))
+    profile = result_dp.scalars().first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Perfil de médico no encontrado.")
+
+    from app.services.document_verification import (
+        verify_doctor_documents,
+        DocumentValidationError,
+    )
+
+    try:
+        verification_result = await verify_doctor_documents(
+            db=db,
+            profile=profile,
+            identity_file=identity_document,
+            college_file=college_document,
+        )
+    except DocumentValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return {
+        "message": "Documentos procesados exitosamente.",
+        "profile": {
+            "dni": profile.dni,
+            "college_number": profile.college_number,
+        },
+        **verification_result,
+    }
 
 
 @router.post("/doctor/upload-documents")

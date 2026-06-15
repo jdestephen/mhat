@@ -91,6 +91,15 @@ export default function AdminDoctorsPage() {
   const [rejectTarget, setRejectTarget] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
 
+  const getFullDocUrl = (url: string | null) => {
+    if (!url) return null;
+    if (url.startsWith('/static/')) {
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://localhost:8000';
+      return `${backendUrl}${url}`;
+    }
+    return url;
+  };
+
   const fetchApplications = useCallback(async () => {
     try {
       const params = filter !== 'ALL' ? { status: filter } : {};
@@ -296,7 +305,7 @@ export default function AdminDoctorsPage() {
                           {/* Identity Document */}
                           {app.identity_document_url && (
                             <a
-                              href={app.identity_document_url}
+                              href={getFullDocUrl(app.identity_document_url) || '#'}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="flex items-center gap-2 p-2 bg-white border border-slate-200 rounded-md hover:border-emerald-300 hover:bg-emerald-50/50 transition-colors group"
@@ -316,7 +325,7 @@ export default function AdminDoctorsPage() {
                           {/* College Document */}
                           {app.college_document_url && (
                             <a
-                              href={app.college_document_url}
+                              href={getFullDocUrl(app.college_document_url) || '#'}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="flex items-center gap-2 p-2 bg-white border border-slate-200 rounded-md hover:border-emerald-300 hover:bg-emerald-50/50 transition-colors group"

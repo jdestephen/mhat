@@ -74,25 +74,17 @@ export default function RegisterPage() {
       // Step 2: If doctor has documents, upload them
       if (isDoctor && (identityFile || collegeFile)) {
         try {
-          // Login to get token for document upload
-          const loginRes = await api.post('/auth/login', new URLSearchParams({
-            username: email,
-            password: password,
-          }), {
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          });
-
-          const token = loginRes.data.access_token;
           setUploadingDocs(true);
 
           const formData = new FormData();
+          formData.append('email', email);
+          formData.append('password', password);
           if (identityFile) formData.append('identity_document', identityFile);
           if (collegeFile) formData.append('college_document', collegeFile);
 
-          const ocrRes = await api.post('/auth/doctor/upload-documents', formData, {
+          const ocrRes = await api.post('/auth/doctor/upload-documents-registration', formData, {
             headers: {
               'Content-Type': 'multipart/form-data',
-              Authorization: `Bearer ${token}`,
             },
           });
 

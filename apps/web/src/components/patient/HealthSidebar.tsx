@@ -278,7 +278,7 @@ export function HealthSidebar({
 
       {/* Family History */}
       <HealthInfoCard
-        title="Antecedentes Familiares"
+        title="Antecedentes"
         icon={Users}
         iconColor="text-indigo-600"
         isEmpty={!familyHistory.length}

@@ -10,6 +10,7 @@ import { PatientHealthHistory } from '@/app/profile/components/patient-health-hi
 import { MedicationList } from '@/app/profile/components/medication-list';
 import { HabitsTab } from '@/app/profile/components/HabitsTab';
 import { FamilyHistoryTab } from '@/app/profile/components/FamilyHistoryTab';
+import { SurgeriesTab } from '@/app/profile/components/surgeries-tab';
 import { ArrowLeft } from 'lucide-react';
 import { PatientInfoBanner } from '@/components/doctor/PatientInfoBanner';
 import { useMyPatients } from '@/hooks/queries/useMyPatients';
@@ -53,6 +54,12 @@ export default function DoctorHealthHistoryPage() {
           ...m,
           patient_profile_id: patientId,
           created_at: m.created_at || new Date().toISOString(),
+          deleted: false,
+        })),
+        surgeries: (healthData.surgeries || []).map((s: Record<string, unknown>) => ({
+          ...s,
+          patient_profile_id: patientId,
+          created_at: s.created_at || new Date().toISOString(),
           deleted: false,
         })),
       } as unknown as PatientProfile);
@@ -116,10 +123,11 @@ export default function DoctorHealthHistoryPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-0 w-full flex-wrap">
           <TabsTrigger value="history" className="flex-1 rounded-tl-lg">
-            <span className="hidden md:block">Condiciones y Alergías</span>
+            <span className="hidden md:block">Condiciones y Alergias</span>
             <span className="block md:hidden">Cond. y Alerg.</span>
           </TabsTrigger>
           <TabsTrigger value="medications" className="flex-1">Medicamentos</TabsTrigger>
+          <TabsTrigger value="surgeries" className="flex-1">Cirugías</TabsTrigger>
           <TabsTrigger value="habits" className="flex-1">Hábitos</TabsTrigger>
           <TabsTrigger value="family-history" className="flex-1 rounded-tr-lg">
             <span className="hidden md:block">Antecedentes Familiares</span>
@@ -140,6 +148,16 @@ export default function DoctorHealthHistoryPage() {
         <TabsContent value="medications">
           <div className="bg-white p-6 rounded-b-lg shadow-sm border border-[var(--border-light)]">
             <MedicationList
+              profile={profile}
+              onRefresh={fetchProfile}
+              apiPrefix={apiPrefix}
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="surgeries">
+          <div className="bg-white p-6 rounded-b-lg shadow-sm border border-[var(--border-light)]">
+            <SurgeriesTab
               profile={profile}
               onRefresh={fetchProfile}
               apiPrefix={apiPrefix}

@@ -83,7 +83,7 @@ export default function HealthHistoryPage() {
           <TabsTrigger value="medications" className="flex-1 text-xs sm:text-sm">Medicamentos</TabsTrigger>
           <TabsTrigger value="surgeries" className="flex-1 text-xs sm:text-sm">Cirugías</TabsTrigger>
           <TabsTrigger value="habits" className="flex-1 text-xs sm:text-sm">Hábitos</TabsTrigger>
-          <TabsTrigger value="family-history" className="flex-1 text-xs sm:text-sm">Antecedentes Familiares</TabsTrigger>
+          <TabsTrigger value="family-history" className="flex-1 text-xs sm:text-sm">Antecedentes</TabsTrigger>
         </TabsList>
 
         <TabsContent value="history">
