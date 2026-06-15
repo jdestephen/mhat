@@ -17,20 +17,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Basic Client-side Protection
     const token = localStorage.getItem('token');
-    
+
     if (!token && !isAuthPage && !isPublicPage) {
-        router.push('/auth/login');
-    }
-    
-    if (token && isPublicPage) {
-        router.push('/dashboard');
-    }
-    
-    if (token && isAuthPage) {
-         router.push('/dashboard');
+      router.replace('/auth/login');
+      return;
     }
 
-  }, [pathname, router, isAuthPage, isPublicPage]);
+    if (token && (isAuthPage || isPublicPage)) {
+      router.replace('/dashboard');
+      return;
+    }
+  }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Close sidebar on route change (mobile)
   useEffect(() => {

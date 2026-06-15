@@ -5,8 +5,10 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import api from '@/lib/api';
+import { useToast } from '@/components/ui/Toast';
 
 export default function LoginPage() {
+  const { toast } = useToast();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -30,6 +32,7 @@ export default function LoginPage() {
       });
       
       localStorage.setItem('token', response.data.access_token);
+      localStorage.setItem('refreshToken', response.data.refresh_token);
       router.push('/dashboard');
     } catch (err: unknown) {
       const apiError = err as { response?: { status?: number; data?: { detail?: string } } };
@@ -55,7 +58,7 @@ export default function LoginPage() {
       await api.post('/auth/resend-verification', { email });
       setError('');
       setShowResend(false);
-      alert('Enlace de verificación reenviado. Revisa tu correo.');
+      toast.success('Enlace de verificación reenviado. Revisa tu correo.');
     } catch {
       // Silent fail
     }

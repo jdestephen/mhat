@@ -217,6 +217,32 @@ class Condition(ConditionBase):
     class Config:
         from_attributes = True
 
+# Surgery
+class SurgeryBase(BaseModel):
+    name: str
+    date_str: Optional[str] = None
+    hospital: Optional[str] = None
+    notes: Optional[str] = None
+
+class SurgeryCreate(SurgeryBase):
+    pass
+
+class SurgeryUpdate(BaseModel):
+    name: Optional[str] = None
+    date_str: Optional[str] = None
+    hospital: Optional[str] = None
+    notes: Optional[str] = None
+
+class Surgery(SurgeryBase):
+    id: int
+    patient_profile_id: UUID
+    created_at: datetime
+    deleted: bool
+    deleted_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
 
 # Personal Reference
 class PersonalReferenceBase(BaseModel):
@@ -310,11 +336,18 @@ class PatientProfile(PatientProfileBase):
     medications: List[Medication] = []
     allergies: List[Allergy] = []
     conditions: List[Condition] = []
+    surgeries: List[Surgery] = []
     personal_references: List[PersonalReference] = []
     health_habit: Optional[HealthHabit] = None
     family_history: List[FamilyHistoryConditionResponse] = []
+    locations: List["PatientLocationResponse"] = []
 
     class Config:
         from_attributes = True
+
+
+# Avoid circular import — import at end
+from app.schemas.patient_location import PatientLocationResponse  # noqa: E402
+PatientProfile.model_rebuild()
 
 

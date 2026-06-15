@@ -164,6 +164,13 @@ class PatientProfile(Base):
     family_history: Mapped[List["FamilyHistoryCondition"]] = relationship("FamilyHistoryCondition", back_populates="patient_profile", cascade="all, delete-orphan")
     # Who manages this patient profile (family members with access)
     managed_by: Mapped[List["FamilyMembership"]] = relationship("FamilyMembership", back_populates="patient_profile")
+    locations: Mapped[List["PatientLocation"]] = relationship("PatientLocation", back_populates="patient_profile", cascade="all, delete-orphan")
+    surgeries: Mapped[List["Surgery"]] = relationship(
+        "Surgery",
+        back_populates="patient_profile",
+        primaryjoin="and_(PatientProfile.id==Surgery.patient_profile_id, Surgery.deleted==False)",
+        viewonly=True,
+    )
 
 class Medication(Base):
     __tablename__ = "medications"
@@ -207,6 +214,24 @@ class Medication(Base):
     condition: Mapped[Optional["Condition"]] = relationship("Condition", back_populates="medications")
     prescribed_by: Mapped[Optional["User"]] = relationship("User", foreign_keys=[prescribed_by_id])
     created_by: Mapped["User"] = relationship("User", foreign_keys=[created_by_id])
+
+class Surgery(Base):
+    __tablename__ = "surgeries"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    patient_profile_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("patient_profiles.id"), nullable=False)
+    
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    date_str: Mapped[Optional[str]] = mapped_column(String, nullable=True) # Mes y Año
+    hospital: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    
+    # Timestamps and soft delete
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    deleted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    
+    patient_profile: Mapped["PatientProfile"] = relationship("PatientProfile", back_populates="surgeries")
 
 class Allergy(Base):
     __tablename__ = "allergies"

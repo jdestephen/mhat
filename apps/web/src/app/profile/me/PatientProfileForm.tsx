@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { User, Sex, PatientProfile } from '@/types';
+import { useToast } from '@/components/ui/Toast';
 
 const BLOOD_TYPE_OPTIONS = [
   { value: '', label: 'Selecciona...' },
@@ -46,6 +47,7 @@ interface FormData {
 }
 
 export function PatientProfileForm({ user, profile, onSaved, profileId, isManaged }: PatientProfileFormProps) {
+  const { toast } = useToast();
   const [saving, setSaving] = React.useState(false);
   const [formData, setFormData] = React.useState<FormData>({
     firstName: isManaged ? (profile.first_name || '') : (user.first_name || ''),
@@ -97,11 +99,11 @@ export function PatientProfileForm({ user, profile, onSaved, profileId, isManage
         country: formData.country || null,
       });
 
-      alert('¡Perfil actualizado!');
+      toast.success('¡Perfil actualizado!');
       onSaved();
     } catch (error) {
       console.error(error);
-      alert('Error al actualizar el perfil');
+      toast.error('Error al actualizar el perfil');
     } finally {
       setSaving(false);
     }

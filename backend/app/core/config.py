@@ -18,7 +18,8 @@ class Settings(BaseSettings):
     # AUTH
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     # STORAGE
     UPLOAD_DIR: str = "/app/uploads"
@@ -45,6 +46,16 @@ class Settings(BaseSettings):
 
     # ADMIN
     ADMIN_NOTIFICATION_EMAIL: Optional[str] = None
+
+    # CORS
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:3000",
+        "http://localhost:19000",
+        "http://localhost:19006",
+        "http://localhost:8081",
+        "exp://localhost:19000",
+        "https://mhat-web.vercel.app",
+    ]
     
     def assemble_db_url(self):
         if not self.DATABASE_URL:

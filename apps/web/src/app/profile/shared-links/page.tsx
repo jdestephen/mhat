@@ -7,6 +7,7 @@ import api from '@/lib/api';
 import { ShareLinkCard } from './components/ShareLinkCard';
 import { CreateShareDialog } from './components/CreateShareDialog';
 import { useActiveProfile } from '@/hooks/useActiveProfile';
+import { useToast } from '@/components/ui/Toast';
 
 interface ShareLink {
   id: string;
@@ -25,6 +26,7 @@ interface ShareLink {
 }
 
 export default function SharedLinksPage() {
+  const { toast } = useToast();
   const [shares, setShares] = useState<ShareLink[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'active' | 'expired' | 'all'>('active');
@@ -69,7 +71,7 @@ export default function SharedLinksPage() {
       fetchShares(); // Refresh list
     } catch (error) {
       console.error('Failed to revoke share:', error);
-      alert('Error al revocar el enlace');
+      toast.error('Error al revocar el enlace');
     }
   };
 

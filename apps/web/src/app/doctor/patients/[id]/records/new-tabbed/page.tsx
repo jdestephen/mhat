@@ -42,6 +42,7 @@ import {
   Pill,
   FileText,
 } from 'lucide-react';
+import { useToast } from '@/components/ui/Toast';
 
 const TABS = [
   { id: 'eval', label: 'Evaluación', icon: Stethoscope },
@@ -60,6 +61,7 @@ export default function NewTabbedRecordPage({
   params: Promise<{ id: string }>;
   initialData?: MedicalRecord;
 }) {
+  const { toast } = useToast();
   const { id: patientId } = use(params);
   const router = useRouter();
   const form = useMedicalRecordForm(patientId, { initialData });
@@ -77,7 +79,7 @@ export default function NewTabbedRecordPage({
     if (success) {
       router.push(`/doctor/patients/${patientId}`);
     } else {
-      alert('Error al crear registro');
+      toast.error('Error al crear registro');
     }
   };
 

@@ -19,7 +19,7 @@ from app.models.user import User, UserRole
 from app.models.patient import (
     PatientProfile, Medication, MedicationStatus,
     Condition, PersonalReference, HealthHabit,
-    FamilyHistoryCondition, Allergy,
+    FamilyHistoryCondition, Allergy, Surgery
 )
 from app.schemas import patient as patient_schema
 
@@ -80,6 +80,8 @@ async def _get_full_profile(
             selectinload(PatientProfile.personal_references),
             selectinload(PatientProfile.health_habit),
             selectinload(PatientProfile.family_history),
+            selectinload(PatientProfile.locations),
+            selectinload(PatientProfile.surgeries),
         )
     )
     return result.scalars().first()
@@ -250,6 +252,90 @@ async def delete_patient_condition(
     from datetime import datetime as dt
     condition.deleted = True
     condition.deleted_at = dt.utcnow()
+    await db.commit()
+
+
+# ==========================
+# Surgeries
+# ==========================
+
+@router.post("/patient/surgeries", response_model=patient_schema.PatientProfile)
+async def add_patient_surgery(
+    *,
+    db: AsyncSession = Depends(get_db),
+    surgery_in: patient_schema.SurgeryCreate,
+    current_user: User = Depends(get_current_user),
+    profile_id: Optional[str] = Query(None),
+) -> Any:
+    """Add a surgery to a patient profile."""
+    profile = await _get_profile(db, current_user, profile_id)
+
+    surgery = Surgery(
+        patient_profile_id=profile.id,
+        **surgery_in.model_dump()
+    )
+    db.add(surgery)
+    await db.commit()
+    return await _get_full_profile(db, profile)
+
+
+@router.patch("/patient/surgeries/{surgery_id}", response_model=patient_schema.Surgery)
+async def update_patient_surgery(
+    *,
+    surgery_id: int,
+    surgery_in: patient_schema.SurgeryUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    profile_id: Optional[str] = Query(None),
+) -> Any:
+    """Update a surgery on a patient profile."""
+    profile = await _get_profile(db, current_user, profile_id)
+
+    result = await db.execute(
+        select(Surgery).filter(
+            Surgery.id == surgery_id,
+            Surgery.patient_profile_id == profile.id,
+            Surgery.deleted == False,
+        )
+    )
+    surgery = result.scalars().first()
+    if not surgery:
+        raise HTTPException(status_code=404, detail="Surgery not found")
+
+    update_data = surgery_in.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(surgery, field, value)
+
+    await db.commit()
+    await db.refresh(surgery)
+    return surgery
+
+
+@router.delete("/patient/surgeries/{surgery_id}", status_code=204)
+async def delete_patient_surgery(
+    *,
+    surgery_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    profile_id: Optional[str] = Query(None),
+) -> None:
+    """Soft-delete a surgery from a patient profile."""
+    profile = await _get_profile(db, current_user, profile_id)
+
+    result = await db.execute(
+        select(Surgery).filter(
+            Surgery.id == surgery_id,
+            Surgery.patient_profile_id == profile.id,
+            Surgery.deleted == False,
+        )
+    )
+    surgery = result.scalars().first()
+    if not surgery:
+        raise HTTPException(status_code=404, detail="Surgery not found")
+
+    from datetime import datetime as dt
+    surgery.deleted = True
+    surgery.deleted_at = dt.utcnow()
     await db.commit()
 
 
@@ -669,3 +755,160 @@ async def get_medications_for_condition(
         ).order_by(Medication.recorded_at.desc())
     )
     return medications.scalars().all()
+
+
+# ==========================
+# Patient Locations
+# ==========================
+
+from app.models.patient_location import PatientLocation
+from app.schemas import patient_location as loc_schema
+
+
+@router.get("/patient/locations", response_model=List[loc_schema.PatientLocationResponse])
+async def get_patient_locations(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    profile_id: Optional[str] = Query(None),
+):
+    """List all saved locations for a patient profile."""
+    profile = await _get_profile(db, current_user, profile_id)
+    result = await db.execute(
+        select(PatientLocation)
+        .where(PatientLocation.patient_profile_id == profile.id)
+        .order_by(PatientLocation.is_default.desc(), PatientLocation.created_at.desc())
+    )
+    return result.scalars().all()
+
+
+@router.post("/patient/locations", response_model=loc_schema.PatientLocationResponse)
+async def create_patient_location(
+    *,
+    db: AsyncSession = Depends(get_db),
+    location_in: loc_schema.PatientLocationCreate,
+    current_user: User = Depends(get_current_user),
+    profile_id: Optional[str] = Query(None),
+):
+    """Add a saved location to a patient profile (max 5)."""
+    profile = await _get_profile(db, current_user, profile_id)
+
+    # Enforce limit
+    count_result = await db.execute(
+        select(PatientLocation)
+        .where(PatientLocation.patient_profile_id == profile.id)
+    )
+    if len(count_result.scalars().all()) >= 5:
+        raise HTTPException(status_code=400, detail="Máximo 5 ubicaciones permitidas")
+
+    # If this is the first location or marked as default, clear other defaults
+    if location_in.is_default:
+        await _clear_default_locations(db, profile.id)
+
+    location = PatientLocation(
+        patient_profile_id=profile.id,
+        **location_in.model_dump()
+    )
+    db.add(location)
+    await db.commit()
+    await db.refresh(location)
+    return location
+
+
+@router.put("/patient/locations/{location_id}", response_model=loc_schema.PatientLocationResponse)
+async def update_patient_location(
+    *,
+    location_id: int,
+    location_in: loc_schema.PatientLocationUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    profile_id: Optional[str] = Query(None),
+):
+    """Update a saved location."""
+    profile = await _get_profile(db, current_user, profile_id)
+
+    result = await db.execute(
+        select(PatientLocation).filter(
+            PatientLocation.id == location_id,
+            PatientLocation.patient_profile_id == profile.id,
+        )
+    )
+    location = result.scalars().first()
+    if not location:
+        raise HTTPException(status_code=404, detail="Location not found")
+
+    update_data = location_in.model_dump(exclude_unset=True)
+
+    # If setting as default, clear other defaults first
+    if update_data.get("is_default"):
+        await _clear_default_locations(db, profile.id)
+
+    for field, value in update_data.items():
+        setattr(location, field, value)
+
+    await db.commit()
+    await db.refresh(location)
+    return location
+
+
+@router.delete("/patient/locations/{location_id}", status_code=204)
+async def delete_patient_location(
+    *,
+    location_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    profile_id: Optional[str] = Query(None),
+) -> None:
+    """Delete a saved location."""
+    profile = await _get_profile(db, current_user, profile_id)
+
+    result = await db.execute(
+        select(PatientLocation).filter(
+            PatientLocation.id == location_id,
+            PatientLocation.patient_profile_id == profile.id,
+        )
+    )
+    location = result.scalars().first()
+    if not location:
+        raise HTTPException(status_code=404, detail="Location not found")
+
+    await db.delete(location)
+    await db.commit()
+
+
+@router.put("/patient/locations/{location_id}/default", response_model=loc_schema.PatientLocationResponse)
+async def set_default_location(
+    *,
+    location_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    profile_id: Optional[str] = Query(None),
+):
+    """Mark a location as the default."""
+    profile = await _get_profile(db, current_user, profile_id)
+
+    result = await db.execute(
+        select(PatientLocation).filter(
+            PatientLocation.id == location_id,
+            PatientLocation.patient_profile_id == profile.id,
+        )
+    )
+    location = result.scalars().first()
+    if not location:
+        raise HTTPException(status_code=404, detail="Location not found")
+
+    await _clear_default_locations(db, profile.id)
+    location.is_default = True
+    await db.commit()
+    await db.refresh(location)
+    return location
+
+
+async def _clear_default_locations(db: AsyncSession, profile_id) -> None:
+    """Reset is_default on all locations for a profile."""
+    from sqlalchemy import update
+    await db.execute(
+        update(PatientLocation)
+        .where(PatientLocation.patient_profile_id == profile_id)
+        .values(is_default=False)
+    )
+

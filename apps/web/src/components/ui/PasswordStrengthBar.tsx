@@ -4,6 +4,8 @@ import React from 'react';
 
 interface PasswordStrengthBarProps {
   password: string;
+  /** When true, only enforce minimum length (dev mode) */
+  relaxed?: boolean;
 }
 
 interface Rule {
@@ -11,19 +13,23 @@ interface Rule {
   test: (pw: string) => boolean;
 }
 
-const RULES: Rule[] = [
+const STRONG_RULES: Rule[] = [
   { label: 'Al menos 8 caracteres', test: (pw) => pw.length >= 8 },
   { label: 'Una letra mayúscula', test: (pw) => /[A-Z]/.test(pw) },
   { label: 'Una letra minúscula', test: (pw) => /[a-z]/.test(pw) },
   { label: 'Un número', test: (pw) => /[0-9]/.test(pw) },
 ];
 
-function getStrength(password: string): number {
+const DEV_RULES: Rule[] = [
+  { label: 'Al menos 8 caracteres', test: (pw) => pw.length >= 8 },
+];
+
+function getStrength(password: string, rules: Rule[]): number {
   if (!password) return 0;
-  return RULES.filter((r) => r.test(password)).length;
+  return rules.filter((r) => r.test(password)).length;
 }
 
-const STRENGTH_CONFIG = [
+const STRONG_STRENGTH_CONFIG = [
   { label: '', color: 'bg-slate-200', textColor: 'text-slate-400' },
   { label: 'Muy débil', color: 'bg-red-500', textColor: 'text-red-600' },
   { label: 'Débil', color: 'bg-orange-500', textColor: 'text-orange-600' },
@@ -31,9 +37,17 @@ const STRENGTH_CONFIG = [
   { label: 'Buena', color: 'bg-emerald-500', textColor: 'text-emerald-600' },
 ];
 
-export function PasswordStrengthBar({ password }: PasswordStrengthBarProps) {
-  const strength = getStrength(password);
-  const config = STRENGTH_CONFIG[strength];
+const DEV_STRENGTH_CONFIG = [
+  { label: '', color: 'bg-slate-200', textColor: 'text-slate-400' },
+  { label: 'OK', color: 'bg-emerald-500', textColor: 'text-emerald-600' },
+];
+
+export function PasswordStrengthBar({ password, relaxed = false }: PasswordStrengthBarProps) {
+  const rules = relaxed ? DEV_RULES : STRONG_RULES;
+  const strengthConfig = relaxed ? DEV_STRENGTH_CONFIG : STRONG_STRENGTH_CONFIG;
+  const strength = getStrength(password, rules);
+  const config = strengthConfig[strength] || strengthConfig[0];
+  const totalSegments = rules.length;
 
   if (!password) return null;
 
@@ -41,7 +55,7 @@ export function PasswordStrengthBar({ password }: PasswordStrengthBarProps) {
     <div className="mt-2 space-y-2">
       {/* Strength bar */}
       <div className="flex gap-1">
-        {[1, 2, 3, 4].map((level) => (
+        {Array.from({ length: totalSegments }, (_, i) => i + 1).map((level) => (
           <div
             key={level}
             className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${
@@ -56,11 +70,14 @@ export function PasswordStrengthBar({ password }: PasswordStrengthBarProps) {
         <span className={`text-xs font-medium ${config.textColor}`}>
           {config.label}
         </span>
+        {relaxed && (
+          <span className="text-[10px] text-amber-500 font-medium">🛠 Dev mode</span>
+        )}
       </div>
 
       {/* Rules checklist */}
       <ul className="space-y-0.5">
-        {RULES.map((rule) => {
+        {rules.map((rule) => {
           const passed = rule.test(password);
           return (
             <li
@@ -88,6 +105,7 @@ export function PasswordStrengthBar({ password }: PasswordStrengthBarProps) {
 }
 
 /** Utility: returns true if password meets all strength rules */
-export function isPasswordStrong(password: string): boolean {
-  return RULES.every((r) => r.test(password));
+export function isPasswordStrong(password: string, relaxed = false): boolean {
+  const rules = relaxed ? DEV_RULES : STRONG_RULES;
+  return rules.every((r) => r.test(password));
 }

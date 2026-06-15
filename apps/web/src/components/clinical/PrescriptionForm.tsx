@@ -80,7 +80,7 @@ export function PrescriptionForm({
             <Trash2 className="h-4 w-4" />
           </Button>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="col-span-2">
               <label className="block text-xs font-medium mb-1">Medicamento</label>
               <InputWithVoice
@@ -91,7 +91,7 @@ export function PrescriptionForm({
                 mode="append"
               />
             </div>
-            <div>
+            <div className="col-span-2 sm:col-span-1">
               <label className="block text-xs font-medium mb-1">Dosis</label>
               <div className="flex gap-2">
                 <Combobox
@@ -122,7 +122,7 @@ export function PrescriptionForm({
                 />
               </div>
             </div>
-            <div>
+            <div className="col-span-2 sm:col-span-1">
               <label className="block text-xs font-medium mb-1">Frecuencia</label>
               <Combobox
                 groups={FREQUENCY_OPTIONS.map((g) => ({
@@ -137,7 +137,7 @@ export function PrescriptionForm({
                 creatable
               />
             </div>
-            <div>
+            <div className="col-span-2 sm:col-span-1">
               <label className="block text-xs font-medium mb-1">Vía</label>
               <Combobox
                 options={ROUTE_OPTIONS}
@@ -149,7 +149,7 @@ export function PrescriptionForm({
                 creatable
               />
             </div>
-            <div>
+            <div className="col-span-2 sm:col-span-1">
               <label className="block text-xs font-medium mb-1">Duración</label>
               <div className="flex gap-2">
                 <Combobox

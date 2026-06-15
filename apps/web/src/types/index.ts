@@ -82,6 +82,18 @@ export interface Medication {
   updated_at?: string;
 }
 
+export interface PatientLocation {
+  id: number;
+  patient_profile_id: string;
+  label: string;
+  latitude: number;
+  longitude: number;
+  address?: string | null;
+  notes?: string | null;
+  is_default: boolean;
+  created_at: string;
+}
+
 export interface PatientProfile {
   id: string;
   user_id: string;
@@ -98,9 +110,23 @@ export interface PatientProfile {
   medications?: Medication[];
   allergies?: Allergy[];
   conditions?: Condition[];
+  surgeries?: Surgery[];
   personal_references?: PersonalReference[];
   health_habit?: HealthHabit | null;
   family_history?: FamilyHistoryCondition[];
+  locations?: PatientLocation[];
+}
+
+export interface Surgery {
+  id: number;
+  patient_profile_id: string;
+  name: string;
+  date_str?: string | null;
+  hospital?: string | null;
+  notes?: string | null;
+  created_at: string;
+  deleted: boolean;
+  deleted_at?: string | null;
 }
 
 export enum RelationshipType {

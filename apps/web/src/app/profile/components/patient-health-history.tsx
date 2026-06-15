@@ -19,6 +19,7 @@ import {
   AllergyType
 } from '@/types';
 import { X, Plus, Pencil } from 'lucide-react';
+import { useToast } from '@/components/ui/Toast';
 
 interface PatientHealthHistoryProps {
   profile: PatientProfile;
@@ -35,6 +36,7 @@ export function PatientHealthHistory({
   apiPrefix = '/profiles/patient',
   profileId,
 }: PatientHealthHistoryProps) {
+  const { toast } = useToast();
   const withProfile = (url: string) => {
     if (!profileId) return url;
     const sep = url.includes('?') ? '&' : '?';
@@ -144,7 +146,7 @@ export function PatientHealthHistory({
       onRefresh();
     } catch (error) {
       console.error(error);
-      alert('Error al eliminar condición');
+      toast.error('Error al eliminar condición');
     }
   };
 
@@ -211,7 +213,7 @@ export function PatientHealthHistory({
       onRefresh();
     } catch (error) {
       console.error(error);
-      alert('Error al eliminar alergia');
+      toast.error('Error al eliminar alergia');
     }
   };
 
@@ -337,33 +339,37 @@ export function PatientHealthHistory({
                     Desde: {cond.since_year || 'Desconocido'}
                   </p>
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-shrink-0">
+                  <div>
                   <span className={`px-2 py-0.5 text-xs rounded ${getConditionStatusColor(cond.status)}`}>
                     {getConditionStatusLabel(cond.status)}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleEditCondition(cond)}
-                    className="text-emerald-700 hover:text-emerald-900 hover:bg-emerald-50"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDeleteCondition(cond.id)}
-                    className="text-red-600 hover:text-red-900 hover:bg-red-50"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
+                    </span>
+                  </div>
+                  <div className="flex flex-row gap-1 sm:gap-0 justify-end">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEditCondition(cond)}
+                      className="border border-slate-200 md:border-0 text-emerald-700 hover:text-emerald-900 hover:bg-emerald-50 sm:px-3"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteCondition(cond.id)}
+                      className="border border-red-200 md:border-0 text-red-600 hover:text-red-900 hover:bg-red-50 sm:px-3"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>  
                 </div>
               </div>
             ))}
           </div>
         )}
       </div>
-      
+
       {/* Allergies Section */}
       <div className="border border-[var(--border-light)] rounded-lg p-3 sm:p-4">
         <div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-2">
@@ -456,26 +462,30 @@ export function PatientHealthHistory({
                     {getAllergySeverityLabel(allergy.severity)} • {allergy.reaction || 'Sin reacción especificada'}
                   </p>
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <span className="px-2 py-0.5 text-xs rounded bg-slate-200 text-slate-700">
-                    {capitalize(allergy.status)}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleEditAllergy(allergy)}
-                    className="text-emerald-700 hover:text-emerald-900 hover:bg-emerald-50"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDeleteAllergy(allergy.id)}
-                    className="text-red-600 hover:text-red-900 hover:bg-red-50"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-shrink-0">
+                  <div>
+                    <span className="px-2 py-0.5 text-xs rounded bg-slate-200 text-slate-700">
+                      {capitalize(allergy.status)}
+                    </span>
+                  </div>
+                  <div className="flex flex-row gap-1 sm:gap-0 justify-end">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEditAllergy(allergy)}
+                      className="border border-slate-200 md:border-0 text-emerald-700 hover:text-emerald-900 hover:bg-emerald-50"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteAllergy(allergy.id)}
+                      className="border border-red-200 md:border-0 text-red-600 hover:text-red-900 hover:bg-red-50"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>  
                 </div>
               </div>
             ))}

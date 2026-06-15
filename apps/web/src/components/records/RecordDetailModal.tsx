@@ -115,7 +115,7 @@ export function RecordDetailModal({ open, onOpenChange, record, readOnly = false
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[750px] max-h-[85vh] min-w-[750px] overflow-y-auto">
+      <DialogContent className="sm:max-w-[750px] sm:max-h-[85vh] sm:min-w-[750px] overflow-y-scroll">
         <DialogHeader onOpenChange={onOpenChange}>
           <DialogTitle>
             <span className="text-xl font-bold text-gray-900">
@@ -126,7 +126,7 @@ export function RecordDetailModal({ open, onOpenChange, record, readOnly = false
 
         <div className="space-y-5 py-3">
           {/* Category & Date */}
-          <div className="flex flex-row justify-between items-start">
+          <div className="flex flex-col sm:flex-row justify-between items-start">
             <div className="flex flex-col">
               <label className="text-sm font-semibold text-slate-500">Motivo de Consulta</label>
               <p className="text-lg font-medium text-slate-900 mt-1">{record.motive}</p>

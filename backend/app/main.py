@@ -6,29 +6,18 @@ from app.api.api import api_router
 from app.db.base import Base
 from app.db.session import engine
 
-# Create tables on startup (Prototype only - use Alembic in Prod)
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
 )
 
-# CORS
-origins = [
-    "http://localhost:3000",
-    "http://localhost:19000",
-    "http://localhost:19006",
-    "http://localhost:8081",
-    "exp://localhost:19000",
-    # Production origins (update with your actual URLs)
-    "https://mhat-web.vercel.app",
-]
-
+# CORS — origins driven by config, methods and headers restricted
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
