@@ -130,7 +130,7 @@ async def get_patient_health_profile(
     """Get patient health profile: medications, allergies, conditions, habits, family history."""
     from app.models.patient import (
         Medication, Allergy, Condition,
-        HealthHabit, FamilyHistoryCondition,
+        HealthHabit, FamilyHistoryCondition, Surgery
     )
 
     await get_doctor_patient_access(patient_profile_id, db, current_user)
@@ -181,6 +181,14 @@ async def get_patient_health_profile(
         ).order_by(PatientLocation.is_default.desc())
     )
     locations = loc_result.scalars().all()
+
+    surgeries_result = await db.execute(
+        select(Surgery).where(
+            Surgery.patient_profile_id == patient_profile_id,
+            Surgery.deleted == False,
+        )
+    )
+    surgeries = surgeries_result.scalars().all()
 
     return {
         "medications": [
@@ -251,6 +259,15 @@ async def get_patient_health_profile(
                 "created_at": loc.created_at.isoformat() if loc.created_at else None,
             }
             for loc in locations
+        ],
+        "surgeries": [
+            {
+                "id": s.id, "name": s.name,
+                "date_str": s.date_str, "hospital": s.hospital,
+                "notes": s.notes,
+                "created_at": s.created_at.isoformat() if s.created_at else None,
+            }
+            for s in surgeries
         ],
     }
 

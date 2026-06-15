@@ -208,6 +208,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
             medications={health?.medications ?? []}
             conditions={health?.conditions ?? []}
             allergies={health?.allergies ?? []}
+            surgeries={health?.surgeries ?? []}
             healthHabit={health?.health_habit ?? null}
             familyHistory={health?.family_history ?? []}
           />
@@ -219,6 +220,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
             medications={health?.medications ?? []}
             conditions={health?.conditions ?? []}
             allergies={health?.allergies ?? []}
+            surgeries={health?.surgeries ?? []}
             healthHabit={health?.health_habit ?? null}
             familyHistory={health?.family_history ?? []}
           />

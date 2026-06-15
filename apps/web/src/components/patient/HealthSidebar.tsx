@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Pill, Activity, AlertTriangle, Heart, Users } from 'lucide-react';
+import { Pill, Activity, AlertTriangle, Heart, Users, Scissors } from 'lucide-react';
 import { HealthHabit, FamilyHistoryCondition } from '@/types';
 
 import { HealthInfoCard } from './HealthInfoCard';
@@ -29,10 +29,18 @@ export interface HealthAllergy {
   severity?: string | null;
 }
 
+export interface HealthSurgery {
+  id: number | string;
+  name: string;
+  date_str?: string | null;
+  hospital?: string | null;
+}
+
 interface HealthSidebarProps {
   medications: HealthMedication[];
   conditions: HealthCondition[];
   allergies: HealthAllergy[];
+  surgeries?: HealthSurgery[];
   healthHabit?: HealthHabit | null;
   familyHistory?: FamilyHistoryCondition[];
 }
@@ -94,6 +102,7 @@ export function HealthSidebar({
   medications,
   conditions,
   allergies,
+  surgeries = [],
   healthHabit,
   familyHistory = [],
 }: HealthSidebarProps) {
@@ -236,6 +245,33 @@ export function HealthSidebar({
                 <span className="text-xs text-slate-400">—</span>
               )}
             </div>
+          </div>
+        ))}
+      </HealthInfoCard>
+
+
+
+      {/* Surgeries */}
+      <HealthInfoCard
+        title="Cirugías"
+        icon={Scissors}
+        iconColor="text-orange-600"
+        isEmpty={!surgeries.length}
+        emptyText="Ninguna"
+      >
+        {/* Header */}
+        <div className="flex text-[10px] font-semibold uppercase tracking-wider text-slate-500 bg-slate-50 rounded-sm border-b border-slate-200 py-1.5 px-1 mb-1">
+          <div className="flex-1 text-orange-600">Cirugía</div>
+          <div className="w-24 text-center text-orange-600">Fecha</div>
+        </div>
+        {/* Rows */}
+        {surgeries.map((surgery) => (
+          <div key={surgery.id} className="flex items-center py-1.5 border-b border-slate-50 last:border-0 px-1 text-sm">
+            <div className="flex-1 font-medium text-slate-800 pr-2">
+              <span className="block truncate">{surgery.name}</span>
+              {surgery.hospital && <span className="block text-[10px] text-slate-500 truncate">{surgery.hospital}</span>}
+            </div>
+            <div className="w-24 text-center text-xs text-slate-500">{surgery.date_str || '—'}</div>
           </div>
         ))}
       </HealthInfoCard>

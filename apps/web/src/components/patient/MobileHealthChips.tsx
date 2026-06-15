@@ -7,6 +7,7 @@ import {
   HealthMedication,
   HealthCondition,
   HealthAllergy,
+  HealthSurgery,
 } from './HealthSidebar';
 import { HealthHabit, FamilyHistoryCondition } from '@/types';
 
@@ -14,6 +15,7 @@ interface MobileHealthChipsProps {
   medications: HealthMedication[];
   conditions: HealthCondition[];
   allergies: HealthAllergy[];
+  surgeries?: HealthSurgery[];
   healthHabit?: HealthHabit | null;
   familyHistory?: FamilyHistoryCondition[];
 }
@@ -37,6 +39,7 @@ export function MobileHealthChips({
   medications,
   conditions,
   allergies,
+  surgeries = [],
   healthHabit,
   familyHistory = [],
 }: MobileHealthChipsProps) {
@@ -74,6 +77,14 @@ export function MobileHealthChips({
       color: 'text-indigo-600',
       bgColor: 'bg-indigo-50 border-indigo-200',
       count: familyHistory.length,
+    },
+    {
+      key: 'surgeries',
+      label: 'Cirugías',
+      icon: Activity,
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50 border-orange-200',
+      count: surgeries.length,
     },
     {
       key: 'habits',
@@ -176,6 +187,22 @@ export function MobileHealthChips({
                 {fh.family_members.map((m) => (
                   <span key={m} className="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">{m}</span>
                 ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {expanded === 'surgeries' && surgeries.length > 0 && (
+        <div className="bg-white rounded-lg border border-orange-200 p-3 space-y-2 animate-in slide-in-from-top-2 duration-200">
+          {surgeries.map((surgery) => (
+            <div key={surgery.id} className="flex items-center justify-between text-sm">
+              <div className="flex flex-col">
+                <span className="font-medium text-slate-800">{surgery.name}</span>
+                {surgery.hospital && <span className="text-xs text-slate-500">{surgery.hospital}</span>}
+              </div>
+              <div className="flex items-center gap-2">
+                {surgery.date_str && <span className="text-xs text-slate-400">{surgery.date_str}</span>}
               </div>
             </div>
           ))}

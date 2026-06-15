@@ -110,10 +110,23 @@ export interface PatientProfile {
   medications?: Medication[];
   allergies?: Allergy[];
   conditions?: Condition[];
+  surgeries?: Surgery[];
   personal_references?: PersonalReference[];
   health_habit?: HealthHabit | null;
   family_history?: FamilyHistoryCondition[];
   locations?: PatientLocation[];
+}
+
+export interface Surgery {
+  id: number;
+  patient_profile_id: string;
+  name: string;
+  date_str?: string | null;
+  hospital?: string | null;
+  notes?: string | null;
+  created_at: string;
+  deleted: boolean;
+  deleted_at?: string | null;
 }
 
 export enum RelationshipType {

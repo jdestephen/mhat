@@ -15,6 +15,7 @@ from app.models.patient import (
     Medication as MedicationModel,
     HealthHabit,
     FamilyHistoryCondition,
+    Surgery,
 )
 from app.schemas import patient as patient_schema
 
@@ -89,6 +90,75 @@ async def doctor_delete_condition(
         raise HTTPException(status_code=404, detail="Condition not found")
     condition.deleted = True
     condition.deleted_at = datetime.now(timezone.utc)
+    await db.commit()
+
+
+# --- Surgeries ---
+
+@router.post("/patients/{patient_id}/surgeries", response_model=patient_schema.Surgery)
+async def doctor_add_surgery(
+    patient_id: uuid.UUID,
+    surgery_in: patient_schema.SurgeryCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> Any:
+    """Doctor adds a surgery to a patient's profile."""
+    await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
+    surgery = Surgery(patient_profile_id=patient_id, **surgery_in.model_dump())
+    db.add(surgery)
+    await db.commit()
+    await db.refresh(surgery)
+    return surgery
+
+
+@router.patch("/patients/{patient_id}/surgeries/{surgery_id}", response_model=patient_schema.Surgery)
+async def doctor_update_surgery(
+    patient_id: uuid.UUID,
+    surgery_id: int,
+    surgery_in: patient_schema.SurgeryUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> Any:
+    """Doctor updates a surgery on a patient's profile."""
+    await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
+    result = await db.execute(
+        select(Surgery).filter(
+            Surgery.id == surgery_id,
+            Surgery.patient_profile_id == patient_id,
+            Surgery.deleted == False,
+        )
+    )
+    surgery = result.scalars().first()
+    if not surgery:
+        raise HTTPException(status_code=404, detail="Surgery not found")
+    for field, value in surgery_in.model_dump(exclude_unset=True).items():
+        setattr(surgery, field, value)
+    await db.commit()
+    await db.refresh(surgery)
+    return surgery
+
+
+@router.delete("/patients/{patient_id}/surgeries/{surgery_id}", status_code=204)
+async def doctor_delete_surgery(
+    patient_id: uuid.UUID,
+    surgery_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> None:
+    """Doctor soft-deletes a surgery from patient's profile."""
+    await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
+    result = await db.execute(
+        select(Surgery).filter(
+            Surgery.id == surgery_id,
+            Surgery.patient_profile_id == patient_id,
+            Surgery.deleted == False,
+        )
+    )
+    surgery = result.scalars().first()
+    if not surgery:
+        raise HTTPException(status_code=404, detail="Surgery not found")
+    surgery.deleted = True
+    surgery.deleted_at = datetime.now(timezone.utc)
     await db.commit()
 
 

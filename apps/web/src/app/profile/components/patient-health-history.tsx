@@ -369,7 +369,7 @@ export function PatientHealthHistory({
           </div>
         )}
       </div>
-      
+
       {/* Allergies Section */}
       <div className="border border-[var(--border-light)] rounded-lg p-3 sm:p-4">
         <div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-2">

@@ -6,6 +6,7 @@ import api from '@/lib/api';
 import { User, UserRole, PatientProfile } from '@/types';
 import { PatientHealthHistory } from '../components/patient-health-history';
 import { MedicationList } from '../components/medication-list';
+import { SurgeriesTab } from '../components/surgeries-tab';
 import { HabitsTab } from '../components/HabitsTab';
 import { FamilyHistoryTab } from '../components/FamilyHistoryTab';
 import { useActiveProfile } from '@/hooks/useActiveProfile';
@@ -78,8 +79,9 @@ export default function HealthHistoryPage() {
       
       <Tabs defaultValue="history" className="w-full">
         <TabsList className="mb-0 w-full">
-          <TabsTrigger value="history" className="flex-1 text-xs sm:text-sm">Condiciones y Alergías</TabsTrigger>
+          <TabsTrigger value="history" className="flex-1 text-xs sm:text-sm">Condiciones y Alergias</TabsTrigger>
           <TabsTrigger value="medications" className="flex-1 text-xs sm:text-sm">Medicamentos</TabsTrigger>
+          <TabsTrigger value="surgeries" className="flex-1 text-xs sm:text-sm">Cirugías</TabsTrigger>
           <TabsTrigger value="habits" className="flex-1 text-xs sm:text-sm">Hábitos</TabsTrigger>
           <TabsTrigger value="family-history" className="flex-1 text-xs sm:text-sm">Antecedentes Familiares</TabsTrigger>
         </TabsList>
@@ -100,6 +102,18 @@ export default function HealthHistoryPage() {
           <div className="bg-white p-3 sm:p-6 rounded-b-lg shadow-sm border border-[var(--border-light)]">
             {profile && (
               <MedicationList
+                profile={profile}
+                onRefresh={fetchData}
+                profileId={activeProfileId || undefined}
+              />
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="surgeries">
+          <div className="bg-white p-3 sm:p-6 rounded-b-lg shadow-sm border border-[var(--border-light)]">
+            {profile && (
+              <SurgeriesTab
                 profile={profile}
                 onRefresh={fetchData}
                 profileId={activeProfileId || undefined}

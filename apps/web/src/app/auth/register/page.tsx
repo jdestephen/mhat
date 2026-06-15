@@ -184,108 +184,123 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center py-6">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md border border-[var(--border-light)]">
+    <div className="flex min-h-screen items-center justify-center py-6 px-4">
+      <div className={`w-full p-6 sm:p-8 space-y-6 bg-white rounded-lg shadow-md border border-[var(--border-light)] transition-all duration-300 ${isDoctor ? 'max-w-3xl' : 'max-w-md'}`}>
         <h1 className="text-2xl font-bold text-center text-slate-800">Crear Cuenta</h1>
+
+        {/* Role toggle — first thing the user selects */}
+        <div className="flex justify-center">
+          <div className="inline-flex bg-slate-100 rounded-full p-1 gap-1">
+            <button
+              type="button"
+              onClick={() => setRole(UserRole.PATIENT)}
+              className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                role === UserRole.PATIENT
+                  ? 'bg-white text-emerald-800 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              Paciente
+            </button>
+            <button
+              type="button"
+              onClick={() => setRole(UserRole.DOCTOR)}
+              className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                role === UserRole.DOCTOR
+                  ? 'bg-white text-emerald-800 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+              Médico
+            </button>
+          </div>
+        </div>
+
         {error && <p className="text-red-500 text-center text-sm">{error}</p>}
-        <form onSubmit={handleRegister} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Nombre</label>
-              <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Apellido</label>
-              <Input value={lastName} onChange={(e) => setLastName(e.target.value)} />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Correo Electrónico</label>
-            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Contraseña</label>
-            <Input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            <PasswordStrengthBar password={password} relaxed={devMode} />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium mb-1">Rol</label>
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input 
-                  type="radio" 
-                  name="role" 
-                  value={UserRole.PATIENT} 
-                  checked={role === UserRole.PATIENT}
-                  onChange={() => setRole(UserRole.PATIENT)}
-                  className="w-4 h-4 text-emerald-800 focus:ring-emerald-500"
-                />
-                <span className="text-sm">Paciente</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input 
-                  type="radio" 
-                  name="role" 
-                  value={UserRole.DOCTOR} 
-                  checked={role === UserRole.DOCTOR}
-                  onChange={() => setRole(UserRole.DOCTOR)}
-                   className="w-4 h-4 text-emerald-800 focus:ring-emerald-500"
-                />
-                <span className="text-sm">Médico</span>
-              </label>
-            </div>
-          </div>
 
-          {/* Doctor-specific fields */}
-          {isDoctor && (
-            <div className="space-y-4 border-t border-gray-100 pt-4">
-              <p className="text-xs text-gray-500">
-                Los siguientes datos son necesarios para verificar tu identidad como médico.
-              </p>
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Número de Colegiación <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  value={collegeNumber}
-                  onChange={(e) => setCollegeNumber(e.target.value)}
-                  placeholder="Ej: 12345"
-                  maxLength={15}
-                />
-                {collegeNumber.trim().length > 0 && !collegeNumberValid && (
-                  <p className="text-red-500 text-xs mt-1">
-                    Debe tener entre 5 y 15 caracteres.
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Teléfono de Contacto <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  type="tel"
-                  value={verificationPhone}
-                  onChange={(e) => setVerificationPhone(e.target.value)}
-                  placeholder="Ej: +504 9999-9999"
-                />
-                <p className="text-xs text-gray-400 mt-1">
-                  Un administrador podrá contactarte para verificar tu información.
-                </p>
-              </div>
-
-              {/* Document uploads */}
-              <div className="border-t border-gray-100 pt-4 space-y-4">
+        <form onSubmit={handleRegister} className="space-y-5">
+          <div className={`${isDoctor ? 'grid md:grid-cols-2 gap-6' : ''}`}>
+            {/* Column 1: All text fields */}
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm font-medium text-slate-700 mb-1">
+                  <label className="block text-sm font-medium mb-1">Nombre</label>
+                  <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Apellido</label>
+                  <Input value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Correo Electrónico</label>
+                <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Contraseña</label>
+                <Input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <PasswordStrengthBar password={password} relaxed={devMode} />
+              </div>
+
+              {/* Doctor text fields — same column */}
+              {isDoctor && (
+                <>
+                  <div className="border-t border-gray-100 pt-4">
+                    <p className="text-xs text-gray-500 mb-3">
+                      Datos necesarios para verificar tu identidad como médico.
+                    </p>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">
+                          Número de Colegiación <span className="text-red-500">*</span>
+                        </label>
+                        <Input
+                          value={collegeNumber}
+                          onChange={(e) => setCollegeNumber(e.target.value)}
+                          placeholder="Ej: 12345"
+                          maxLength={15}
+                        />
+                        {collegeNumber.trim().length > 0 && !collegeNumberValid && (
+                          <p className="text-red-500 text-xs mt-1">
+                            Debe tener entre 5 y 15 caracteres.
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">
+                          Teléfono de Contacto <span className="text-red-500">*</span>
+                        </label>
+                        <Input
+                          type="tel"
+                          value={verificationPhone}
+                          onChange={(e) => setVerificationPhone(e.target.value)}
+                          placeholder="Ej: +504 9999-9999"
+                        />
+                        <p className="text-xs text-gray-400 mt-1">
+                          Un administrador podrá contactarte para verificar tu información.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Column 2: Document uploads only (doctor) */}
+            {isDoctor && (
+              <div className="space-y-4 md:border-l md:pl-6 border-gray-100">
+                <div>
+                  <p className="text-sm font-semibold text-slate-700 mb-1">
                     Documentos de Verificación
                   </p>
-                  <p className="text-xs text-gray-400 mb-3">
+                  <p className="text-xs text-gray-400 mb-4">
                     Sube fotos de tu documento de identidad y constancia de colegiación.
                     Los datos se extraerán automáticamente si no los ingresaste manualmente.
                   </p>
@@ -303,8 +318,8 @@ export default function RegisterPage() {
                   onFileSelect={setCollegeFile}
                 />
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           <Button
             type="submit"
