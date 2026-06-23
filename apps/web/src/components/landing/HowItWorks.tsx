@@ -1,24 +1,29 @@
-import { UserPlus, FileHeart, Share2 } from "lucide-react";
+"use client";
 
-const steps = [
-  {
-    title: "Create your profile",
-    description: "Sign up in seconds and set up your personal health profile. It's completely free and highly secure.",
-    icon: UserPlus,
-  },
-  {
-    title: "Add your history",
-    description: "Input your medications, allergies, conditions, and past surgeries. You can also add profiles for your dependents.",
-    icon: FileHeart,
-  },
-  {
-    title: "Share securely",
-    description: "Generate secure, temporary access links for your healthcare providers before appointments to ensure they have the full picture.",
-    icon: Share2,
-  },
-];
+import { UserPlus, FileHeart, Share2 } from "lucide-react";
+import { useLanguage } from "./LanguageContext";
 
 export function HowItWorks() {
+  const { t } = useLanguage();
+
+  const steps = [
+    {
+      title: t('s1Title'),
+      description: t('s1Desc'),
+      icon: UserPlus,
+    },
+    {
+      title: t('s2Title'),
+      description: t('s2Desc'),
+      icon: FileHeart,
+    },
+    {
+      title: t('s3Title'),
+      description: t('s3Desc'),
+      icon: Share2,
+    },
+  ];
+
   return (
     <section id="how-it-works" className="py-24 bg-white relative overflow-hidden">
       {/* Decorative line for desktop */}
@@ -27,10 +32,10 @@ export function HowItWorks() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-20">
           <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-            How it works
+            {t('hiwTitle')}
           </h2>
           <p className="text-lg text-slate-600">
-            Getting started with Numa is simple. Take control of your health records in three easy steps.
+            {t('hiwDesc')}
           </p>
         </div>
 

@@ -1,7 +1,12 @@
+"use client";
+
 import Link from "next/link";
 import { Github, Twitter, Linkedin } from "lucide-react";
+import { useLanguage } from "./LanguageContext";
 
 export function Footer() {
+  const { t } = useLanguage();
+
   return (
     <footer className="bg-white border-t border-slate-200 pt-16 pb-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -16,50 +21,36 @@ export function Footer() {
               </span>
             </Link>
             <p className="text-slate-500 max-w-sm mb-6">
-              Empowering patients with complete control over their medical history. Secure, accessible, and designed for your family.
+              {t('footerDesc')}
             </p>
-            <div className="flex gap-4">
-              <a href="#" className="text-slate-400 hover:text-teal-600 transition-colors">
-                <Twitter className="h-5 w-5" />
-                <span className="sr-only">Twitter</span>
-              </a>
-              <a href="#" className="text-slate-400 hover:text-teal-600 transition-colors">
-                <Github className="h-5 w-5" />
-                <span className="sr-only">GitHub</span>
-              </a>
-              <a href="#" className="text-slate-400 hover:text-teal-600 transition-colors">
-                <Linkedin className="h-5 w-5" />
-                <span className="sr-only">LinkedIn</span>
-              </a>
-            </div>
           </div>
           
           <div>
-            <h3 className="font-semibold text-slate-900 mb-4">Product</h3>
+            <h3 className="font-semibold text-slate-900 mb-4">{t('product')}</h3>
             <ul className="space-y-3">
-              <li><a href="#features" className="text-slate-500 hover:text-teal-600 transition-colors">Features</a></li>
-              <li><a href="#how-it-works" className="text-slate-500 hover:text-teal-600 transition-colors">How it works</a></li>
-              <li><a href="#" className="text-slate-500 hover:text-teal-600 transition-colors">Security</a></li>
+              <li><a href="#features" className="text-slate-500 hover:text-teal-600 transition-colors">{t('features')}</a></li>
+              <li><a href="#how-it-works" className="text-slate-500 hover:text-teal-600 transition-colors">{t('howItWorks')}</a></li>
+              <li><a href="#" className="text-slate-500 hover:text-teal-600 transition-colors">{t('security')}</a></li>
             </ul>
           </div>
 
           <div>
-            <h3 className="font-semibold text-slate-900 mb-4">Company</h3>
+            <h3 className="font-semibold text-slate-900 mb-4">{t('company')}</h3>
             <ul className="space-y-3">
-              <li><a href="#" className="text-slate-500 hover:text-teal-600 transition-colors">About</a></li>
-              <li><a href="#" className="text-slate-500 hover:text-teal-600 transition-colors">Contact</a></li>
-              <li><a href="#" className="text-slate-500 hover:text-teal-600 transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="text-slate-500 hover:text-teal-600 transition-colors">Terms of Service</a></li>
+              <li><a href="#" className="text-slate-500 hover:text-teal-600 transition-colors">{t('about')}</a></li>
+              <li><a href="#" className="text-slate-500 hover:text-teal-600 transition-colors">{t('contact')}</a></li>
+              <li><a href="#" className="text-slate-500 hover:text-teal-600 transition-colors">{t('privacy')}</a></li>
+              <li><a href="#" className="text-slate-500 hover:text-teal-600 transition-colors">{t('terms')}</a></li>
             </ul>
           </div>
         </div>
         
         <div className="border-t border-slate-200 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-slate-500 text-sm">
-            © {new Date().getFullYear()} Numa (formerly MHAT Medical). All rights reserved.
+            {t('copyright', { year: String(new Date().getFullYear()) })}
           </p>
           <div className="text-slate-400 text-sm">
-            Designed for healthcare control.
+            {t('designedFor')}
           </div>
         </div>
       </div>
