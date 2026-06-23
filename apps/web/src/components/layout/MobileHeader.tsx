@@ -29,7 +29,7 @@ export function MobileHeader({ onMenuToggle }: MobileHeaderProps) {
         <div className="bg-emerald-900 p-1.5 rounded-md">
           <Stethoscope className="h-4 w-4 text-white" />
         </div>
-        <span className="text-lg text-emerald-950">MHAT</span>
+        <span className="text-lg text-emerald-950">Numa</span>
       </Link>
 
       {/* Spacer to center the logo */}

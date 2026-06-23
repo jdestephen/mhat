@@ -67,7 +67,7 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center">
       <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md border border-[var(--border-light)]">
-        <h1 className="text-2xl font-bold text-center text-slate-800">Iniciar Sesión en MHAT</h1>
+        <h1 className="text-2xl font-bold text-center text-slate-800">Iniciar Sesión en Numa</h1>
         {error && (
           <div className="text-center">
             {isPendingDoctor ? (

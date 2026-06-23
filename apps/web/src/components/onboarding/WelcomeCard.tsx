@@ -107,7 +107,7 @@ export function WelcomeCard() {
       <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-6">
         <p className="text-xs text-blue-700">
           💡 <span className="font-medium">¿Por qué puedo ingresar mi información médica?</span>{' '}
-          MHAT te permite registrar tu propia información de salud para que
+          Numa te permite registrar tu propia información de salud para que
           esté disponible cuando la necesites. Los datos que ingreses serán
           marcados como &quot;auto-reportados&quot; y un médico podrá
           verificarlos.

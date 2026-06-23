@@ -6,7 +6,7 @@ import { Providers } from "@/components/providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "MHAT - Medical History",
+  title: "Numa - Medical History",
   description: "Personal Medical History App",
 };
 

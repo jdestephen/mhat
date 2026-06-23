@@ -19,12 +19,11 @@ from app.models.user import DoctorAccessLevel, AccessType
 
 
 def generate_invitation_code() -> str:
-    """Generate a short, human-friendly code like 'MHAT-A7K9'."""
-    chars = string.ascii_uppercase + string.digits
-    # Remove ambiguous characters (0/O, 1/I/L)
-    chars = chars.replace('0', '').replace('O', '').replace('1', '').replace('I', '').replace('L', '')
-    suffix = ''.join(secrets.choice(chars) for _ in range(6))
-    return f'MHAT-{suffix}'
+    """Generate a short, human-friendly code like 'NUMA-A7K9'."""
+    # Use consonants and unambiguous numbers to avoid bad words and confusion
+    chars = '34679ACDEFGHJKLMNPRTUVWXY'
+    suffix = ''.join(random.choices(chars, k=6))
+    return f'NUMA-{suffix}'
 
 
 class AccessInvitation(Base):
