@@ -10,11 +10,11 @@ async def send_verification_email(email: str, token: str) -> None:
     """Send email verification link to the user."""
     verification_url = f"{settings.FRONTEND_URL}/auth/verify-email?token={token}"
 
-    subject = "Verifica tu correo electrónico - MHAT"
-    html_body = f"""
-    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-        <div style="text-align: center; margin-bottom: 32px;">
-            <h1 style="color: #064e3b; font-size: 28px; margin: 0;">MHAT</h1>
+    subject = "Verifica tu correo electrónico - Numa"
+    html_content = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+            <div style="background-color: #ecfdf5; padding: 24px; text-align: center; border-bottom: 2px solid #34d399;">
+            <h1 style="color: #064e3b; font-size: 28px; margin: 0;">Numa</h1>
             <p style="color: #6b7280; font-size: 14px; margin-top: 4px;">Historial Médico</p>
         </div>
         <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 32px;">
@@ -31,9 +31,9 @@ async def send_verification_email(email: str, token: str) -> None:
                     Verificar Correo
                 </a>
             </div>
-            <p style="color: #6b7280; font-size: 13px; line-height: 1.5;">
-                Si no creaste una cuenta en MHAT, puedes ignorar este correo.
-                Este enlace expira en {settings.EMAIL_VERIFY_TOKEN_EXPIRE_HOURS} horas.
+            <p style="color: #64748b; font-size: 14px; margin: 0;">
+                Si no creaste una cuenta en Numa, puedes ignorar este correo.
+                </p>Este enlace expira en {settings.EMAIL_VERIFY_TOKEN_EXPIRE_HOURS} horas.
             </p>
             <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
             <p style="color: #9ca3af; font-size: 12px;">
@@ -44,18 +44,18 @@ async def send_verification_email(email: str, token: str) -> None:
     </div>
     """
 
-    await _send_email(email, subject, html_body)
+    await _send_email(email, subject, html_content)
 
 
 async def send_password_reset_email(email: str, token: str) -> None:
     """Send password reset link to the user."""
     reset_url = f"{settings.FRONTEND_URL}/auth/reset-password?token={token}"
 
-    subject = "Restablecer contraseña - MHAT"
-    html_body = f"""
-    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-        <div style="text-align: center; margin-bottom: 32px;">
-            <h1 style="color: #064e3b; font-size: 28px; margin: 0;">MHAT</h1>
+    subject = "Restablecer contraseña - Numa"
+    html_content = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+            <div style="background-color: #ecfdf5; padding: 24px; text-align: center; border-bottom: 2px solid #34d399;">
+            <h1 style="color: #064e3b; font-size: 28px; margin: 0;">Numa</h1>
             <p style="color: #6b7280; font-size: 14px; margin-top: 4px;">Historial Médico</p>
         </div>
         <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 32px;">
@@ -86,25 +86,25 @@ async def send_password_reset_email(email: str, token: str) -> None:
     </div>
     """
 
-    await _send_email(email, subject, html_body)
+    await _send_email(email, subject, html_content)
 
 
 async def send_patient_activation_email(email: str, doctor_name: str) -> None:
     """Send activation email to patient when a doctor creates their profile."""
     register_url = f"{settings.FRONTEND_URL}/auth/register"
 
-    subject = "Tu médico creó tu perfil de salud - MHAT"
-    html_body = f"""
-    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-        <div style="text-align: center; margin-bottom: 32px;">
-            <h1 style="color: #064e3b; font-size: 28px; margin: 0;">MHAT</h1>
+    subject = "Tu médico creó tu perfil de salud - Numa"
+    html_content = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+            <div style="background-color: #ecfdf5; padding: 24px; text-align: center; border-bottom: 2px solid #34d399;">
+            <h1 style="color: #064e3b; font-size: 28px; margin: 0;">Numa</h1>
             <p style="color: #6b7280; font-size: 14px; margin-top: 4px;">Historial Médico</p>
         </div>
         <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 32px;">
             <h2 style="color: #1e293b; font-size: 20px; margin-top: 0;">Tu perfil de salud está listo</h2>
-            <p style="color: #4b5563; line-height: 1.6;">
-                <strong>{doctor_name}</strong> ha creado un perfil de salud para ti en MHAT.
-                Para acceder a tu historial médico y gestionar tu información de salud,
+                <p style="color: #334155; font-size: 16px; margin: 0 0 16px 0;">
+                <strong>{doctor_name}</strong> ha creado un perfil de salud para ti en Numa.
+                </p>Para acceder a tu historial médico y gestionar tu información de salud,
                 crea tu cuenta haciendo clic en el siguiente botón.
             </p>
             <div style="text-align: center; margin: 32px 0;">
@@ -128,7 +128,7 @@ async def send_patient_activation_email(email: str, doctor_name: str) -> None:
     </div>
     """
 
-    await _send_email(email, subject, html_body)
+    await _send_email(email, subject, html_content)
 
 
 async def send_doctor_registration_notification(
@@ -140,11 +140,11 @@ async def send_doctor_registration_notification(
     """Notify admin(s) about a new doctor registration pending approval."""
     admin_url = f"{settings.FRONTEND_URL}/admin/doctors"
 
-    subject = "Nuevo médico pendiente de aprobación - MHAT"
-    html_body = f"""
-    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-        <div style="text-align: center; margin-bottom: 32px;">
-            <h1 style="color: #064e3b; font-size: 28px; margin: 0;">MHAT</h1>
+    subject = "Nuevo médico pendiente de aprobación - Numa"
+    html_content = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+            <div style="background-color: #ecfdf5; padding: 24px; text-align: center; border-bottom: 2px solid #34d399;">
+            <h1 style="color: #064e3b; font-size: 28px; margin: 0;">Numa</h1>
             <p style="color: #6b7280; font-size: 14px; margin-top: 4px;">Administración</p>
         </div>
         <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 32px;">
@@ -172,25 +172,25 @@ async def send_doctor_registration_notification(
 
     admin_email = settings.ADMIN_NOTIFICATION_EMAIL
     if admin_email:
-        await _send_email(admin_email, subject, html_body)
+        await _send_email(admin_email, subject, html_content)
 
 
 async def send_doctor_approval_email(doctor_email: str, doctor_name: str) -> None:
     """Notify a doctor that their account has been approved."""
     login_url = f"{settings.FRONTEND_URL}/auth/login"
 
-    subject = "¡Tu cuenta de médico ha sido aprobada! - MHAT"
-    html_body = f"""
-    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-        <div style="text-align: center; margin-bottom: 32px;">
-            <h1 style="color: #064e3b; font-size: 28px; margin: 0;">MHAT</h1>
+    subject = "¡Tu cuenta de médico ha sido aprobada! - Numa"
+    html_content = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+            <div style="background-color: #ecfdf5; padding: 24px; text-align: center; border-bottom: 2px solid #34d399;">
+            <h1 style="color: #064e3b; font-size: 28px; margin: 0;">Numa</h1>
             <p style="color: #6b7280; font-size: 14px; margin-top: 4px;">Historial Médico</p>
         </div>
         <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 32px;">
             <h2 style="color: #1e293b; font-size: 20px; margin-top: 0;">¡Bienvenido, Dr. {doctor_name}!</h2>
-            <p style="color: #4b5563; line-height: 1.6;">
-                Tu cuenta de médico en MHAT ha sido verificada y aprobada.
-                Ya puedes iniciar sesión y comenzar a gestionar tus pacientes.
+                <p style="color: #334155; font-size: 16px; margin: 0 0 16px 0;">
+                Tu cuenta de médico en Numa ha sido verificada y aprobada.
+                </p>Ya puedes iniciar sesión y comenzar a gestionar tus pacientes.
             </p>
             <div style="text-align: center; margin: 32px 0;">
                 <a href="{login_url}"
@@ -204,18 +204,18 @@ async def send_doctor_approval_email(doctor_email: str, doctor_name: str) -> Non
     </div>
     """
 
-    await _send_email(doctor_email, subject, html_body)
+    await _send_email(doctor_email, subject, html_content)
 
 
 async def send_doctor_rejection_email(
     doctor_email: str, doctor_name: str, reason: str
 ) -> None:
     """Notify a doctor that their account application was rejected."""
-    subject = "Actualización sobre tu solicitud de cuenta - MHAT"
-    html_body = f"""
-    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-        <div style="text-align: center; margin-bottom: 32px;">
-            <h1 style="color: #064e3b; font-size: 28px; margin: 0;">MHAT</h1>
+    subject = "Actualización sobre tu solicitud de cuenta - Numa"
+    html_content = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+            <div style="background-color: #fef2f2; padding: 24px; text-align: center; border-bottom: 2px solid #f87171;">
+            <h1 style="color: #7f1d1d; font-size: 28px; margin: 0;">Numa</h1>
             <p style="color: #6b7280; font-size: 14px; margin-top: 4px;">Historial Médico</p>
         </div>
         <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 32px;">
@@ -236,7 +236,7 @@ async def send_doctor_rejection_email(
     </div>
     """
 
-    await _send_email(doctor_email, subject, html_body)
+    await _send_email(doctor_email, subject, html_content)
 
 
 async def _send_email(to: str, subject: str, html: str) -> None:

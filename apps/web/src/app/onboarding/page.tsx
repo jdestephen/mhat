@@ -203,7 +203,7 @@ export default function OnboardingPage() {
               <Stethoscope className="w-10 h-10 text-emerald-700" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-3">
-              ¡Bienvenido a MHAT!
+              ¡Bienvenido a Numa!
             </h1>
             <p className="text-gray-500 text-lg mb-6 max-w-md mx-auto">
               Tu historial médico personal, seguro y accesible. Vamos a
@@ -453,7 +453,7 @@ export default function OnboardingPage() {
               ¡Todo listo!
             </h2>
             <p className="text-gray-500 mb-8 max-w-sm mx-auto">
-              Tu cuenta está configurada. Ahora puedes empezar a usar MHAT
+              Tu cuenta está configurada. Ahora puedes empezar a usar Numa
               para gestionar tu historial médico.
             </p>
 

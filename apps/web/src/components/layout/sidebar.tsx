@@ -303,7 +303,7 @@ export function Sidebar({ onClose }: SidebarProps = {}) {
               <div className="bg-emerald-900 p-2 rounded-lg flex-shrink-0">
                 <Stethoscope className="h-6 w-6 text-white" />
               </div>
-              <span className="text-2xl text-emerald-950">MHAT</span>
+              <span className="text-2xl text-emerald-950">Numa</span>
             </Link>
             <div className="flex justify-end">
               {renderCollapseToggle()}

@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     EMAIL_ENABLED: bool = False
     RESEND_API_KEY: Optional[str] = None
     EMAIL_FROM_ADDRESS: str = "noreply@mhathn.com"
-    EMAIL_FROM_NAME: str = "MHAT - Historial Médico"
+    EMAIL_FROM_NAME: str = "Numa - Historial Médico"
 
     # TOKEN EXPIRY
     EMAIL_VERIFY_TOKEN_EXPIRE_HOURS: int = 24

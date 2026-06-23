@@ -25,7 +25,7 @@ const ActiveProfileContext = createContext<ActiveProfileContextType>({
   isLoading: false,
 });
 
-const STORAGE_KEY = 'mhat_active_profile_id';
+const STORAGE_KEY = 'numa_active_profile_id';
 
 export function ActiveProfileProvider({ children }: { children: React.ReactNode }) {
   const { data: profiles = [], isLoading, isFetching } = usePatientProfiles();

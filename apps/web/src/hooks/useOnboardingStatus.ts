@@ -3,8 +3,8 @@ import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
 import { usePatientProfile } from '@/hooks/queries/usePatientProfile';
 import { UserRole } from '@/types';
 
-const LS_KEY_TOUR = 'mhat_tour_completed';
-const LS_KEY_SETUP = 'mhat_setup_completed';
+const LS_KEY_TOUR = 'numa_tour_completed';
+const LS_KEY_SETUP = 'numa_setup_completed';
 
 export interface OnboardingStatus {
   /** Profile is missing core fields (first_name, sex, date_of_birth) */
