@@ -9,10 +9,9 @@ import {
   AlertTriangle,
   Pill,
   ClipboardList,
-  Calendar,
   Tag,
 } from 'lucide-react';
-import { DoctorMedicalRecord, RecordStatus, RecordSource } from '@/types';
+import { DoctorMedicalRecord, RecordStatus, } from '@/types';
 import { getDocumentUrl } from '@/lib/api';
 
 interface RecordDetailModalProps {

@@ -167,7 +167,7 @@ export default function DoctorDashboardPage() {
               <div className="flex gap-3">
                 <Input
                   type="text"
-                  placeholder="ej. MHAT-A7K9M2"
+                  placeholder="ej. NUMA-A7K9M2"
                   value={claimCode}
                   onChange={(e) => setClaimCode(e.target.value.toUpperCase())}
                   className="font-mono text-lg tracking-wider max-w-xs"

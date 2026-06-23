@@ -78,7 +78,7 @@ const MOBILE_STEPS: DriveStep[] = [
     popover: {
       title: '📋 Tu Historial Médico',
       description:
-        'En MHAT puedes crear registros de tus consultas, subir documentos médicos, y llevar un seguimiento de tus signos vitales.',
+        'En Numa puedes crear registros de tus consultas, subir documentos médicos, y llevar un seguimiento de tus signos vitales.',
     },
   },
   {
@@ -103,7 +103,7 @@ const TOUR_CONFIG: Config = {
   overlayColor: 'rgba(0, 0, 0, 0.6)',
   stagePadding: 8,
   stageRadius: 12,
-  popoverClass: 'mhat-tour-popover',
+  popoverClass: 'numa-tour-popover',
   nextBtnText: 'Siguiente',
   prevBtnText: 'Anterior',
   doneBtnText: '¡Listo!',

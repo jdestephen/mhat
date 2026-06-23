@@ -5,6 +5,7 @@ import {
   Calendar,
   Paperclip,
   Eye,
+  FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ui/StatusBadge';
@@ -37,6 +38,7 @@ interface RecordCardProps {
   record: RecordCardData;
   index: number;
   onViewDetail: (record: RecordCardData) => void;
+  onViewPage?: (recordId: string) => void;
 }
 
 const formatDate = (dateStr: string) => {
@@ -47,9 +49,7 @@ const formatDate = (dateStr: string) => {
   });
 };
 
-
-
-export function RecordCard({ record, index, onViewDetail }: RecordCardProps) {
+export function RecordCard({ record, index, onViewDetail, onViewPage }: RecordCardProps) {
   return (
     <div
       className={`p-3 sm:p-4 hover:bg-slate-50/30 transition-colors rounded-lg border border-gray-200 ${index % 2 === 0 ? 'bg-gray-50/10' : 'bg-gray-50'}`}
@@ -114,15 +114,15 @@ export function RecordCard({ record, index, onViewDetail }: RecordCardProps) {
             </div>
           </div>
         </div>
-        <div className="flex sm:flex-col items-center sm:items-end gap-2 sm:gap-1 flex-shrink-0">
+        <div className="flex sm:flex-col items-center sm:items-end gap-2 flex-shrink-0 mt-3 sm:mt-0">
           <Button
             variant="outline"
             size="sm"
             onClick={() => onViewDetail(record)}
-            className="flex items-center gap-1 rounded-full text-xs px-3 py-1 sm:px-2 sm:py-0.75 max-h-[30px] sm:max-h-[25px]"
+            className="flex items-center justify-center gap-1.5 rounded-full text-xs px-3 py-1 sm:px-3 sm:py-1 max-h-[32px] bg-white border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 shadow-sm w-full sm:w-auto"
           >
             <Eye className="h-4 w-4" />
-            <span className="sm:inline">Ver Detalle</span>
+            <span>Ver Detalle</span>
           </Button>
         </div>
       </div>
