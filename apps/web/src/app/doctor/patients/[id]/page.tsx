@@ -30,7 +30,8 @@ import {
   MapPin,
   Navigation,
 } from 'lucide-react';
-import { RecordDetailModal, RecordDetailData } from '@/components/records/RecordDetailModal';
+import { RecordDetailData } from '@/components/records/RecordDetailModal';
+import { RecordSlideModal } from './components/RecordSlideModal';
 import { RecordCard, RecordCardData } from '@/components/records/RecordCard';
 import { HealthSidebar } from '@/components/patient/HealthSidebar';
 import { MobileHealthChips } from '@/components/patient/MobileHealthChips';
@@ -777,14 +778,14 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
         </div>
       )}
 
-      {/* Record Detail Modal */}
-      <RecordDetailModal
+      {/* Record Slide Modal */}
+      <RecordSlideModal
         open={modalOpen}
         onOpenChange={setModalOpen}
-        record={selectedRecord}
-        onEdit={selectedRecord ? () => {
+        record={selectedRecord as any}
+        onViewPage={selectedRecord ? () => {
           setModalOpen(false);
-          router.push(`/doctor/patients/${patientId}/records/${selectedRecord.id}/edit`);
+          router.push(`/doctor/patients/${patientId}/records/${selectedRecord.id}`);
         } : undefined}
       />
 
