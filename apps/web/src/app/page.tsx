@@ -1,25 +1,23 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+"use client";
+
+import { Navbar } from "@/components/landing/Navbar";
+import { Hero } from "@/components/landing/Hero";
+import { Features } from "@/components/landing/Features";
+import { HowItWorks } from "@/components/landing/HowItWorks";
+import { Footer } from "@/components/landing/Footer";
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-white">
-      <div className="text-center space-y-6 max-w-lg px-6">
-        <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-6xl">
-          MHAT Medical
-        </h1>
-        <p className="text-lg text-slate-600">
-          Your personal medical history, secure and accessible.
-        </p>
-        <div className="flex gap-4 justify-center">
-          <Link href="/auth/login">
-            <Button size="lg" className="w-32">Login</Button>
-          </Link>
-          <Link href="/auth/register">
-            <Button size="lg" variant="outline" className="w-32">Register</Button>
-          </Link>
-        </div>
-      </div>
+    <div className="min-h-screen bg-white selection:bg-teal-100 selection:text-teal-900">
+      <Navbar />
+      
+      <main>
+        <Hero />
+        <Features />
+        <HowItWorks />
+      </main>
+
+      <Footer />
     </div>
   );
 }
