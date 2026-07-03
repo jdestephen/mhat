@@ -3,8 +3,7 @@ Access Invitation Model
 
 Short-code invitations for patients to grant doctors access to their records.
 """
-import secrets
-import string
+import random
 import uuid
 from datetime import datetime
 from typing import Optional
