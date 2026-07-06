@@ -1,7 +1,16 @@
 import axios from 'axios';
+/**
+ * Ensures the API URL has a protocol. Without it, axios treats the value as a
+ * relative path and prepends the current page origin (e.g. vercel.app/…).
+ */
+function normalizeApiUrl(raw: string | undefined): string | undefined {
+  if (!raw) return raw;
+  if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
+  return `https://${raw}`;
+}
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  baseURL: normalizeApiUrl(process.env.NEXT_PUBLIC_API_URL),
   headers: {
     'Content-Type': 'application/json',
   },
