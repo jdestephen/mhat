@@ -13,12 +13,19 @@ export function useUploadDocument() {
       const formData = new FormData();
       formData.append('file', file);
 
+      // Setting Content-Type to undefined clears the default 'application/json'
+      // from the axios instance, letting the browser auto-set
+      // 'multipart/form-data' with the correct boundary from FormData.
       const res = await api.post(`/hx/${recordId}/documents`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: { 'Content-Type': undefined },
         onUploadProgress: (progressEvent) => {
-          const total = progressEvent.total || file.size;
-          const percent = Math.round((progressEvent.loaded * 100) / total);
-          onProgress?.(percent);
+          try {
+            const total = progressEvent.total || file.size;
+            const percent = Math.round((progressEvent.loaded * 100) / total);
+            onProgress?.(percent);
+          } catch {
+            // Swallow progress errors so they don't crash the upload
+          }
         },
       });
 
