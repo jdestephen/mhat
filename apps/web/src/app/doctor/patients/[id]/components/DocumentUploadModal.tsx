@@ -6,12 +6,15 @@ import { Button } from '@/components/ui/button';
 import { useCategories } from '@/hooks/queries/useCategories';
 import { useCreateDoctorRecord } from '@/hooks/mutations/useCreateDoctorRecord';
 import { useUploadDocument } from '@/hooks/mutations/useUploadDocument';
+import { useToast } from '@/components/ui/Toast';
+import { AxiosError } from 'axios';
 import {
   Upload,
   X,
   FileText,
   Loader2,
   CheckCircle,
+  AlertCircle,
 } from 'lucide-react';
 
 interface DocumentUploadModalProps {
@@ -30,6 +33,7 @@ export function DocumentUploadModal({
   const { data: categories = [] } = useCategories();
   const createRecord = useCreateDoctorRecord();
   const uploadDocument = useUploadDocument();
+  const { toast } = useToast();
 
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [files, setFiles] = useState<File[]>([]);
@@ -37,6 +41,7 @@ export function DocumentUploadModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<Record<number, number>>({});
   const [isDragOver, setIsDragOver] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -51,6 +56,7 @@ export function DocumentUploadModal({
     setNote('');
     setUploadProgress({});
     setIsSubmitting(false);
+    setErrorMessage(null);
   };
 
   const handleClose = () => {
@@ -90,6 +96,7 @@ export function DocumentUploadModal({
     if (!selectedCategoryId || files.length === 0) return;
 
     setIsSubmitting(true);
+    setErrorMessage(null);
 
     try {
       // Step 1: Create a lightweight MedicalRecord
@@ -114,11 +121,16 @@ export function DocumentUploadModal({
       }
 
       // Done
+      toast.success('Documentos guardados correctamente');
       resetForm();
       onOpenChange(false);
       onSuccess();
     } catch (error) {
       console.error('Error uploading documents:', error);
+
+      const message = getUploadErrorMessage(error);
+      setErrorMessage(message);
+      toast.error(message);
       setIsSubmitting(false);
     }
   };
@@ -134,6 +146,35 @@ export function DocumentUploadModal({
       return '📄';
     }
     return '📎';
+  };
+
+  const getUploadErrorMessage = (error: unknown): string => {
+    const axiosErr = error as AxiosError<{ detail?: string }>;
+
+    // Network error or request blocked (ad blocker / Brave Shields)
+    if (!axiosErr.response) {
+      return 'No se pudo conectar con el servidor. Si usas un bloqueador de anuncios (ej. Brave Shields), desactívalo para este sitio e intenta de nuevo.';
+    }
+
+    const status = axiosErr.response.status;
+
+    if (status === 413) {
+      return 'El archivo es demasiado grande. Intenta con un archivo más pequeño.';
+    }
+    if (status === 401 || status === 403) {
+      return 'Tu sesión ha expirado. Recarga la página e inicia sesión de nuevo.';
+    }
+    if (status >= 500) {
+      return 'Error en el servidor. Intenta de nuevo en unos minutos.';
+    }
+
+    // Try to use backend detail if available
+    const detail = axiosErr.response.data?.detail;
+    if (detail && typeof detail === 'string') {
+      return detail;
+    }
+
+    return 'Error al subir los documentos. Intenta de nuevo.';
   };
 
   return (
@@ -280,6 +321,14 @@ export function DocumentUploadModal({
             />
           </div>
         </div>
+
+          {/* Inline error message */}
+          {errorMessage && (
+            <div className="flex items-start gap-2.5 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-red-700">{errorMessage}</p>
+            </div>
+          )}
 
         {/* Footer */}
         <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
