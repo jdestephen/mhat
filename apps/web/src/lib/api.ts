@@ -1,7 +1,16 @@
 import axios from 'axios';
+/**
+ * Ensures the API URL has a protocol. Without it, axios treats the value as a
+ * relative path and prepends the current page origin (e.g. vercel.app/…).
+ */
+function normalizeApiUrl(raw: string | undefined): string | undefined {
+  if (!raw) return raw;
+  if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
+  return `https://${raw}`;
+}
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  baseURL: normalizeApiUrl(process.env.NEXT_PUBLIC_API_URL),
   headers: {
     'Content-Type': 'application/json',
   },
@@ -108,10 +117,20 @@ api.interceptors.response.use(
 
 /**
  * Derives the backend origin (e.g. http://localhost:8000) from the API URL.
- * Used to build full URLs for static assets like uploaded documents.
+ * Uses a safe fallback during build-time prerendering when the env var may be
+ * absent or invalid (Vercel strips it at build for static pages).
  */
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1';
-export const BACKEND_ORIGIN = new URL(apiUrl).origin;
+function resolveBackendOrigin(): string {
+  const raw = process.env.NEXT_PUBLIC_API_URL;
+  if (!raw) return 'http://localhost:8000';
+  try {
+    return new URL(raw).origin;
+  } catch {
+    return 'http://localhost:8000';
+  }
+}
+
+export const BACKEND_ORIGIN = resolveBackendOrigin();
 
 /** Builds a full URL for a document served by the backend or cloud storage. */
 export const getDocumentUrl = (path: string): string =>

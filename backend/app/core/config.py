@@ -47,15 +47,14 @@ class Settings(BaseSettings):
     # ADMIN
     ADMIN_NOTIFICATION_EMAIL: Optional[str] = None
 
-    # CORS
-    CORS_ORIGINS: list[str] = [
-        "http://localhost:3000",
-        "http://localhost:19000",
-        "http://localhost:19006",
-        "http://localhost:8081",
-        "exp://localhost:19000",
-        "https://mhat-web.vercel.app",
-    ]
+    # CORS — comma-separated list of allowed origins, configurable per environment.
+    # Dev defaults are included so local development works without extra config.
+    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:19000,http://localhost:19006,http://localhost:8081,exp://localhost:19000"
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        """Parse comma-separated CORS_ORIGINS into a list."""
+        return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
     
     def assemble_db_url(self):
         if not self.DATABASE_URL:
