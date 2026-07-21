@@ -97,8 +97,8 @@ class MedicalRecord(Base):
     )
     
     # === DOCTOR-SPECIFIC FIELDS (is_doctor_only=True) ===
-    # Brief history - context max 1500 chars
-    brief_history: Mapped[Optional[str]] = mapped_column(String(1500), nullable=True)
+    # Brief history - context max 2500 chars
+    brief_history: Mapped[Optional[str]] = mapped_column(String(2500), nullable=True)
     
     # Red flags / urgency
     has_red_flags: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True, default=False)

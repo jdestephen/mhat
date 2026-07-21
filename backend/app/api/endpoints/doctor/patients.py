@@ -130,7 +130,7 @@ async def get_patient_health_profile(
     """Get patient health profile: medications, allergies, conditions, habits, family history."""
     from app.models.patient import (
         Medication, Allergy, Condition,
-        HealthHabit, FamilyHistoryCondition, Surgery
+        HealthHabit, FamilyHistoryCondition, Surgery, Vaccine
     )
 
     await get_doctor_patient_access(patient_profile_id, db, current_user)
@@ -189,6 +189,14 @@ async def get_patient_health_profile(
         )
     )
     surgeries = surgeries_result.scalars().all()
+
+    vaccines_result = await db.execute(
+        select(Vaccine).where(
+            Vaccine.patient_profile_id == patient_profile_id,
+            Vaccine.deleted == False,
+        )
+    )
+    vaccines = vaccines_result.scalars().all()
 
     return {
         "medications": [
@@ -268,6 +276,19 @@ async def get_patient_health_profile(
                 "created_at": s.created_at.isoformat() if s.created_at else None,
             }
             for s in surgeries
+        ],
+        "vaccines": [
+            {
+                "id": v.id, "vaccine_name": v.vaccine_name,
+                "code": v.code, "code_system": v.code_system,
+                "dose_number": v.dose_number,
+                "date_administered": v.date_administered.isoformat() if v.date_administered else None,
+                "administered_by": v.administered_by,
+                "lot_number": v.lot_number, "site": v.site,
+                "notes": v.notes,
+                "created_at": v.created_at.isoformat() if v.created_at else None,
+            }
+            for v in vaccines
         ],
     }
 

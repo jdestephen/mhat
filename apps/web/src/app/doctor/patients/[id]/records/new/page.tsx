@@ -146,7 +146,6 @@ export default function NewDoctorRecordPage({
   
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showClinicalAssessment, setShowClinicalAssessment] = useState(true);
   const [showPlan, setShowPlan] = useState(true);
   const [showOrders, setShowOrders] = useState(
     initialData?.clinical_orders ? initialData.clinical_orders.length > 0 : false
@@ -429,12 +428,12 @@ export default function NewDoctorRecordPage({
               <div className="col-span-2">
                 <label className="block text-sm font-medium mb-1">
                   Historia de la enfermedad
-                  <span className="text-xs text-gray-400 ml-2">({briefHistory.length}/1100)</span>
+                  <span className="text-xs text-gray-400 ml-2">({briefHistory.length}/2400)</span>
                 </label>
                 <TextareaWithVoice
                   value={briefHistory}
-                  onChange={(e) => setBriefHistory(e.target.value.slice(0, 1100))}
-                  placeholder="Contexto clínico relevante (max 1,100 caracteres)"
+                  onChange={(e) => setBriefHistory(e.target.value.slice(0, 2400))}
+                  placeholder="Contexto clínico relevante (max 2,400 caracteres)"
                   language="es-ES"
                   mode="append"
                 />

@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Pill, Activity, AlertTriangle, Heart, Users, Scissors } from 'lucide-react';
+import { Pill, Activity, AlertTriangle, Heart, Users, Scissors, Syringe } from 'lucide-react';
 import { HealthHabit, FamilyHistoryCondition } from '@/types';
 
 import { HealthInfoCard } from './HealthInfoCard';
@@ -36,11 +36,19 @@ export interface HealthSurgery {
   hospital?: string | null;
 }
 
+export interface HealthVaccine {
+  id: number | string;
+  vaccine_name: string;
+  dose_number?: number | null;
+  date_administered?: string | null;
+}
+
 interface HealthSidebarProps {
   medications: HealthMedication[];
   conditions: HealthCondition[];
   allergies: HealthAllergy[];
   surgeries?: HealthSurgery[];
+  vaccines?: HealthVaccine[];
   healthHabit?: HealthHabit | null;
   familyHistory?: FamilyHistoryCondition[];
 }
@@ -103,6 +111,7 @@ export function HealthSidebar({
   conditions,
   allergies,
   surgeries = [],
+  vaccines = [],
   healthHabit,
   familyHistory = [],
 }: HealthSidebarProps) {
@@ -272,6 +281,30 @@ export function HealthSidebar({
               {surgery.hospital && <span className="block text-[10px] text-slate-500 truncate">{surgery.hospital}</span>}
             </div>
             <div className="w-24 text-center text-xs text-slate-500">{surgery.date_str || '—'}</div>
+          </div>
+        ))}
+      </HealthInfoCard>
+
+      {/* Vaccines */}
+      <HealthInfoCard
+        title="Vacunas"
+        icon={Syringe}
+        iconColor="text-teal-600"
+        isEmpty={!vaccines.length}
+        emptyText="Ninguna"
+      >
+        {/* Header */}
+        <div className="flex text-[10px] font-semibold uppercase tracking-wider text-slate-500 bg-slate-50 rounded-sm border-b border-slate-200 py-1.5 px-1 mb-1">
+          <div className="flex-1 text-teal-600">Vacuna</div>
+          <div className="w-16 text-center text-teal-600">Dosis</div>
+          <div className="w-24 text-center text-teal-600">Fecha</div>
+        </div>
+        {/* Rows */}
+        {vaccines.map((vaccine) => (
+          <div key={vaccine.id} className="flex items-center py-1.5 border-b border-slate-50 last:border-0 px-1 text-sm">
+            <div className="flex-1 font-medium text-slate-800 truncate pr-2">{vaccine.vaccine_name}</div>
+            <div className="w-16 text-center text-xs text-slate-500">{vaccine.dose_number || '—'}</div>
+            <div className="w-24 text-center text-xs text-slate-500">{vaccine.date_administered || '—'}</div>
           </div>
         ))}
       </HealthInfoCard>
