@@ -9293,6 +9293,484 @@
         "code": "111260001",
         "default_verification_status": "unverified_patient"
       }
+    ],
+    "vaccines": [
+      {
+        "id": "vax_covid19_pfizer",
+        "key": "covid19_pfizer",
+        "display": "COVID-19 Pfizer-BioNTech",
+        "group": "COVID-19",
+        "synonyms": [
+          "Comirnaty",
+          "Pfizer",
+          "BNT162b2"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "208"
+      },
+      {
+        "id": "vax_covid19_moderna",
+        "key": "covid19_moderna",
+        "display": "COVID-19 Moderna",
+        "group": "COVID-19",
+        "synonyms": [
+          "Spikevax",
+          "mRNA-1273"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "207"
+      },
+      {
+        "id": "vax_covid19_astrazeneca",
+        "key": "covid19_astrazeneca",
+        "display": "COVID-19 AstraZeneca",
+        "group": "COVID-19",
+        "synonyms": [
+          "Vaxzevria",
+          "AZD1222",
+          "Oxford"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "210"
+      },
+      {
+        "id": "vax_covid19_janssen",
+        "key": "covid19_janssen",
+        "display": "COVID-19 Janssen (Johnson & Johnson)",
+        "group": "COVID-19",
+        "synonyms": [
+          "J&J",
+          "Ad26.COV2.S"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "212"
+      },
+      {
+        "id": "vax_covid19_sinopharm",
+        "key": "covid19_sinopharm",
+        "display": "COVID-19 Sinopharm (BBIBP-CorV)",
+        "group": "COVID-19",
+        "synonyms": [
+          "BBIBP",
+          "Sinopharm"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "510"
+      },
+      {
+        "id": "vax_covid19_sinovac",
+        "key": "covid19_sinovac",
+        "display": "COVID-19 Sinovac (CoronaVac)",
+        "group": "COVID-19",
+        "synonyms": [
+          "CoronaVac",
+          "Sinovac"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "511"
+      },
+      {
+        "id": "vax_covid19_sputnik",
+        "key": "covid19_sputnik",
+        "display": "COVID-19 Sputnik V",
+        "group": "COVID-19",
+        "synonyms": [
+          "Gam-COVID-Vac",
+          "Sputnik"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "510"
+      },
+      {
+        "id": "vax_influenza",
+        "key": "influenza",
+        "display": "Influenza (gripe estacional)",
+        "group": "Influenza",
+        "synonyms": [
+          "Gripe",
+          "Flu",
+          "Influenza estacional"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "88"
+      },
+      {
+        "id": "vax_influenza_h1n1",
+        "key": "influenza_h1n1",
+        "display": "Influenza A H1N1",
+        "group": "Influenza",
+        "synonyms": [
+          "H1N1",
+          "Gripe porcina"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "125"
+      },
+      {
+        "id": "vax_hepatitis_a",
+        "key": "hepatitis_a",
+        "display": "Hepatitis A",
+        "group": "Hepatitis",
+        "synonyms": [
+          "Hep A",
+          "Havrix",
+          "Vaqta"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "83"
+      },
+      {
+        "id": "vax_hepatitis_b",
+        "key": "hepatitis_b",
+        "display": "Hepatitis B",
+        "group": "Hepatitis",
+        "synonyms": [
+          "Hep B",
+          "Engerix-B",
+          "Recombivax"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "45"
+      },
+      {
+        "id": "vax_hepatitis_ab",
+        "key": "hepatitis_ab",
+        "display": "Hepatitis A + B combinada",
+        "group": "Hepatitis",
+        "synonyms": [
+          "Twinrix",
+          "Hep AB"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "104"
+      },
+      {
+        "id": "vax_bcg",
+        "key": "bcg",
+        "display": "BCG (Tuberculosis)",
+        "group": "Infantil/Pediátrica",
+        "synonyms": [
+          "Bacilo de Calmette-Guérin",
+          "TB"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "19"
+      },
+      {
+        "id": "vax_polio_ipv",
+        "key": "polio_ipv",
+        "display": "Polio (IPV inactivada)",
+        "group": "Infantil/Pediátrica",
+        "synonyms": [
+          "IPV",
+          "Salk",
+          "Poliomielitis"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "10"
+      },
+      {
+        "id": "vax_polio_opv",
+        "key": "polio_opv",
+        "display": "Polio oral (OPV)",
+        "group": "Infantil/Pediátrica",
+        "synonyms": [
+          "OPV",
+          "Sabin",
+          "Polio oral"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "02"
+      },
+      {
+        "id": "vax_mmr",
+        "key": "mmr",
+        "display": "Triple viral (SRP / MMR)",
+        "group": "Infantil/Pediátrica",
+        "synonyms": [
+          "SRP",
+          "MMR",
+          "Sarampión",
+          "Rubéola",
+          "Parotiditis",
+          "Paperas"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "03"
+      },
+      {
+        "id": "vax_dpt",
+        "key": "dpt",
+        "display": "DPT (Difteria, Pertussis, Tétanos)",
+        "group": "Infantil/Pediátrica",
+        "synonyms": [
+          "DPT",
+          "Triple bacteriana",
+          "Difteria",
+          "Tos ferina",
+          "Tétanos pediátrica"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "01"
+      },
+      {
+        "id": "vax_pentavalente",
+        "key": "pentavalente",
+        "display": "Pentavalente (DPT + HepB + Hib)",
+        "group": "Infantil/Pediátrica",
+        "synonyms": [
+          "Pentavalente",
+          "DPT-HB-Hib"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "102"
+      },
+      {
+        "id": "vax_rotavirus",
+        "key": "rotavirus",
+        "display": "Rotavirus",
+        "group": "Infantil/Pediátrica",
+        "synonyms": [
+          "Rotarix",
+          "RotaTeq"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "116"
+      },
+      {
+        "id": "vax_varicela",
+        "key": "varicela",
+        "display": "Varicela",
+        "group": "Infantil/Pediátrica",
+        "synonyms": [
+          "Varivax",
+          "Chickenpox",
+          "Varicella"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "21"
+      },
+      {
+        "id": "vax_neumococo_pcv13",
+        "key": "neumococo_pcv13",
+        "display": "Neumococo conjugada (PCV13)",
+        "group": "Infantil/Pediátrica",
+        "synonyms": [
+          "Prevnar 13",
+          "PCV13",
+          "Neumococo"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "133"
+      },
+      {
+        "id": "vax_neumococo_ppsv23",
+        "key": "neumococo_ppsv23",
+        "display": "Neumococo polisacárida (PPSV23)",
+        "group": "Infantil/Pediátrica",
+        "synonyms": [
+          "Pneumovax",
+          "PPSV23"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "33"
+      },
+      {
+        "id": "vax_meningococo_acwy",
+        "key": "meningococo_acwy",
+        "display": "Meningococo ACWY",
+        "group": "Infantil/Pediátrica",
+        "synonyms": [
+          "Menactra",
+          "Menveo",
+          "Meningitis ACWY"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "114"
+      },
+      {
+        "id": "vax_meningococo_b",
+        "key": "meningococo_b",
+        "display": "Meningococo B",
+        "group": "Infantil/Pediátrica",
+        "synonyms": [
+          "Bexsero",
+          "Trumenba",
+          "MenB"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "162"
+      },
+      {
+        "id": "vax_hib",
+        "key": "hib",
+        "display": "Haemophilus influenzae tipo b (Hib)",
+        "group": "Infantil/Pediátrica",
+        "synonyms": [
+          "Hib",
+          "ActHIB",
+          "PedvaxHIB"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "17"
+      },
+      {
+        "id": "vax_tdap",
+        "key": "tdap",
+        "display": "Tdap (Tétanos, Difteria, Pertussis - adulto)",
+        "group": "Adulto",
+        "synonyms": [
+          "Boostrix",
+          "Adacel",
+          "Tdap adulto"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "115"
+      },
+      {
+        "id": "vax_td",
+        "key": "td",
+        "display": "Td (Tétanos y Difteria - adulto)",
+        "group": "Adulto",
+        "synonyms": [
+          "Tétanos",
+          "Toxoide tetánico",
+          "Antitetánica"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "09"
+      },
+      {
+        "id": "vax_herpes_zoster",
+        "key": "herpes_zoster",
+        "display": "Herpes Zóster (Culebrilla)",
+        "group": "Adulto",
+        "synonyms": [
+          "Shingrix",
+          "Zostavax",
+          "Culebrilla",
+          "Zóster"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "187"
+      },
+      {
+        "id": "vax_vph",
+        "key": "vph",
+        "display": "VPH (Virus del Papiloma Humano)",
+        "group": "Adulto",
+        "synonyms": [
+          "HPV",
+          "Gardasil",
+          "Cervarix",
+          "Papiloma"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "137"
+      },
+      {
+        "id": "vax_fiebre_amarilla",
+        "key": "fiebre_amarilla",
+        "display": "Fiebre Amarilla",
+        "group": "Viajero",
+        "synonyms": [
+          "Yellow Fever",
+          "YF-Vax",
+          "Stamaril"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "37"
+      },
+      {
+        "id": "vax_fiebre_tifoidea",
+        "key": "fiebre_tifoidea",
+        "display": "Fiebre Tifoidea",
+        "group": "Viajero",
+        "synonyms": [
+          "Typhoid",
+          "Typhim Vi",
+          "Vivotif"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "25"
+      },
+      {
+        "id": "vax_rabia",
+        "key": "rabia",
+        "display": "Rabia",
+        "group": "Viajero",
+        "synonyms": [
+          "Rabies",
+          "Imovax",
+          "RabAvert",
+          "Antirrábica"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "40"
+      },
+      {
+        "id": "vax_colera",
+        "key": "colera",
+        "display": "Cólera",
+        "group": "Viajero",
+        "synonyms": [
+          "Cholera",
+          "Dukoral",
+          "Vaxchora"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "26"
+      },
+      {
+        "id": "vax_encefalitis_japonesa",
+        "key": "encefalitis_japonesa",
+        "display": "Encefalitis Japonesa",
+        "group": "Viajero",
+        "synonyms": [
+          "Japanese Encephalitis",
+          "Ixiaro"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "39"
+      },
+      {
+        "id": "vax_dengue",
+        "key": "dengue",
+        "display": "Dengue",
+        "group": "Otra",
+        "synonyms": [
+          "Dengvaxia",
+          "Qdenga"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "56"
+      },
+      {
+        "id": "vax_mpox",
+        "key": "mpox",
+        "display": "Mpox (Viruela del mono)",
+        "group": "Otra",
+        "synonyms": [
+          "Monkeypox",
+          "Jynneos",
+          "Viruela símica"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "206"
+      },
+      {
+        "id": "vax_rsv",
+        "key": "rsv",
+        "display": "VRS (Virus Respiratorio Sincitial)",
+        "group": "Otra",
+        "synonyms": [
+          "RSV",
+          "Abrysvo",
+          "Arexvy"
+        ],
+        "code_system": "http://hl7.org/fhir/sid/cvx",
+        "code": "305"
+      }
     ]
   }
 }

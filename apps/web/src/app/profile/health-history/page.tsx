@@ -7,12 +7,13 @@ import { User, UserRole, PatientProfile } from '@/types';
 import { PatientHealthHistory } from '../components/patient-health-history';
 import { MedicationList } from '../components/medication-list';
 import { SurgeriesTab } from '../components/surgeries-tab';
+import { VaccinesTab } from '../components/VaccinesTab';
 import { HabitsTab } from '../components/HabitsTab';
 import { FamilyHistoryTab } from '../components/FamilyHistoryTab';
 import { useActiveProfile } from '@/hooks/useActiveProfile';
-import { ArrowLeft, Activity, Pill, Scissors, Coffee, Users } from 'lucide-react';
+import { ArrowLeft, Activity, Pill, Scissors, Coffee, Users, Syringe } from 'lucide-react';
 
-type Section = 'menu' | 'history' | 'medications' | 'surgeries' | 'habits' | 'family-history';
+type Section = 'menu' | 'history' | 'medications' | 'surgeries' | 'vaccines' | 'habits' | 'family-history';
 
 export default function HealthHistoryPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -73,6 +74,7 @@ export default function HealthHistoryPage() {
     { id: 'history', title: 'Condiciones y Alergias', desc: 'Registra tus enfermedades crónicas y alergias conocidas', icon: Activity },
     { id: 'medications', title: 'Medicamentos', desc: 'Gestiona tus medicamentos actuales e historial', icon: Pill },
     { id: 'surgeries', title: 'Cirugías', desc: 'Historial de intervenciones quirúrgicas pasadas', icon: Scissors },
+    { id: 'vaccines', title: 'Vacunas', desc: 'Registro de vacunas e inmunizaciones aplicadas', icon: Syringe },
     { id: 'habits', title: 'Hábitos', desc: 'Registro de estilo de vida, consumo de tabaco y alcohol', icon: Coffee },
     { id: 'family-history', title: 'Antecedentes Familiares', desc: 'Historial médico de tus familiares directos', icon: Users },
   ];
@@ -150,6 +152,9 @@ export default function HealthHistoryPage() {
               )}
               {profile && activeSection === 'surgeries' && (
                 <SurgeriesTab profile={profile} onRefresh={fetchData} profileId={activeProfileId || undefined} />
+              )}
+              {profile && activeSection === 'vaccines' && (
+                <VaccinesTab profile={profile} onRefresh={fetchData} profileId={activeProfileId || undefined} />
               )}
               {activeSection === 'habits' && (
                 <HabitsTab onRefresh={fetchData} profileId={activeProfileId || undefined} />

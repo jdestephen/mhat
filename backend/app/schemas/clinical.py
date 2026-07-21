@@ -198,7 +198,7 @@ class DoctorMedicalRecordCreate(BaseModel):
     tags: Optional[List[str]] = Field(default_factory=list)
     
     # Doctor-specific fields
-    brief_history: Optional[str] = Field(None, max_length=300)
+    brief_history: Optional[str] = Field(None, max_length=2500)
     has_red_flags: bool = False
     red_flags: Optional[List[str]] = None
     key_finding: Optional[str] = Field(None, max_length=250)
@@ -227,7 +227,7 @@ class DoctorMedicalRecordUpdate(BaseModel):
     category_id: Optional[int] = None
     tags: Optional[List[str]] = None
     
-    brief_history: Optional[str] = Field(None, max_length=300)
+    brief_history: Optional[str] = Field(None, max_length=2500)
     has_red_flags: Optional[bool] = None
     red_flags: Optional[List[str]] = None
     key_finding: Optional[str] = Field(None, max_length=250)

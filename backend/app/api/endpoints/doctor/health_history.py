@@ -16,6 +16,7 @@ from app.models.patient import (
     HealthHabit,
     FamilyHistoryCondition,
     Surgery,
+    Vaccine,
 )
 from app.schemas import patient as patient_schema
 
@@ -425,4 +426,73 @@ async def doctor_delete_family_history(
     if not condition:
         raise HTTPException(status_code=404, detail="Family history condition not found")
     await db.delete(condition)
+    await db.commit()
+
+
+# --- Vaccines ---
+
+@router.post("/patients/{patient_id}/vaccines", response_model=patient_schema.Vaccine)
+async def doctor_add_vaccine(
+    patient_id: uuid.UUID,
+    vaccine_in: patient_schema.VaccineCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> Any:
+    """Doctor adds a vaccine to a patient's profile."""
+    await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
+    vaccine = Vaccine(patient_profile_id=patient_id, **vaccine_in.model_dump())
+    db.add(vaccine)
+    await db.commit()
+    await db.refresh(vaccine)
+    return vaccine
+
+
+@router.patch("/patients/{patient_id}/vaccines/{vaccine_id}", response_model=patient_schema.Vaccine)
+async def doctor_update_vaccine(
+    patient_id: uuid.UUID,
+    vaccine_id: int,
+    vaccine_in: patient_schema.VaccineUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> Any:
+    """Doctor updates a vaccine on a patient's profile."""
+    await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
+    result = await db.execute(
+        select(Vaccine).filter(
+            Vaccine.id == vaccine_id,
+            Vaccine.patient_profile_id == patient_id,
+            Vaccine.deleted == False,
+        )
+    )
+    vaccine = result.scalars().first()
+    if not vaccine:
+        raise HTTPException(status_code=404, detail="Vaccine not found")
+    for field, value in vaccine_in.model_dump(exclude_unset=True).items():
+        setattr(vaccine, field, value)
+    await db.commit()
+    await db.refresh(vaccine)
+    return vaccine
+
+
+@router.delete("/patients/{patient_id}/vaccines/{vaccine_id}", status_code=204)
+async def doctor_delete_vaccine(
+    patient_id: uuid.UUID,
+    vaccine_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+) -> None:
+    """Doctor soft-deletes a vaccine from patient's profile."""
+    await get_doctor_patient_access(patient_id, db, current_user, require_write=True)
+    result = await db.execute(
+        select(Vaccine).filter(
+            Vaccine.id == vaccine_id,
+            Vaccine.patient_profile_id == patient_id,
+            Vaccine.deleted == False,
+        )
+    )
+    vaccine = result.scalars().first()
+    if not vaccine:
+        raise HTTPException(status_code=404, detail="Vaccine not found")
+    vaccine.deleted = True
+    vaccine.deleted_at = datetime.now(timezone.utc)
     await db.commit()

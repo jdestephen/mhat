@@ -171,6 +171,12 @@ class PatientProfile(Base):
         primaryjoin="and_(PatientProfile.id==Surgery.patient_profile_id, Surgery.deleted==False)",
         viewonly=True,
     )
+    vaccines: Mapped[List["Vaccine"]] = relationship(
+        "Vaccine",
+        back_populates="patient_profile",
+        primaryjoin="and_(PatientProfile.id==Vaccine.patient_profile_id, Vaccine.deleted==False)",
+        viewonly=True,
+    )
 
 class Medication(Base):
     __tablename__ = "medications"
@@ -232,6 +238,30 @@ class Surgery(Base):
     deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     
     patient_profile: Mapped["PatientProfile"] = relationship("PatientProfile", back_populates="surgeries")
+
+
+class Vaccine(Base):
+    __tablename__ = "vaccines"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    patient_profile_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("patient_profiles.id"), nullable=False)
+
+    vaccine_name: Mapped[str] = mapped_column(String, nullable=False)
+    code: Mapped[Optional[str]] = mapped_column(String, nullable=True)  # CVX code (null for custom entries)
+    code_system: Mapped[Optional[str]] = mapped_column(String, nullable=True)  # e.g., "http://hl7.org/fhir/sid/cvx"
+    dose_number: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    date_administered: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    administered_by: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    lot_number: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    site: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    # Timestamps and soft delete
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    deleted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+    patient_profile: Mapped["PatientProfile"] = relationship("PatientProfile", back_populates="vaccines")
 
 class Allergy(Base):
     __tablename__ = "allergies"

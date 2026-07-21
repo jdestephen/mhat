@@ -70,6 +70,28 @@ class CatalogService:
                     
         return results[:50]
 
+    def search_vaccines(self, query: str) -> List[Dict[str, Any]]:
+        if not self._data:
+            return []
+
+        query = query.lower().strip()
+        vaccines = self._data.get("terminology", {}).get("vaccines", [])
+
+        results = []
+        for item in vaccines:
+            # Check display name
+            if query in item["display"].lower():
+                results.append(item)
+                continue
+
+            # Check synonyms
+            for synonym in item.get("synonyms", []):
+                if query in synonym.lower():
+                    results.append(item)
+                    break
+
+        return results[:50]
+
     def get_ui_options(self) -> Dict[str, Any]:
         if not self._data:
             return {}

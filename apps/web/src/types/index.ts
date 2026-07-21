@@ -111,6 +111,7 @@ export interface PatientProfile {
   allergies?: Allergy[];
   conditions?: Condition[];
   surgeries?: Surgery[];
+  vaccines?: Vaccine[];
   personal_references?: PersonalReference[];
   health_habit?: HealthHabit | null;
   family_history?: FamilyHistoryCondition[];
@@ -123,6 +124,23 @@ export interface Surgery {
   name: string;
   date_str?: string | null;
   hospital?: string | null;
+  notes?: string | null;
+  created_at: string;
+  deleted: boolean;
+  deleted_at?: string | null;
+}
+
+export interface Vaccine {
+  id: number;
+  patient_profile_id: string;
+  vaccine_name: string;
+  code?: string | null;
+  code_system?: string | null;
+  dose_number?: number | null;
+  date_administered?: string | null;
+  administered_by?: string | null;
+  lot_number?: string | null;
+  site?: string | null;
   notes?: string | null;
   created_at: string;
   deleted: boolean;

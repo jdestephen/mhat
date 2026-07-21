@@ -74,6 +74,7 @@ async def get_patient_profile(
             selectinload(PatientProfile.family_history),
             selectinload(PatientProfile.locations),
             selectinload(PatientProfile.surgeries),
+            selectinload(PatientProfile.vaccines),
         )
     )
     return result.scalars().first()
@@ -135,6 +136,8 @@ async def update_patient_profile(
             selectinload(PatientProfile.health_habit),
             selectinload(PatientProfile.family_history),
             selectinload(PatientProfile.locations),
+            selectinload(PatientProfile.surgeries),
+            selectinload(PatientProfile.vaccines),
         )
     )
     return result.scalars().first()
