@@ -10,11 +10,12 @@ import { MedicationList } from '@/app/profile/components/medication-list';
 import { HabitsTab } from '@/app/profile/components/HabitsTab';
 import { FamilyHistoryTab } from '@/app/profile/components/FamilyHistoryTab';
 import { SurgeriesTab } from '@/app/profile/components/surgeries-tab';
-import { ArrowLeft, Activity, Pill, Scissors, Coffee, Users } from 'lucide-react';
+import { VaccinesTab } from '@/app/profile/components/VaccinesTab';
+import { ArrowLeft, Activity, Pill, Scissors, Coffee, Users, Syringe } from 'lucide-react';
 import { PatientInfoBanner } from '@/components/doctor/PatientInfoBanner';
 import { useMyPatients } from '@/hooks/queries/useMyPatients';
 
-type Section = 'menu' | 'history' | 'medications' | 'surgeries' | 'habits' | 'family-history';
+type Section = 'menu' | 'history' | 'medications' | 'surgeries' | 'vaccines' | 'habits' | 'family-history';
 
 export default function DoctorHealthHistoryPage() {
   const params = useParams();
@@ -61,6 +62,12 @@ export default function DoctorHealthHistoryPage() {
           created_at: s.created_at || new Date().toISOString(),
           deleted: false,
         })),
+        vaccines: (healthData.vaccines || []).map((v: Record<string, unknown>) => ({
+          ...v,
+          patient_profile_id: patientId,
+          created_at: v.created_at || new Date().toISOString(),
+          deleted: false,
+        })),
       } as unknown as PatientProfile);
     } catch (err) {
       console.error('Error loading patient health data', err);
@@ -100,6 +107,7 @@ export default function DoctorHealthHistoryPage() {
     { id: 'history', title: 'Condiciones y Alergias', desc: 'Registro de enfermedades y alergias del paciente', icon: Activity },
     { id: 'medications', title: 'Medicamentos', desc: 'Gestión y control de medicamentos recetados', icon: Pill },
     { id: 'surgeries', title: 'Cirugías', desc: 'Historial de intervenciones quirúrgicas', icon: Scissors },
+    { id: 'vaccines', title: 'Vacunas', desc: 'Registro de vacunas e inmunizaciones aplicadas', icon: Syringe },
     { id: 'habits', title: 'Hábitos', desc: 'Hábitos de vida, consumo de sustancias y riesgos', icon: Coffee },
     { id: 'family-history', title: 'Antecedentes Familiares', desc: 'Información médica del núcleo familiar', icon: Users },
   ];
@@ -188,6 +196,9 @@ export default function DoctorHealthHistoryPage() {
               )}
               {profile && activeSection === 'surgeries' && (
                 <SurgeriesTab profile={profile} onRefresh={fetchProfile} apiPrefix={apiPrefix} />
+              )}
+              {profile && activeSection === 'vaccines' && (
+                <VaccinesTab profile={profile} onRefresh={fetchProfile} apiPrefix={apiPrefix} />
               )}
               {activeSection === 'habits' && (
                 <HabitsTab onRefresh={fetchProfile} apiPrefix={apiPrefix} />

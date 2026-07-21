@@ -27,6 +27,16 @@ async def search_conditions(
     """
     return catalog_service.search_conditions(q)
 
+@router.get("/vaccines", response_model=List[Dict[str, Any]])
+async def search_vaccines(
+    q: str = "",
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """
+    Search vaccines catalog by display name or synonyms.
+    """
+    return catalog_service.search_vaccines(q)
+
 @router.get("/options", response_model=Dict[str, Any])
 async def get_ui_options(
     current_user: User = Depends(deps.get_current_user),

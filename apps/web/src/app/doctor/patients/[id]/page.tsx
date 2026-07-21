@@ -210,6 +210,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
             conditions={health?.conditions ?? []}
             allergies={health?.allergies ?? []}
             surgeries={health?.surgeries ?? []}
+            vaccines={health?.vaccines ?? []}
             healthHabit={health?.health_habit ?? null}
             familyHistory={health?.family_history ?? []}
           />
@@ -222,6 +223,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
             conditions={health?.conditions ?? []}
             allergies={health?.allergies ?? []}
             surgeries={health?.surgeries ?? []}
+            vaccines={health?.vaccines ?? []}
             healthHabit={health?.health_habit ?? null}
             familyHistory={health?.family_history ?? []}
           />
@@ -269,7 +271,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                             variant="default"
                           >
                             <Plus className="h-4 w-4" />
-                            <span className="sm:hidden md:inline">Nuevo Registro</span>
+                            <span className="sm:hidden md:inline">Nuevo</span>
                           </Button>
                         </Link>
                         <Button

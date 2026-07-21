@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
@@ -42,6 +42,16 @@ export default function DoctorAccessPage() {
   const [expiresInDays, setExpiresInDays] = useState<number>(30);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
+
+  // Reset local state when the active profile changes
+  useEffect(() => {
+    setShowCreateForm(false);
+    setAccessLevel(AccessLevel.READ_ONLY);
+    setAccessType('PERMANENT');
+    setExpiresInDays(30);
+    setCopiedCode(null);
+    setGeneratedCode(null);
+  }, [activeProfileId]);
 
   const handleCreateInvitation = async () => {
     try {

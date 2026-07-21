@@ -244,6 +244,42 @@ class Surgery(SurgeryBase):
         from_attributes = True
 
 
+# Vaccine
+class VaccineBase(BaseModel):
+    vaccine_name: str
+    code: Optional[str] = None
+    code_system: Optional[str] = None
+    dose_number: Optional[int] = None
+    date_administered: Optional[date] = None
+    administered_by: Optional[str] = None
+    lot_number: Optional[str] = None
+    site: Optional[str] = None
+    notes: Optional[str] = None
+
+class VaccineCreate(VaccineBase):
+    pass
+
+class VaccineUpdate(BaseModel):
+    vaccine_name: Optional[str] = None
+    code: Optional[str] = None
+    code_system: Optional[str] = None
+    dose_number: Optional[int] = None
+    date_administered: Optional[date] = None
+    administered_by: Optional[str] = None
+    lot_number: Optional[str] = None
+    site: Optional[str] = None
+    notes: Optional[str] = None
+
+class Vaccine(VaccineBase):
+    id: int
+    patient_profile_id: UUID
+    created_at: datetime
+    deleted: bool
+    deleted_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
 # Personal Reference
 class PersonalReferenceBase(BaseModel):
     name: str
@@ -337,6 +373,7 @@ class PatientProfile(PatientProfileBase):
     allergies: List[Allergy] = []
     conditions: List[Condition] = []
     surgeries: List[Surgery] = []
+    vaccines: List[Vaccine] = []
     personal_references: List[PersonalReference] = []
     health_habit: Optional[HealthHabit] = None
     family_history: List[FamilyHistoryConditionResponse] = []

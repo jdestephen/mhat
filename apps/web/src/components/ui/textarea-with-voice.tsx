@@ -44,7 +44,7 @@ export function TextareaWithVoice({
     error,
   } = useVoiceInput({
     language,
-    continuous: false,
+    continuous: true,
     interimResults: true,
     onResult: handleVoiceResult,
   });

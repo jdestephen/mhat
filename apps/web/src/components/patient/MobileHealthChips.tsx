@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Pill, Activity, AlertTriangle, Heart, Users, ChevronDown } from 'lucide-react';
+import { Pill, Activity, AlertTriangle, Heart, Users, ChevronDown, Syringe } from 'lucide-react';
 import clsx from 'clsx';
 import {
   HealthMedication,
   HealthCondition,
   HealthAllergy,
   HealthSurgery,
+  HealthVaccine,
 } from './HealthSidebar';
 import { HealthHabit, FamilyHistoryCondition } from '@/types';
 
@@ -16,6 +17,7 @@ interface MobileHealthChipsProps {
   conditions: HealthCondition[];
   allergies: HealthAllergy[];
   surgeries?: HealthSurgery[];
+  vaccines?: HealthVaccine[];
   healthHabit?: HealthHabit | null;
   familyHistory?: FamilyHistoryCondition[];
 }
@@ -40,6 +42,7 @@ export function MobileHealthChips({
   conditions,
   allergies,
   surgeries = [],
+  vaccines = [],
   healthHabit,
   familyHistory = [],
 }: MobileHealthChipsProps) {
@@ -85,6 +88,14 @@ export function MobileHealthChips({
       color: 'text-orange-600',
       bgColor: 'bg-orange-50 border-orange-200',
       count: surgeries.length,
+    },
+    {
+      key: 'vaccines',
+      label: 'Vacunas',
+      icon: Syringe,
+      color: 'text-teal-600',
+      bgColor: 'bg-teal-50 border-teal-200',
+      count: vaccines.length,
     },
     {
       key: 'habits',
@@ -203,6 +214,22 @@ export function MobileHealthChips({
               </div>
               <div className="flex items-center gap-2">
                 {surgery.date_str && <span className="text-xs text-slate-400">{surgery.date_str}</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {expanded === 'vaccines' && vaccines.length > 0 && (
+        <div className="bg-white rounded-lg border border-teal-200 p-3 space-y-2 animate-in slide-in-from-top-2 duration-200">
+          {vaccines.map((vaccine) => (
+            <div key={vaccine.id} className="flex items-center justify-between text-sm">
+              <div className="flex flex-col">
+                <span className="font-medium text-slate-800">{vaccine.vaccine_name}</span>
+                {vaccine.dose_number && <span className="text-xs text-slate-500">Dosis {vaccine.dose_number}</span>}
+              </div>
+              <div className="flex items-center gap-2">
+                {vaccine.date_administered && <span className="text-xs text-slate-400">{vaccine.date_administered}</span>}
               </div>
             </div>
           ))}
