@@ -33,6 +33,7 @@ import {
 import { RecordDetailData } from '@/components/records/RecordDetailModal';
 import { RecordSlideModal } from './components/RecordSlideModal';
 import { RecordCard, RecordCardData } from '@/components/records/RecordCard';
+import { RecordsTable } from '@/components/records/RecordsTable';
 import { HealthSidebar } from '@/components/patient/HealthSidebar';
 import { MobileHealthChips } from '@/components/patient/MobileHealthChips';
 import { DocumentUploadModal } from './components/DocumentUploadModal';
@@ -59,9 +60,11 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
   const [personalInfoModalOpen, setPersonalInfoModalOpen] = useState(false);
   const actionMenuRef = useRef<HTMLDivElement>(null);
   const fabMenuRef = useRef<HTMLDivElement>(null);
+  const [recordsPage, setRecordsPage] = useState(1);
   const [vsPage, setVsPage] = useState(1);
   const [rxPage, setRxPage] = useState(1);
   const [ordersPage, setOrdersPage] = useState(1);
+  const RECORDS_PAGE_SIZE = 7;
   const VS_PAGE_SIZE = 10;
   const PLAN_PAGE_SIZE = 3;
 
@@ -194,7 +197,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
   return (
     <div className="flex flex-col lg:flex-row max-w-8xl mx-auto gap-4 lg:gap-6">
       {/* Left column: Header + Health Sidebar (desktop) */}
-      <div className="flex flex-col lg:flex-1 mb-2 lg:mb-6 gap-4 lg:gap-7">
+      <div className="flex flex-col lg:w-[32%] mb-2 lg:mb-6 gap-4 lg:gap-7">
         <div>
           <Link href="/doctor" className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-emerald-600 transition-colors mb-2">
             <ArrowLeft className="h-3 w-3" />
@@ -231,7 +234,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
       </div>
 
       {/* Main Content: Sidebar + Tabs */}
-      <div className="flex flex-col lg:flex-[4] gap-4 lg:gap-6 min-w-0">
+      <div className="flex flex-col lg:w-[68%] gap-4 lg:gap-6">
         {/* Main Content */}
         <div className="space-y-6">
           {/* Tabs */}
@@ -383,14 +386,42 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                   </div>
                 ) : (
                   <div className="flex flex-col p-2 gap-2">
-                    {records.map((record, index) => (
-                      <RecordCard
-                        key={record.id}
-                        record={record}
-                        index={index}
+                    {/* Desktop/Tablet: Table view */}
+                      {/* <div className="hidden md:block">
+                      <RecordsTable
+                        records={records.slice(
+                          (recordsPage - 1) * RECORDS_PAGE_SIZE,
+                          recordsPage * RECORDS_PAGE_SIZE,
+                        )}
                         onViewDetail={handleViewDetail}
                       />
-                    ))}
+                    </div> */}
+
+                    {/* Mobile: Card view */}
+                    <div className="flex flex-col gap-2">
+                      {records
+                        .slice(
+                          (recordsPage - 1) * RECORDS_PAGE_SIZE,
+                          recordsPage * RECORDS_PAGE_SIZE,
+                        )
+                        .map((record, index) => (
+                          <RecordCard
+                            key={record.id}
+                            record={record}
+                            index={(recordsPage - 1) * RECORDS_PAGE_SIZE + index}
+                            onViewDetail={handleViewDetail}
+                          />
+                        ))}
+                    </div>
+
+                    <Pagination
+                      currentPage={recordsPage}
+                      totalPages={Math.ceil(records.length / RECORDS_PAGE_SIZE)}
+                      totalItems={records.length}
+                      pageSize={RECORDS_PAGE_SIZE}
+                      onPageChange={setRecordsPage}
+                      itemLabel="registros"
+                    />
                   </div>
                 )}
               </TabsContent>
