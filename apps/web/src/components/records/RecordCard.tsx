@@ -88,8 +88,8 @@ export function RecordCard({ record, index, onViewDetail, onViewPage }: RecordCa
               <h3 className="font-medium text-gray-700 text-sm">Motivo: {record.motive}</h3>
             </div>
             <div className="flex flex-col sm:flex-row items-stretch gap-2 mt-2">
-              <div className="flex flex-col px-2 py-2 border border-gray-200 rounded-lg sm:w-[60%] min-h-[50px] sm:min-h-[70px]">
-                <span className="text-gray-900 text-xs font-semibold">Diagnósticos:</span>
+              <div className="flex flex-col px-2 py-2 border border-gray-200 rounded-lg sm:min-w-[50%] sm:w-auto sm:max-w-[90%] min-h-[50px] sm:min-h-[70px]">
+                <span className="text-gray-700 text-xs font-semibold">Diagnósticos:</span>
                 {record.diagnoses && record.diagnoses.length > 0 && record.diagnoses.some((d) => d.diagnosis) && (
                   <div className="flex flex-row mt-1">
                     <span className="text-gray-800 text-sm capitalize">
@@ -98,26 +98,28 @@ export function RecordCard({ record, index, onViewDetail, onViewPage }: RecordCa
                   </div>
                 )}
               </div>
-              {/* <div className="flex flex-col px-3 py-2 border border-gray-200 rounded-lg sm:w-1/3 min-h-[50px] sm:min-h-[70px]">
-                <span className="text-red-900 text-xs font-semibold">Alertas Rojas:</span>
-                {record.red_flags && record.red_flags.length > 0 && (
+              {record.key_finding && (
+                <div className="flex flex-col px-2 py-2 border border-gray-200 rounded-lg sm:w-[40%] min-h-[50px] sm:min-h-[70px]">
+                  <span className="text-gray-700 text-xs font-semibold">Examen Físico:</span>
+                  {record.key_finding && (
+                    <div className="flex flex-row mt-1">
+                      <span className="text-gray-800 text-sm">
+                        {record.key_finding}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+              {record.red_flags && record.red_flags.length > 0 && (
+                <div className="flex flex-col px-2 py-2 border border-gray-200 rounded-lg sm:w-[40%] min-h-[50px] sm:min-h-[70px]">
+                  <span className="text-red-900 text-xs font-semibold">Alertas Rojas:</span>
                   <div className="flex flex-row mt-1">
                     <span className="text-red-800 text-sm capitalize">
                       {record.red_flags.map((redFlag) => redFlag).join(', ')}
                     </span>
                   </div>
-                )}
-              </div> */}
-              <div className="flex flex-col px-2 py-2 border border-gray-200 rounded-lg sm:w-[40%] min-h-[50px] sm:min-h-[70px]">
-                <span className="text-gray-900 text-xs font-semibold">Examen Físico:</span>
-                {record.key_finding && (
-                  <div className="flex flex-row mt-1">
-                    <span className="text-gray-800 text-sm capitalize">
-                      {record.key_finding}
-                    </span>
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

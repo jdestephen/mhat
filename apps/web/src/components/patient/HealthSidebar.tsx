@@ -177,7 +177,7 @@ export function HealthSidebar({
         {/* Rows */}
         {medications.map((med) => (
           <div key={med.id} className="flex items-baseline py-1.5 border-b border-slate-50 last:border-0 gap-1 px-1 text-sm">
-            <div className="flex-1 font-medium text-slate-800 wrapped pr-2">{med.name}</div>
+            <div className="flex-1 font-sm text-slate-800 wrapped pr-2">{med.name}</div>
             <div className="w-20 text-right text-xs text-slate-600">{med.dosage || '—'}</div>
             <div className="w-24 text-right text-xs text-slate-600 truncate">{med.frequency || '—'}</div>
           </div>
