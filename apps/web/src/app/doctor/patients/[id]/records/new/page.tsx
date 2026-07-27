@@ -562,7 +562,7 @@ export default function NewDoctorRecordPage({
                 />
               </div>
 
-              <div className="col-span-2">
+              {/* <div className="col-span-2">
                 <label className="block text-sm font-medium mb-1">Acciones de Hoy</label>
                 <div className="flex flex-wrap gap-2">
                   {ACTIONS_OPTIONS.map((action) => (
@@ -585,7 +585,7 @@ export default function NewDoctorRecordPage({
                     </button>
                   ))}
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
 
