@@ -330,6 +330,7 @@ async def read_medical_records(
     date_to: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
     profile_id: Optional[str] = Query(None, description="Profile ID to view records for"),
     has_prescriptions: Optional[bool] = Query(None, description="Filter to records with prescriptions"),
+    has_orders: Optional[bool] = Query(None, description="Filter to records with clinical orders"),
 ) -> Any:
     """
     Retrieve Medical Records with optional search filters.
@@ -350,6 +351,10 @@ async def read_medical_records(
     # Filter to records with prescriptions
     if has_prescriptions:
         stmt = stmt.filter(MedicalRecord.prescriptions.any())
+
+    # Filter to records with clinical orders
+    if has_orders:
+        stmt = stmt.filter(MedicalRecord.clinical_orders.any())
 
     # Date range filters
     if date_from:

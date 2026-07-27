@@ -270,7 +270,7 @@ export default function DedicatedRecordPage({ params }: { params: Promise<{ id: 
         {/* Annexes (Prescriptions, Orders, Docs) */}
         {(record.prescriptions?.length || record.clinical_orders?.length || record.documents?.length || record.tags?.length) ? (
           <div className="border-t border-slate-100 bg-slate-50/30 px-6 py-8">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-8">
               
               {/* Prescriptions */}
               {record.prescriptions && record.prescriptions.length > 0 && (
