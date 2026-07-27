@@ -17,6 +17,7 @@ export function useUpdateDoctorRecord() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['doctor', 'patients', variables.patientId, 'records'] });
+      queryClient.invalidateQueries({ queryKey: ['patient-orders', variables.patientId] });
     },
   });
 }

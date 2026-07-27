@@ -5,7 +5,7 @@ import { useUpdateDoctorRecord } from '@/hooks/mutations/useUpdateDoctorRecord';
 import { useCategories } from '@/hooks/queries/useCategories';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
 import { VitalSignsFormData } from '@/components/clinical/VitalSignsForm';
-import { OrderType, OrderUrgency, MedicalDiagnosis, MedicalRecord, DiagnosisStatus } from '@/types';
+import { OrderType, OrderUrgency, OrderItem, MedicalDiagnosis, MedicalRecord, DiagnosisStatus } from '@/types';
 
 export interface PrescriptionForm {
   medication_name: string;
@@ -20,6 +20,7 @@ export interface PrescriptionForm {
 export interface OrderForm {
   order_type: OrderType;
   description: string;
+  items: OrderItem[];
   urgency: OrderUrgency;
   reason: string;
   referral_to: string;
@@ -103,7 +104,8 @@ export function useMedicalRecordForm(patientId: string, options?: UseMedicalReco
   const [orders, setOrders] = useState<OrderForm[]>(
     initialData?.clinical_orders?.map((o) => ({
       order_type: o.order_type,
-      description: o.description,
+      description: o.description || '',
+      items: o.items || [],
       urgency: o.urgency,
       reason: o.reason || '',
       referral_to: o.referral_to || '',
@@ -198,6 +200,7 @@ export function useMedicalRecordForm(patientId: string, options?: UseMedicalReco
     setOrders(prev => [...prev, {
       order_type: OrderType.LAB,
       description: '',
+      items: [],
       urgency: OrderUrgency.ROUTINE,
       reason: '',
       referral_to: '',
@@ -245,9 +248,10 @@ export function useMedicalRecordForm(patientId: string, options?: UseMedicalReco
       quantity: p.quantity || undefined,
       instructions: p.instructions || undefined,
     })),
-    orders: orders.filter(o => o.description.trim()).map(o => ({
+    orders: orders.filter(o => o.items.length > 0 || o.description.trim()).map(o => ({
       order_type: o.order_type,
-      description: o.description,
+      description: o.description || undefined,
+      items: o.items.length > 0 ? o.items : undefined,
       urgency: o.urgency,
       reason: o.reason || undefined,
       referral_to: o.referral_to || undefined,

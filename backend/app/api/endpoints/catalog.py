@@ -45,3 +45,14 @@ async def get_ui_options(
     Get localized UI options for dropdowns (severity, status, etc.).
     """
     return catalog_service.get_ui_options()
+
+@router.get("/clinical-orders", response_model=Dict[str, Any])
+async def get_clinical_order_options(
+    type: str = "",
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """
+    Get predefined clinical order options grouped by type.
+    Optional 'type' query param to filter (LAB, IMAGING, REFERRAL, PROCEDURE).
+    """
+    return catalog_service.get_clinical_order_options(type if type else None)

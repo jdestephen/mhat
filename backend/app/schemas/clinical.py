@@ -85,10 +85,18 @@ class PrescriptionResponse(PrescriptionBase):
 # Clinical Order Schemas
 # =====================
 
+class OrderItem(BaseModel):
+    """A single item within a clinical order, with optional standard code."""
+    display: str
+    code: Optional[str] = None
+    code_system: Optional[str] = None
+
+
 class ClinicalOrderBase(BaseModel):
     """Base clinical order fields."""
     order_type: OrderType
-    description: str = Field(..., max_length=500)
+    description: Optional[str] = Field(None, max_length=500)
+    items: Optional[List[OrderItem]] = Field(default_factory=list)
     urgency: OrderUrgency = OrderUrgency.ROUTINE
     reason: Optional[str] = None
     notes: Optional[str] = None
@@ -96,14 +104,26 @@ class ClinicalOrderBase(BaseModel):
 
 
 class ClinicalOrderCreate(ClinicalOrderBase):
-    """Schema for creating a clinical order."""
+    """Schema for creating a clinical order (within a medical record)."""
     pass
+
+
+class StandaloneClinicalOrderCreate(BaseModel):
+    """Schema for creating a standalone clinical order (not attached to a record)."""
+    order_type: OrderType
+    items: List[OrderItem] = Field(..., min_length=1)
+    description: str = Field(..., max_length=500)  # Motive (required for standalone)
+    urgency: OrderUrgency = OrderUrgency.ROUTINE
+    reason: Optional[str] = None
+    notes: Optional[str] = None
+    referral_to: Optional[str] = Field(None, max_length=200)
 
 
 class ClinicalOrderUpdate(BaseModel):
     """Schema for updating a clinical order."""
     order_type: Optional[OrderType] = None
     description: Optional[str] = Field(None, max_length=500)
+    items: Optional[List[OrderItem]] = None
     urgency: Optional[OrderUrgency] = None
     reason: Optional[str] = None
     notes: Optional[str] = None
@@ -113,12 +133,15 @@ class ClinicalOrderUpdate(BaseModel):
 class ClinicalOrderResponse(ClinicalOrderBase):
     """Schema for clinical order response."""
     id: UUID
-    medical_record_id: UUID
+    medical_record_id: Optional[UUID] = None
+    patient_id: Optional[UUID] = None
+    category_id: Optional[int] = None
     created_at: datetime
     created_by: UUID
 
     class Config:
         from_attributes = True
+
 
 
 # =====================

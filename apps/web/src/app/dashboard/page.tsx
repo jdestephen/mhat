@@ -6,7 +6,7 @@ import api, { getDocumentUrl } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { RecordSearchBar } from '@/components/search/RecordSearchBar';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Plus, Calendar, Stethoscope, Paperclip, Pill } from 'lucide-react';
+import { Plus, Calendar, Stethoscope, Paperclip, Pill, ClipboardList } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { MedicalRecord, RecordStatus, UserRole } from '@/types';
@@ -101,6 +101,22 @@ export default function DashboardPage() {
     },
   });
 
+  // Orders-only query
+  const { data: orderRecords, isLoading: ordersLoading } = useQuery<MedicalRecord[]>({
+    queryKey: ['order-records', debouncedQuery, searchFilters.dateFrom, searchFilters.dateTo, activeProfileId],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.append('has_orders', 'true');
+      if (debouncedQuery) params.append('q', debouncedQuery);
+      if (searchFilters.dateFrom) params.append('date_from', searchFilters.dateFrom);
+      if (searchFilters.dateTo) params.append('date_to', searchFilters.dateTo);
+      if (activeProfileId) params.append('profile_id', activeProfileId);
+
+      const res = await api.get(`/hx/?${params.toString()}`);
+      return res.data;
+    },
+  });
+
   // Paginated records
   const totalItems = records?.length ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
@@ -181,6 +197,10 @@ export default function DashboardPage() {
             <TabsTrigger value="recetas">
               <Pill className="w-4 h-4 mr-2" />
               Recetas
+            </TabsTrigger>
+            <TabsTrigger value="ordenes">
+              <ClipboardList className="w-4 h-4 mr-2" />
+              Órdenes
             </TabsTrigger>
           </TabsList>
 
@@ -447,6 +467,123 @@ export default function DashboardPage() {
                                 {rx.route && <span>Vía: <strong className="capitalize">{rx.route}</strong></span>}
                                 {rx.quantity && <span>Cant: <strong>{rx.quantity}</strong></span>}
                               </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </TabsContent>
+
+          <TabsContent value="ordenes">
+            {ordersLoading ? (
+              <div className="text-center py-10">Cargando órdenes...</div>
+            ) : (
+              <>
+                {(!orderRecords || orderRecords.length === 0) && (
+                  <EmptyState
+                    icon={<ClipboardList className="w-12 h-12" />}
+                    title="No hay órdenes clínicas"
+                    description="Las órdenes que tus médicos agreguen a tus registros aparecerán aquí"
+                  />
+                )}
+
+                {orderRecords && orderRecords.length > 0 && (
+                  <div className="space-y-4">
+                    {orderRecords.map((record) => (
+                      <div key={record.id} className="bg-white rounded-lg border border-[var(--border-light)] shadow-sm overflow-hidden">
+                        {/* Record header */}
+                        <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                          <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 bg-amber-50 rounded-full flex items-center justify-center text-amber-600 shrink-0">
+                              <ClipboardList className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-slate-900 text-sm">{record.motive}</p>
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                <span className="flex flex-row items-center gap-1 text-xs text-slate-500">
+                                  <Calendar size={11} />
+                                  {new Date(record.record_date || record.created_at).toLocaleDateString('es-ES', {
+                                    day: 'numeric', month: 'short', year: 'numeric'
+                                  })}
+                                </span>
+                                {record.category && (
+                                  <span className="sm:ml-2 text-[10px] font-bold uppercase tracking-wider text-emerald-700 px-1 py-0.5 rounded-md border border-emerald-200">
+                                    {record.category.name}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => router.push(`/records/${record.id}`)}
+                            className="text-slate-500 hover:text-slate-700"
+                          >
+                            Ver Detalle
+                          </Button>
+                        </div>
+
+                        {/* Order items */}
+                        <div className="divide-y divide-slate-50">
+                          {record.clinical_orders?.map((order) => (
+                            <div key={order.id} className="px-4 py-3">
+                              <div className="flex items-center gap-2 mb-1.5">
+                                <span className={`text-xs px-2 py-0.5 rounded font-medium ${
+                                  order.order_type === 'LAB' ? 'bg-purple-100 text-purple-700' :
+                                  order.order_type === 'IMAGING' ? 'bg-blue-100 text-blue-700' :
+                                  order.order_type === 'REFERRAL' ? 'bg-amber-100 text-amber-700' :
+                                  order.order_type === 'PROCEDURE' ? 'bg-teal-100 text-teal-700' :
+                                  'bg-gray-100 text-gray-700'
+                                }`}>
+                                  {order.order_type === 'LAB' ? 'Laboratorio' :
+                                   order.order_type === 'IMAGING' ? 'Imagen' :
+                                   order.order_type === 'REFERRAL' ? 'Referencia' :
+                                   order.order_type === 'PROCEDURE' ? 'Procedimiento' :
+                                   order.order_type}
+                                </span>
+                                <span className={`text-xs px-2 py-0.5 rounded ${
+                                  order.urgency === 'STAT' ? 'bg-red-100 text-red-700' :
+                                  order.urgency === 'URGENT' ? 'bg-amber-100 text-amber-700' :
+                                  'bg-gray-100 text-gray-600'
+                                }`}>
+                                  {order.urgency === 'STAT' ? 'Inmediato' :
+                                   order.urgency === 'URGENT' ? 'Urgente' :
+                                   'Rutina'}
+                                </span>
+                              </div>
+                              {/* Items as pills */}
+                              {order.items && order.items.length > 0 ? (
+                                <div className="flex flex-wrap gap-1.5 mt-1">
+                                  {order.items.map((item: { display: string; code?: string; code_system?: string }, itemIdx: number) => (
+                                    <span
+                                      key={itemIdx}
+                                      className="inline-flex items-center px-2.5 py-1 text-xs font-medium bg-slate-50 text-slate-700 rounded-full border border-slate-200"
+                                      title={item.code ? `${item.code_system || ''}: ${item.code}` : undefined}
+                                    >
+                                      {item.display}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : order.description ? (
+                                <p className="font-medium text-slate-900 text-sm">{order.description}</p>
+                              ) : null}
+                              {/* Motive */}
+                              {order.items && order.items.length > 0 && order.description && (
+                                <p className="text-xs text-slate-500 mt-1">
+                                  <span className="font-medium">Motivo:</span> {order.description}
+                                </p>
+                              )}
+                              {order.reason && (
+                                <p className="text-xs text-slate-500 mt-0.5">{order.reason}</p>
+                              )}
+                              {order.referral_to && (
+                                <p className="text-xs text-slate-600 mt-0.5">Referir a: {order.referral_to}</p>
+                              )}
                             </div>
                           ))}
                         </div>

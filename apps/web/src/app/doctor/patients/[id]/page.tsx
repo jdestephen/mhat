@@ -39,6 +39,8 @@ import { MobileHealthChips } from '@/components/patient/MobileHealthChips';
 import { DocumentUploadModal } from './components/DocumentUploadModal';
 import { Pagination } from '@/components/ui/Pagination';
 import { VitalSignsModal } from '@/components/clinical/VitalSignsModal';
+import { ClinicalOrderModal } from '@/components/clinical/ClinicalOrderModal';
+import { usePatientOrders } from '@/hooks/queries/usePatientOrders';
 import { getVitalColor, getBpColor } from '@/lib/vitalSignsRanges';
 import api, { getDocumentUrl } from '@/lib/api';
 import { PatientPersonalInfoModal } from '@/components/doctor/PatientPersonalInfoModal';
@@ -57,6 +59,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [actionMenuOpen, setActionMenuOpen] = useState(false);
   const [vitalModalOpen, setVitalModalOpen] = useState(false);
+  const [orderModalOpen, setOrderModalOpen] = useState(false);
   const [personalInfoModalOpen, setPersonalInfoModalOpen] = useState(false);
   const actionMenuRef = useRef<HTMLDivElement>(null);
   const fabMenuRef = useRef<HTMLDivElement>(null);
@@ -156,9 +159,10 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
     });
   };
 
-  // Collect all prescriptions and orders from records
+  // Collect all prescriptions from records
   const allPrescriptions = records.flatMap((r) => r.prescriptions || []);
-  const allOrders = records.flatMap((r) => r.clinical_orders || []);
+  // Use the unified patient orders hook (both record-attached and standalone)
+  const { data: allOrders = [] } = usePatientOrders(patientId);
 
   const allDocuments = useMemo(
     () =>
@@ -325,6 +329,17 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                           >
                             <Activity className="h-4 w-4 text-rose-600" />
                             Signos Vitales
+                          </button>
+                          <button
+                            type="button"
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                            onClick={() => {
+                              setActionMenuOpen(false);
+                              setOrderModalOpen(true);
+                            }}
+                          >
+                            <ClipboardList className="h-4 w-4 text-emerald-600" />
+                            Orden Clínica
                           </button>
                           <div className="border-t border-gray-100 my-1" />
                           <button
@@ -659,7 +674,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                             .map((order) => (
                               <div key={order.id} className="p-4 rounded-lg border border-gray-200">
                                 <div className="flex items-start justify-between">
-                                  <div className="flex flex-col gap-1">
+                                  <div className="flex flex-col gap-1 flex-1">
                                     <div className="flex items-center gap-2 mb-1">
                                       <span className={`px-2 py-0.5 rounded text-xs font-medium ${
                                         order.order_type === 'LAB' ? 'bg-purple-100 text-purple-700' :
@@ -676,8 +691,34 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                                       }`}>
                                         {order.urgency}
                                       </span>
+                                      {!order.medical_record_id && (
+                                        <span className="px-2 py-0.5 rounded text-xs bg-emerald-100 text-emerald-700 font-medium">
+                                          Independiente
+                                        </span>
+                                      )}
                                     </div>
-                                    <h3 className="font-medium text-gray-900 mt-2">{order.description}</h3>
+                                    {/* Items as pills */}
+                                    {order.items && order.items.length > 0 ? (
+                                      <div className="flex flex-wrap gap-1.5 mt-1">
+                                        {order.items.map((item, itemIdx) => (
+                                          <span
+                                            key={itemIdx}
+                                            className="inline-flex items-center px-2.5 py-1 text-xs font-medium bg-slate-50 text-slate-700 rounded-full border border-slate-200"
+                                            title={item.code ? `${item.code_system || ''}: ${item.code}` : undefined}
+                                          >
+                                            {item.display}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    ) : order.description ? (
+                                      <h3 className="font-medium text-gray-900 mt-2">{order.description}</h3>
+                                    ) : null}
+                                    {/* Motive when items exist */}
+                                    {order.items && order.items.length > 0 && order.description && (
+                                      <p className="text-sm text-slate-600 mt-1">
+                                        <span className="font-medium text-slate-500">Motivo:</span> {order.description}
+                                      </p>
+                                    )}
                                     {order.reason && (
                                       <p className="text-sm text-gray-500">{order.reason}</p>
                                     )}
@@ -687,7 +728,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                                       </p>
                                     )}
                                   </div>
-                                  <span className="text-sm text-blue-600">
+                                  <span className="text-sm text-blue-600 shrink-0">
                                     {formatDate(order.created_at)}
                                   </span>
                                 </div>
@@ -760,6 +801,14 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                 >
                   <Activity className="h-4 w-4 text-rose-600" />
                   Signos Vitales
+                </button>
+                <button
+                  type="button"
+                  className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                  onClick={() => { setActionMenuOpen(false); setOrderModalOpen(true); }}
+                >
+                  <ClipboardList className="h-4 w-4 text-emerald-600" />
+                  Orden Clínica
                 </button>
                 <div className="border-t border-gray-100 my-1" />
                 <button
@@ -834,6 +883,14 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
       <VitalSignsModal
         open={vitalModalOpen}
         onOpenChange={setVitalModalOpen}
+        patientId={patientId}
+        patientName={patientName}
+      />
+
+      {/* Clinical Order Modal */}
+      <ClinicalOrderModal
+        open={orderModalOpen}
+        onOpenChange={setOrderModalOpen}
         patientId={patientId}
         patientName={patientName}
       />

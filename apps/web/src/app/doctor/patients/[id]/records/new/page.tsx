@@ -17,6 +17,7 @@ import { Select } from '@/components/ui/select';
 import { Combobox } from '@/components/ui/Combobox';
 import { VitalSignsForm, VitalSignsFormData } from '@/components/clinical/VitalSignsForm';
 import { PrescriptionForm, PrescriptionFormData } from '@/components/clinical/PrescriptionForm';
+import { ClinicalOrderForm, OrderFormData } from '@/components/clinical/ClinicalOrderForm';
 import { PatientInfoBanner } from '@/components/doctor/PatientInfoBanner';
 import { 
   UserRole, 
@@ -27,11 +28,8 @@ import {
   MedicalRecord,
 } from '@/types';
 import { 
-  ArrowLeft, 
   Plus, 
-  Trash2, 
-  AlertTriangle,
-  ClipboardList,
+  Trash2,
   ChevronDown,
   ChevronRight,
   HeartPulse,
@@ -39,15 +37,6 @@ import {
   CalendarDays,
 } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
-
-
-interface OrderForm {
-  order_type: OrderType;
-  description: string;
-  urgency: OrderUrgency;
-  reason: string;
-  referral_to: string;
-}
 
 
 
@@ -134,10 +123,11 @@ export default function NewDoctorRecordPage({
       instructions: p.instructions || '',
     })) || []
   );
-  const [orders, setOrders] = useState<OrderForm[]>(
+  const [orders, setOrders] = useState<OrderFormData[]>(
     initialData?.clinical_orders?.map(o => ({
       order_type: o.order_type,
-      description: o.description,
+      items: o.items || [],
+      description: o.description || '',
       urgency: o.urgency,
       reason: o.reason || '',
       referral_to: o.referral_to || '',
@@ -147,9 +137,6 @@ export default function NewDoctorRecordPage({
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPlan, setShowPlan] = useState(true);
-  const [showOrders, setShowOrders] = useState(
-    initialData?.clinical_orders ? initialData.clinical_orders.length > 0 : false
-  );
   const [showVitalSigns, setShowVitalSigns] = useState(false);
   
   // Vital Signs — pre-populated if editing
@@ -221,23 +208,7 @@ export default function NewDoctorRecordPage({
   const showDiagnosis = selectedCategory?.has_diagnosis ?? false;
 
 
-  const addOrder = () => {
-    setOrders([...orders, {
-      order_type: OrderType.LAB,
-      description: '',
-      urgency: OrderUrgency.ROUTINE,
-      reason: '',
-      referral_to: '',
-    }]);
-  };
 
-  const updateOrder = (idx: number, field: keyof OrderForm, value: string) => {
-    setOrders(prev => prev.map((o, i) => i === idx ? { ...o, [field]: value } : o));
-  };
-
-  const removeOrder = (idx: number) => {
-    setOrders(prev => prev.filter((_, i) => i !== idx));
-  };
 
   const buildPayload = () => ({
     patientId,
@@ -272,9 +243,10 @@ export default function NewDoctorRecordPage({
       quantity: p.quantity || undefined,
       instructions: p.instructions || undefined,
     })),
-    orders: orders.filter(o => o.description.trim()).map(o => ({
+    orders: orders.filter(o => o.items.length > 0 || o.description.trim()).map(o => ({
       order_type: o.order_type,
-      description: o.description,
+      description: o.description || undefined,
+      items: o.items.length > 0 ? o.items : undefined,
       urgency: o.urgency,
       reason: o.reason || undefined,
       referral_to: o.referral_to || undefined,
@@ -659,110 +631,19 @@ export default function NewDoctorRecordPage({
           </div>
 
           {/* Prescriptions Accordion */}
-          {/* Prescriptions Accordion */}
           <PrescriptionForm
             prescriptions={prescriptions}
             onChange={setPrescriptions}
             defaultOpen={initialData?.prescriptions ? initialData.prescriptions.length > 0 : false}
           />
 
-          {/* Orders Accordion */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setShowOrders(!showOrders)}
-              className="w-full p-4 flex items-center justify-between hover:bg-gray-50 h-auto"
-            >
-              <div className="flex items-center gap-3">
-                <ClipboardList className="h-5 w-5 text-blue-600" />
-                <span className="font-medium">Órdenes ({orders.length})</span>
-              </div>
-              {showOrders ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
-            </Button>
-
-            {showOrders && (
-              <div className="p-4 border-t border-gray-100 space-y-4">
-                {orders.map((order, idx) => (
-                  <div key={idx} className="p-4 bg-gray-50 rounded-lg relative">
-                    <Button
-                      type="button"
-                      variant="danger-ghost"
-                      size="icon"
-                      onClick={() => removeOrder(idx)}
-                      className="absolute top-2 right-2 h-8 w-8"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-medium mb-1">Tipo</label>
-                        <Select
-                          options={[
-                            { value: OrderType.LAB, label: 'Laboratorio' },
-                            { value: OrderType.IMAGING, label: 'Imagen' },
-                            { value: OrderType.REFERRAL, label: 'Referencia' },
-                            { value: OrderType.PROCEDURE, label: 'Procedimiento' },
-                          ]}
-                          value={order.order_type}
-                          onChange={(val) => updateOrder(idx, 'order_type', val.toString())}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium mb-1">Urgencia</label>
-                        <Select
-                          options={[
-                            { value: OrderUrgency.ROUTINE, label: 'Rutina' },
-                            { value: OrderUrgency.URGENT, label: 'Urgente' },
-                            { value: OrderUrgency.STAT, label: 'STAT' },
-                          ]}
-                          value={order.urgency}
-                          onChange={(val) => updateOrder(idx, 'urgency', val.toString())}
-                        />
-                      </div>
-                      <div className="col-span-2">
-                        <label className="block text-xs font-medium mb-1">Descripción</label>
-                        <InputWithVoice
-                          value={order.description}
-                          onChange={(e) => updateOrder(idx, 'description', e.target.value)}
-                          placeholder="¿Qué se está ordenando?"
-                          language="es-ES"
-                          mode="append"
-                        />
-                      </div>
-                      <div className="col-span-2">
-                        <label className="block text-xs font-medium mb-1">Razón</label>
-                        <InputWithVoice
-                          value={order.reason}
-                          onChange={(e) => updateOrder(idx, 'reason', e.target.value)}
-                          placeholder="Justificación clínica"
-                          language="es-ES"
-                          mode="append"
-                        />
-                      </div>
-                      {order.order_type === OrderType.REFERRAL && (
-                        <div className="col-span-2">
-                          <label className="block text-xs font-medium mb-1">Referir A</label>
-                          <InputWithVoice
-                            value={order.referral_to}
-                            onChange={(e) => updateOrder(idx, 'referral_to', e.target.value)}
-                            placeholder="Especialista o clínica"
-                            language="es-ES"
-                            mode="append"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-
-                <Button type="button" variant="outline" onClick={addOrder} className="w-full">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Agregar Orden
-                </Button>
-              </div>
-            )}
+          {/* Orders */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+            <ClinicalOrderForm
+              orders={orders}
+              onChange={setOrders}
+              defaultOpen={orders.length > 0}
+            />
           </div>
 
           {/* Notes */}
