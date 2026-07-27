@@ -1,0 +1,356 @@
+{
+  "meta": {
+    "locale": "es",
+    "version": "1.0.0",
+    "purpose": "clinical_order_options",
+    "description": "Predefined options for clinical orders grouped by OrderType. Each option includes a standard code (LOINC for labs/imaging, SNOMED CT for procedures/referrals)."
+  },
+  "order_options": {
+    "LAB": {
+      "label": "Laboratorio",
+      "code_system": "LOINC",
+      "groups": [
+        {
+          "group": "Hematología",
+          "options": [
+            { "display": "Hemograma completo (BHC)", "code": "57021-8" },
+            { "display": "Velocidad de eritrosedimentación (VES)", "code": "30341-2" },
+            { "display": "Reticulocitos", "code": "17849-1" },
+            { "display": "Frotis de sangre periférica", "code": "34994-4" }
+          ]
+        },
+        {
+          "group": "Química Sanguínea",
+          "options": [
+            { "display": "Glucosa en ayunas", "code": "2345-7" },
+            { "display": "Hemoglobina glicosilada (HbA1c)", "code": "4548-4" },
+            { "display": "Perfil lipídico completo", "code": "57698-3" },
+            { "display": "Creatinina sérica", "code": "2160-0" },
+            { "display": "Nitrógeno ureico (BUN)", "code": "3094-0" },
+            { "display": "Ácido úrico", "code": "3084-1" },
+            { "display": "Albúmina sérica", "code": "1751-7" },
+            { "display": "Proteínas totales", "code": "2885-2" },
+            { "display": "Calcio sérico", "code": "17861-6" },
+            { "display": "Fósforo sérico", "code": "2777-1" },
+            { "display": "Magnesio sérico", "code": "19123-9" },
+            { "display": "Sodio", "code": "2951-2" },
+            { "display": "Potasio", "code": "2823-3" },
+            { "display": "Cloruro", "code": "2075-0" },
+            { "display": "Bilirrubina total y fraccionada", "code": "1975-2" }
+          ]
+        },
+        {
+          "group": "Perfil Hepático",
+          "options": [
+            { "display": "TGO (AST)", "code": "1920-8" },
+            { "display": "TGP (ALT)", "code": "1742-6" },
+            { "display": "Fosfatasa alcalina", "code": "6768-6" },
+            { "display": "Gamma-glutamil transferasa (GGT)", "code": "2324-2" },
+            { "display": "Tiempo de protrombina (TP/INR)", "code": "5902-2" }
+          ]
+        },
+        {
+          "group": "Perfil Tiroideo",
+          "options": [
+            { "display": "TSH", "code": "3016-3" },
+            { "display": "T3 libre", "code": "3051-0" },
+            { "display": "T4 libre", "code": "3024-7" },
+            { "display": "Anti-TPO", "code": "8099-4" }
+          ]
+        },
+        {
+          "group": "Orina y Heces",
+          "options": [
+            { "display": "Examen general de orina (EGO)", "code": "24356-8" },
+            { "display": "Urocultivo con antibiograma", "code": "630-4" },
+            { "display": "Examen general de heces", "code": "49246-0" },
+            { "display": "Sangre oculta en heces", "code": "2335-8" },
+            { "display": "Coproparasitoscópico", "code": "10701-1" }
+          ]
+        },
+        {
+          "group": "Serología e Inmunología",
+          "options": [
+            { "display": "Proteína C reactiva (PCR)", "code": "1988-5" },
+            { "display": "Factor reumatoideo (FR)", "code": "11572-5" },
+            { "display": "Anticuerpos antinucleares (ANA)", "code": "8061-4" },
+            { "display": "VIH (ELISA)", "code": "68961-2" },
+            { "display": "VDRL / RPR", "code": "20507-0" },
+            { "display": "Hepatitis B (HBsAg)", "code": "5195-3" },
+            { "display": "Hepatitis C (Anti-HCV)", "code": "16128-1" },
+            { "display": "Dengue (NS1 + IgM/IgG)", "code": "75377-2" }
+          ]
+        },
+        {
+          "group": "Coagulación",
+          "options": [
+            { "display": "Tiempo de protrombina (TP)", "code": "5902-2" },
+            { "display": "Tiempo parcial de tromboplastina (TPT)", "code": "3173-2" },
+            { "display": "INR", "code": "6301-6" },
+            { "display": "Dímero D", "code": "48065-7" },
+            { "display": "Fibrinógeno", "code": "3255-7" }
+          ]
+        },
+        {
+          "group": "Microbiología",
+          "options": [
+            { "display": "Hemocultivo", "code": "600-7" },
+            { "display": "Cultivo de secreción (especificar sitio)", "code": "6462-6" },
+            { "display": "Baciloscopía (BAAR)", "code": "11545-1" },
+            { "display": "KOH (hongos)", "code": "580-1" }
+          ]
+        },
+        {
+          "group": "Marcadores Tumorales",
+          "options": [
+            { "display": "PSA total", "code": "2857-1" },
+            { "display": "CA 125", "code": "10334-1" },
+            { "display": "CA 19-9", "code": "24108-3" },
+            { "display": "Alfa-fetoproteína (AFP)", "code": "1834-1" },
+            { "display": "CEA", "code": "2039-6" }
+          ]
+        },
+        {
+          "group": "Hormonas y Fertilidad",
+          "options": [
+            { "display": "Prueba de embarazo (β-HCG)", "code": "21198-7" },
+            { "display": "Testosterona total", "code": "2986-8" },
+            { "display": "Prolactina", "code": "2842-3" },
+            { "display": "FSH / LH", "code": "15067-2" },
+            { "display": "Estradiol", "code": "2243-4" }
+          ]
+        },
+        {
+          "group": "Otros",
+          "options": [
+            { "display": "Vitamina D (25-OH)", "code": "1989-3" },
+            { "display": "Vitamina B12", "code": "2132-9" },
+            { "display": "Ácido fólico", "code": "2284-8" },
+            { "display": "Ferritina sérica", "code": "2276-4" },
+            { "display": "Hierro sérico", "code": "2498-4" },
+            { "display": "Electroforesis de proteínas", "code": "13984-3" }
+          ]
+        }
+      ]
+    },
+    "IMAGING": {
+      "label": "Imagen",
+      "code_system": "LOINC",
+      "groups": [
+        {
+          "group": "Radiografía",
+          "options": [
+            { "display": "Radiografía de tórax (PA y lateral)", "code": "36643-5" },
+            { "display": "Radiografía de abdomen (simple)", "code": "36554-4" },
+            { "display": "Radiografía de columna cervical", "code": "36659-1" },
+            { "display": "Radiografía de columna lumbar", "code": "36675-7" },
+            { "display": "Radiografía de pelvis", "code": "37553-5" },
+            { "display": "Radiografía de extremidades (especificar)", "code": "37637-6" }
+          ]
+        },
+        {
+          "group": "Ultrasonido",
+          "options": [
+            { "display": "Ultrasonido abdominal completo", "code": "24558-9" },
+            { "display": "Ultrasonido pélvico", "code": "24548-0" },
+            { "display": "Ultrasonido renal y vías urinarias", "code": "24564-7" },
+            { "display": "Ultrasonido tiroideo", "code": "30709-0" },
+            { "display": "Ultrasonido de mama bilateral", "code": "24605-8" },
+            { "display": "Ultrasonido de partes blandas (especificar)", "code": "24566-2" },
+            { "display": "Ultrasonido Doppler de miembros inferiores", "code": "24623-1" },
+            { "display": "Ultrasonido Doppler de miembros superiores", "code": "24627-2" },
+            { "display": "Ultrasonido Doppler carotídeo", "code": "24611-6" },
+            { "display": "Ecocardiograma transtorácico", "code": "34552-0" },
+            { "display": "Ultrasonido obstétrico", "code": "24560-5" }
+          ]
+        },
+        {
+          "group": "Tomografía (TAC/CT)",
+          "options": [
+            { "display": "TAC de cráneo simple", "code": "24725-4" },
+            { "display": "TAC de cráneo contrastada", "code": "24727-0" },
+            { "display": "TAC de tórax", "code": "24627-2" },
+            { "display": "TAC de tórax alta resolución (TACAR)", "code": "37443-9" },
+            { "display": "TAC de abdomen y pelvis", "code": "24566-2" },
+            { "display": "Angio-TAC pulmonar", "code": "36147-7" },
+            { "display": "TAC de columna (especificar nivel)", "code": "30621-7" }
+          ]
+        },
+        {
+          "group": "Resonancia Magnética (RM)",
+          "options": [
+            { "display": "RM de cerebro", "code": "24590-2" },
+            { "display": "RM de columna cervical", "code": "24577-9" },
+            { "display": "RM de columna lumbar", "code": "24582-9" },
+            { "display": "RM de rodilla", "code": "24587-8" },
+            { "display": "RM de hombro", "code": "24588-6" },
+            { "display": "RM de abdomen", "code": "24556-3" }
+          ]
+        },
+        {
+          "group": "Estudios Especiales",
+          "options": [
+            { "display": "Mamografía bilateral", "code": "24606-6" },
+            { "display": "Densitometría ósea (DEXA)", "code": "38269-7" },
+            { "display": "Electrocardiograma (ECG/EKG)", "code": "11524-6" },
+            { "display": "Holter 24 horas", "code": "18752-6" },
+            { "display": "Prueba de esfuerzo (ergometría)", "code": "18107-3" },
+            { "display": "Endoscopía digestiva alta", "code": "40820-6" },
+            { "display": "Colonoscopía", "code": "28618-7" }
+          ]
+        }
+      ]
+    },
+    "REFERRAL": {
+      "label": "Referencia",
+      "code_system": "http://snomed.info/sct",
+      "groups": [
+        {
+          "group": "Especialidades Médicas",
+          "options": [
+            { "display": "Cardiología", "code": "394579002" },
+            { "display": "Endocrinología", "code": "394583002" },
+            { "display": "Gastroenterología", "code": "394584008" },
+            { "display": "Nefrología", "code": "394589003" },
+            { "display": "Neumología", "code": "418112009" },
+            { "display": "Neurología", "code": "394591006" },
+            { "display": "Reumatología", "code": "394810000" },
+            { "display": "Hematología", "code": "394803006" },
+            { "display": "Infectología", "code": "394807007" },
+            { "display": "Oncología", "code": "394593009" },
+            { "display": "Geriatría", "code": "394811001" },
+            { "display": "Medicina Interna", "code": "419192003" }
+          ]
+        },
+        {
+          "group": "Especialidades Quirúrgicas",
+          "options": [
+            { "display": "Cirugía General", "code": "394609007" },
+            { "display": "Traumatología y Ortopedia", "code": "394801008" },
+            { "display": "Urología", "code": "394612005" },
+            { "display": "Otorrinolaringología (ORL)", "code": "394604002" },
+            { "display": "Oftalmología", "code": "394594003" },
+            { "display": "Neurocirugía", "code": "394610002" },
+            { "display": "Cirugía Vascular", "code": "394611003" },
+            { "display": "Cirugía Plástica", "code": "394608004" },
+            { "display": "Cirugía Pediátrica", "code": "394539006" }
+          ]
+        },
+        {
+          "group": "Ginecología y Obstetricia",
+          "options": [
+            { "display": "Ginecología", "code": "394586005" },
+            { "display": "Obstetricia", "code": "408470005" },
+            { "display": "Ginecología Oncológica", "code": "394585009" }
+          ]
+        },
+        {
+          "group": "Pediatría",
+          "options": [
+            { "display": "Pediatría General", "code": "394537008" },
+            { "display": "Neonatología", "code": "394802001" },
+            { "display": "Cardiología Pediátrica", "code": "394538003" },
+            { "display": "Neurología Pediátrica", "code": "394592004" }
+          ]
+        },
+        {
+          "group": "Salud Mental",
+          "options": [
+            { "display": "Psiquiatría", "code": "394587001" },
+            { "display": "Psicología Clínica", "code": "394913002" }
+          ]
+        },
+        {
+          "group": "Rehabilitación y Apoyo",
+          "options": [
+            { "display": "Medicina Física y Rehabilitación", "code": "394602003" },
+            { "display": "Terapia Física", "code": "309452007" },
+            { "display": "Terapia Ocupacional", "code": "80546007" },
+            { "display": "Terapia del Lenguaje", "code": "159026005" },
+            { "display": "Nutrición Clínica", "code": "768837005" },
+            { "display": "Trabajo Social", "code": "310115006" }
+          ]
+        },
+        {
+          "group": "Otras",
+          "options": [
+            { "display": "Dermatología", "code": "394582007" },
+            { "display": "Alergología", "code": "394577000" },
+            { "display": "Medicina del Dolor", "code": "394600006" },
+            { "display": "Cuidados Paliativos", "code": "394806003" },
+            { "display": "Patología", "code": "394595002" },
+            { "display": "Radiología Intervencionista", "code": "405278004" },
+            { "display": "Odontología", "code": "394812008" },
+            { "display": "Podología", "code": "394599008" }
+          ]
+        }
+      ]
+    },
+    "PROCEDURE": {
+      "label": "Procedimiento",
+      "code_system": "http://snomed.info/sct",
+      "groups": [
+        {
+          "group": "Procedimientos Menores en Consultorio",
+          "options": [
+            { "display": "Curación de herida", "code": "225358003" },
+            { "display": "Sutura de laceración", "code": "18557009" },
+            { "display": "Retiro de sutura/puntos", "code": "30549001" },
+            { "display": "Drenaje de absceso", "code": "174838006" },
+            { "display": "Cauterización de lesión", "code": "64049009" },
+            { "display": "Crioterapia (verruga, lesión cutánea)", "code": "173259002" },
+            { "display": "Extracción de cuerpo extraño", "code": "36481006" },
+            { "display": "Inyección intraarticular", "code": "473195005" },
+            { "display": "Inyección de corticosteroide (especificar sitio)", "code": "397956004" },
+            { "display": "Bloqueo nervioso local", "code": "386638009" },
+            { "display": "Lavado de oído (extracción de cerumen)", "code": "173382005" }
+          ]
+        },
+        {
+          "group": "Procedimientos Diagnósticos",
+          "options": [
+            { "display": "Biopsia de piel (punch, incisional)", "code": "240977001" },
+            { "display": "Aspiración con aguja fina (BAAF)", "code": "48635004" },
+            { "display": "Papanicolaou (PAP)", "code": "440623000" },
+            { "display": "Colposcopía", "code": "235334004" },
+            { "display": "Espirometría", "code": "127783003" },
+            { "display": "Audiometría", "code": "252555009" },
+            { "display": "Prueba de Schirmer (ojo seco)", "code": "164732005" },
+            { "display": "Test de Allen", "code": "252237001" }
+          ]
+        },
+        {
+          "group": "Procedimientos Terapéuticos",
+          "options": [
+            { "display": "Nebulización", "code": "44548000" },
+            { "display": "Oxigenoterapia", "code": "57485005" },
+            { "display": "Hidratación intravenosa", "code": "47693006" },
+            { "display": "Transfusión sanguínea", "code": "116859006" },
+            { "display": "Sondaje nasogástrico", "code": "225770001" },
+            { "display": "Sondaje vesical", "code": "45253005" },
+            { "display": "Colocación de férula / yeso", "code": "74330002" },
+            { "display": "Vendaje compresivo", "code": "225174002" },
+            { "display": "Terapia de rehidratación oral supervisada", "code": "243108002" }
+          ]
+        },
+        {
+          "group": "Inmunización y Profilaxis",
+          "options": [
+            { "display": "Aplicación de vacuna (especificar)", "code": "33879002" },
+            { "display": "Profilaxis antitetánica", "code": "312869001" },
+            { "display": "Profilaxis antirrábica", "code": "312868009" },
+            { "display": "Prueba de tuberculina (PPD)", "code": "28163009" }
+          ]
+        },
+        {
+          "group": "Otros",
+          "options": [
+            { "display": "Certificado médico", "code": "772790007" },
+            { "display": "Referencia hospitalaria", "code": "3457005" },
+            { "display": "Interconsulta urgente", "code": "11429006" }
+          ]
+        }
+      ]
+    }
+  }
+}
