@@ -2,6 +2,14 @@
 trigger: always_on
 ---
 
+# Context files
+Before starting any task, read the project context files located in `.agent/context/`:
+- `PROJECT.md` — overall monorepo architecture, roles, data model, and cross-cutting patterns
+- `API.md` — backend endpoints grouped by module, parameters, responses, and architectural rules
+- `WEB.md` — web app routes, components, hooks, and frontend patterns
+
+These files are the source of truth for how the application works. Always consult them before making changes.
+
 # .antigravity — React Native + Next.js rules
 
 ## Project context
