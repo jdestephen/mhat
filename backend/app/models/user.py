@@ -14,6 +14,7 @@ from app.db.base_class import Base
 class UserRole(str, enum.Enum):
     DOCTOR = "DOCTOR"
     PATIENT = "PATIENT"
+    ASSISTANT = "ASSISTANT"
 
 class Sex(str, enum.Enum):
     MASCULINO = "MASCULINO"
@@ -53,6 +54,11 @@ class DoctorPatientAccess(Base):
     # Audit
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     granted_by: Mapped[Optional[UUID]] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+
+    # Health center where this access relationship exists
+    health_center_id: Mapped[Optional[UUID]] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("health_centers.id"), nullable=True, index=True
+    )
 
 class User(Base):
     __tablename__ = "users"

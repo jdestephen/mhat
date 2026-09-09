@@ -428,12 +428,12 @@ async def doctor_patient_init(
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Initialize a patient profile for a doctor user.
+    Initialize a patient profile for a doctor or assistant user.
     Creates a PatientProfile + SELF FamilyMembership if none exists.
     Idempotent — returns existing profile if already initialized.
     """
-    if current_user.role != UserRole.DOCTOR:
-        raise HTTPException(status_code=403, detail="Only doctors can use this endpoint")
+    if current_user.role not in (UserRole.DOCTOR, UserRole.ASSISTANT):
+        raise HTTPException(status_code=403, detail="Only clinical users can use this endpoint")
 
     # Check if a patient profile already exists for this user
     result = await db.execute(

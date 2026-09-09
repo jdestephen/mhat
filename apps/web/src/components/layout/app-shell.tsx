@@ -24,7 +24,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
 
     if (token && (isAuthPage || isPublicPage)) {
-      router.replace('/dashboard');
+      // Determine the correct landing page based on stored mode
+      const activeMode = localStorage.getItem('numa_active_mode');
+      if (activeMode === 'patient') {
+        router.replace('/dashboard');
+      } else {
+        // Default: clinical mode for doctors/assistants, dashboard for patients
+        // We check if the user has an active clinical mode stored
+        router.replace(activeMode === 'clinical' ? '/doctor' : '/dashboard');
+      }
       return;
     }
   }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps

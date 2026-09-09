@@ -14,4 +14,4 @@ from app.models.family_invitation import FamilyInvitation
 from app.models.verification_token import VerificationToken
 from app.models.profile_claim import ProfileClaimRequest
 from app.models.refresh_token import RefreshToken
-
+from app.models.assistant import DoctorAssistantAssignment, AssistantInvitation

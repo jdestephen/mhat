@@ -10,7 +10,7 @@ import uuid
 import enum
 
 from sqlalchemy import (
-    String, Boolean, Integer, Text, DateTime, Date, ForeignKey, func, Enum
+    String, Boolean, Integer, Text, DateTime, Date, Float, ForeignKey, func, Enum
 )
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -35,6 +35,13 @@ class HealthCenterRole(str, enum.Enum):
     STAFF = "STAFF"       # Administrative staff (future use)
 
 
+class HealthCenterVerificationStatus(str, enum.Enum):
+    """Verification status for health centers created by doctors."""
+    PENDING = "PENDING"
+    VERIFIED = "VERIFIED"
+    REJECTED = "REJECTED"
+
+
 class HealthCenter(Base):
     """
     Represents a health care facility (hospital, clinic, private practice, etc).
@@ -57,6 +64,7 @@ class HealthCenter(Base):
         default=HealthCenterType.CLINIC,
         nullable=False
     )
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     
     # Contact information
     address: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
@@ -64,15 +72,48 @@ class HealthCenter(Base):
     country: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     phone: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     email: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    website: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)
+
+    # Location (GPS)
+    latitude: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    longitude: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+
+    # Branding
+    logo_key: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+
+    # Legal / fiscal
+    tax_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     
     # Status
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    
+
+    # Verification workflow
+    verification_status: Mapped[HealthCenterVerificationStatus] = mapped_column(
+        Enum(HealthCenterVerificationStatus),
+        default=HealthCenterVerificationStatus.PENDING,
+        server_default="PENDING",
+        nullable=False,
+    )
+    verified_by: Mapped[Optional[UUID]] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
+    verified_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    rejection_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # When rejected as duplicate, the admin can suggest the correct HC
+    suggested_health_center_id: Mapped[Optional[UUID]] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("health_centers.id"), nullable=True
+    )
+
     # Audit
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), 
         server_default=func.now(),
         nullable=False
+    )
+    created_by_id: Mapped[Optional[UUID]] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True
     )
     
     # Relationships
@@ -80,6 +121,15 @@ class HealthCenter(Base):
         "HealthCenterMembership",
         back_populates="health_center",
         cascade="all, delete-orphan"
+    )
+    created_by: Mapped[Optional["User"]] = relationship(
+        "User", foreign_keys=[created_by_id]
+    )
+    verified_by_user: Mapped[Optional["User"]] = relationship(
+        "User", foreign_keys=[verified_by]
+    )
+    suggested_health_center: Mapped[Optional["HealthCenter"]] = relationship(
+        "HealthCenter", remote_side=[id], foreign_keys=[suggested_health_center_id]
     )
 
 

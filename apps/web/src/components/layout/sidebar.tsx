@@ -22,7 +22,7 @@ import { useState } from 'react';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
 import { UserRole } from '@/types';
 import { ProfileSwitcher } from '@/components/patient/ProfileSwitcher';
-// import { DoctorModeToggle } from '@/components/layout/DoctorModeToggle';
+import { RoleSwitcher } from '@/components/layout/RoleSwitcher';
 
 
 interface MenuItem {
@@ -51,7 +51,16 @@ export function Sidebar({ onClose }: SidebarProps = {}) {
   const effectiveCollapsed = isOverlay ? false : collapsed;
 
   const isDoctor = user?.role === UserRole.DOCTOR;
+  const isAssistant = user?.role === UserRole.ASSISTANT;
+  const isClinicalUser = isDoctor || isAssistant;
   const isPatient = user?.role === UserRole.PATIENT;
+
+  // Determine active mode: clinical vs patient (for dual-mode users)
+  const activeMode =
+    typeof window !== 'undefined'
+      ? (localStorage.getItem('numa_active_mode') as 'clinical' | 'patient') || 'clinical'
+      : 'clinical';
+  const isInPatientMode = isClinicalUser && activeMode === 'patient';
 
   const toggleMenu = (label: string) => {
     if (collapsed) return;
@@ -65,7 +74,7 @@ export function Sidebar({ onClose }: SidebarProps = {}) {
   // Build menu items based on role
   const sidebarItems: MenuItem[] = [];
 
-  if (isDoctor) {
+  if (isClinicalUser && !isInPatientMode) {
     sidebarItems.push(
       {
         label: 'Panel Médico',
@@ -122,7 +131,7 @@ export function Sidebar({ onClose }: SidebarProps = {}) {
         href: '/profile/me',
         icon: <UserCircle className="w-5 h-5" />,
       },
-      ...(isPatient ? [
+      ...(isPatient || isInPatientMode ? [
         {
           id: 'nav-health-history',
           label: 'Historial de Salud',
@@ -316,11 +325,11 @@ export function Sidebar({ onClose }: SidebarProps = {}) {
         )}
       </div>
 
-      {/* Profile Switcher (patients only, multi-profile) */}
-      {!effectiveCollapsed && isPatient && <ProfileSwitcher />}
+      {/* Profile Switcher (shown in patient mode) */}
+      {!effectiveCollapsed && (isPatient || isInPatientMode) && <ProfileSwitcher />}
 
-      {/* Doctor Mode Toggle */}
-      {/* !effectiveCollapsed && isDoctor && <DoctorModeToggle /> */}
+      {/* Role Switcher (doctors and assistants) */}
+      {isClinicalUser && <RoleSwitcher collapsed={effectiveCollapsed} />}
 
       {/* Nav */}
       <div className="flex-1 overflow-auto py-6 px-2">

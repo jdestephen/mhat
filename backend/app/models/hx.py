@@ -34,6 +34,7 @@ class RecordSource(str, enum.Enum):
     """Who created the medical record."""
     PATIENT = "PATIENT"       # Created by patient or family member
     DOCTOR = "DOCTOR"         # Created by doctor
+    ASSISTANT = "ASSISTANT"   # Created by doctor's assistant (verified, tracked separately)
     IMPORTED = "IMPORTED"     # Imported from external system
 
 class Category(Base):
@@ -129,9 +130,18 @@ class MedicalRecord(Base):
     
     # Status tracking
     status: Mapped[RecordStatus] = mapped_column(Enum(RecordStatus), default=RecordStatus.UNVERIFIED, nullable=False)
+
+    # Health center where this consultation took place
+    health_center_id: Mapped[Optional[UUID]] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("health_centers.id"), nullable=True, index=True
+    )
     
     # Audit fields
     created_by: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    # When record_source=ASSISTANT, tracks which assistant created the record
+    assistant_id: Mapped[Optional[UUID]] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
     verified_by: Mapped[Optional[UUID]] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     verified_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
@@ -146,6 +156,7 @@ class MedicalRecord(Base):
     clinical_orders: Mapped[List["ClinicalOrder"]] = relationship("ClinicalOrder", back_populates="medical_record", cascade="all, delete-orphan")
     vital_signs: Mapped[Optional["VitalSigns"]] = relationship("VitalSigns", back_populates="medical_record", uselist=False, cascade="all, delete-orphan")
     creator: Mapped["User"] = relationship("User", foreign_keys=[created_by])
+    assistant: Mapped[Optional["User"]] = relationship("User", foreign_keys=[assistant_id])
     verifier: Mapped[Optional["User"]] = relationship("User", foreign_keys=[verified_by])
     view_logs: Mapped[List["RecordViewLog"]] = relationship("RecordViewLog", back_populates="medical_record", cascade="all, delete-orphan")
 

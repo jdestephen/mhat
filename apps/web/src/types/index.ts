@@ -1,6 +1,7 @@
 export enum UserRole {
   PATIENT = 'PATIENT',
   DOCTOR = 'DOCTOR',
+  ASSISTANT = 'ASSISTANT',
 }
 
 export enum Sex {

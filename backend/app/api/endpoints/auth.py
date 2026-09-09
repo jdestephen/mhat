@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -239,6 +240,13 @@ async def register_user(
         raise HTTPException(
             status_code=400,
             detail="Ya existe un usuario con este correo electrónico.",
+        )
+
+    # Block direct ASSISTANT registration — assistants are created via doctor invitation only
+    if user_in.role == UserRole.ASSISTANT:
+        raise HTTPException(
+            status_code=400,
+            detail="Los asistentes solo pueden registrarse mediante una invitación de médico.",
         )
 
     user = User(
@@ -572,5 +580,124 @@ async def upload_doctor_documents(
             "college_number": profile.college_number,
         },
         **verification_result,
+    }
+
+
+# ==========================
+# Assistant Activation
+# ==========================
+
+class ActivateAssistantRequest(BaseModel):
+    token: str
+    password: str
+
+
+@router.post("/activate-assistant")
+async def activate_assistant(
+    body: ActivateAssistantRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Activate an assistant account via an invitation token.
+    Creates the User with role=ASSISTANT, links to the inviting doctor and HC.
+    """
+    from app.models.assistant import AssistantInvitation, DoctorAssistantAssignment
+    from app.models.patient import PatientProfile
+    from app.models.family import FamilyMembership, RelationshipType, AccessLevel
+
+    # Find the invitation
+    result = await db.execute(
+        select(AssistantInvitation).where(AssistantInvitation.token == body.token)
+    )
+    invitation = result.scalars().first()
+
+    if not invitation:
+        raise HTTPException(status_code=404, detail="Token de invitación no válido.")
+    if invitation.is_revoked:
+        raise HTTPException(status_code=400, detail="Esta invitación ha sido revocada.")
+    if invitation.claimed_at:
+        raise HTTPException(status_code=400, detail="Esta invitación ya fue utilizada.")
+    if invitation.expires_at < datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="Esta invitación ha expirado.")
+
+    # Check if a user with this email already exists
+    existing_result = await db.execute(
+        select(User).where(User.email == invitation.email)
+    )
+    existing_user = existing_result.scalars().first()
+
+    if existing_user:
+        if existing_user.role == UserRole.ASSISTANT:
+            # Already an assistant — just create the assignment
+            assignment = DoctorAssistantAssignment(
+                doctor_id=invitation.doctor_id,
+                assistant_id=existing_user.id,
+                health_center_id=invitation.health_center_id,
+                permissions=invitation.permissions,
+            )
+            db.add(assignment)
+            invitation.claimed_at = datetime.now(timezone.utc)
+            await db.commit()
+            return {"message": "Asignación creada exitosamente. Ya tenías una cuenta de asistente."}
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail="Ya existe un usuario con este correo. Contacta al administrador.",
+            )
+
+    # Validate password
+    if len(body.password) < 8:
+        raise HTTPException(status_code=400, detail="La contraseña debe tener al menos 8 caracteres.")
+
+    # Create the assistant user
+    user = User(
+        email=invitation.email,
+        password=security.get_password_hash(body.password),
+        first_name=invitation.first_name,
+        last_name=invitation.last_name,
+        role=UserRole.ASSISTANT,
+        is_active=True,
+        is_email_verified=True,  # Pre-verified via invitation
+    )
+    db.add(user)
+    await db.flush()
+
+    # Create the doctor-assistant assignment
+    assignment = DoctorAssistantAssignment(
+        doctor_id=invitation.doctor_id,
+        assistant_id=user.id,
+        health_center_id=invitation.health_center_id,
+        permissions=invitation.permissions,
+    )
+    db.add(assignment)
+
+    # Create patient profile + SELF membership (dual-mode: assistant can also be a patient)
+    profile = PatientProfile(
+        user_id=user.id,
+        first_name=invitation.first_name,
+        last_name=invitation.last_name,
+    )
+    db.add(profile)
+    await db.flush()
+
+    membership = FamilyMembership(
+        user_id=user.id,
+        patient_profile_id=profile.id,
+        relationship_type=RelationshipType.SELF,
+        access_level=AccessLevel.FULL_ACCESS,
+        can_manage_family=True,
+        created_by=user.id,
+        is_active=True,
+    )
+    db.add(membership)
+
+    # Mark invitation as claimed
+    invitation.claimed_at = datetime.now(timezone.utc)
+
+    await db.commit()
+
+    return {
+        "message": "Cuenta de asistente creada exitosamente. Ya puedes iniciar sesión.",
+        "email": user.email,
     }
 
