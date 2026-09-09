@@ -11,6 +11,7 @@ import { ChangePasswordForm } from './ChangePasswordForm';
 import { LocationManager } from '@/components/patient/LocationManager';
 import { useProductTour } from '@/hooks/useProductTour';
 import { useActiveProfile } from '@/hooks/useActiveProfile';
+import { useActiveMode } from '@/hooks/useActiveMode';
 import { Compass } from 'lucide-react';
 
 export default function PersonalInfoPage() {
@@ -18,6 +19,10 @@ export default function PersonalInfoPage() {
   const [profile, setProfile] = useState<PatientProfile | DoctorProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const { activeProfileId, isManagingOther } = useActiveProfile();
+  const { isInPatientMode, isClinicalUser } = useActiveMode();
+
+  // Treat clinical users in patient mode as patients for this page
+  const actingAsPatient = user?.role === UserRole.PATIENT || (isClinicalUser && isInPatientMode);
 
   useEffect(() => {
     fetchData();
@@ -29,7 +34,7 @@ export default function PersonalInfoPage() {
       const userRes = await api.get<User>('/auth/me');
       setUser(userRes.data);
 
-      if (userRes.data.role === UserRole.PATIENT) {
+      if (userRes.data.role === UserRole.PATIENT || isInPatientMode) {
         const params = new URLSearchParams();
         if (activeProfileId) params.append('profile_id', activeProfileId);
         const profileRes = await api.get<PatientProfile>(
@@ -61,7 +66,7 @@ export default function PersonalInfoPage() {
     return <div className="p-8">Error al cargar usuario</div>;
   }
 
-  const isPatient = user.role === UserRole.PATIENT;
+  const isPatient = actingAsPatient;
 
   return (
     <div className="max-w-2xl mx-auto pb-20 px-0 sm:px-0">

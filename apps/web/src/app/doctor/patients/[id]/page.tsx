@@ -13,6 +13,7 @@ import { UserRole, AccessLevel, VitalSigns } from '@/types';
 import { PatientInfoBanner } from '@/components/doctor/PatientInfoBanner';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useActiveMode } from '@/hooks/useActiveMode';
 import {
   FileText,
   Pill,
@@ -131,14 +132,16 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
     enabled: !isReadOnly,
   });
 
-  // Redirect non-doctors
+  const { isClinicalUser } = useActiveMode();
+
+  // Redirect non-clinical users
   useEffect(() => {
-    if (!userLoading && user?.role !== UserRole.DOCTOR) {
+    if (!userLoading && !isClinicalUser) {
       router.replace('/dashboard');
     }
-  }, [userLoading, user?.role, router]);
+  }, [userLoading, isClinicalUser, router]);
 
-  if (!userLoading && user?.role !== UserRole.DOCTOR) {
+  if (!userLoading && !isClinicalUser) {
     return null;
   }
 

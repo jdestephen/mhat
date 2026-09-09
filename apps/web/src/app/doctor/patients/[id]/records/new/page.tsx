@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
+import { useActiveMode } from '@/hooks/useActiveMode';
 import api from '@/lib/api';
 import { useCreateDoctorRecord } from '@/hooks/mutations/useCreateDoctorRecord';
 import { useUpdateDoctorRecord } from '@/hooks/mutations/useUpdateDoctorRecord';
@@ -198,8 +199,10 @@ export default function NewDoctorRecordPage({
   // Derived state
   const hasRedFlags = redFlags.length > 0;
 
-  // Redirect non-doctors
-  if (!userLoading && user?.role !== UserRole.DOCTOR) {
+  const { isClinicalUser } = useActiveMode();
+
+  // Redirect non-clinical users
+  if (!userLoading && !isClinicalUser) {
     router.push('/dashboard');
     return null;
   }

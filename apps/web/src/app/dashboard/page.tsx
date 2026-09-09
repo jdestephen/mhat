@@ -22,18 +22,21 @@ import { useActiveProfile } from '@/hooks/useActiveProfile';
 import { WelcomeCard } from '@/components/onboarding/WelcomeCard';
 import { ProfileCompletionBanner } from '@/components/onboarding/ProfileCompletionBanner';
 import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
+import { useActiveMode } from '@/hooks/useActiveMode';
 
 export default function DashboardPage() {
   const router = useRouter();
   const { data: user, isLoading: userLoading } = useCurrentUser();
   const { isNewUser, hasCompletedSetup, isLoading: onboardingLoading } = useOnboardingStatus();
   
-  // Redirect doctors to their dashboard
+  const { isInPatientMode, isClinicalUser } = useActiveMode();
+
+  // Redirect clinical users to their dashboard — but only if NOT in patient mode
   useEffect(() => {
-    if (!userLoading && user?.role === UserRole.DOCTOR) {
+    if (!userLoading && isClinicalUser && !isInPatientMode) {
       router.replace('/doctor');
     }
-  }, [user, userLoading, router]);
+  }, [user, userLoading, router, isClinicalUser, isInPatientMode]);
 
   // Redirect new patients to onboarding wizard
   useEffect(() => {

@@ -15,6 +15,7 @@ import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
 import { useUpdatePatientRecord } from '@/hooks/mutations/useUpdatePatientRecord';
 import api from '@/lib/api';
 import { useActiveProfile } from '@/hooks/useActiveProfile';
+import { useActiveMode } from '@/hooks/useActiveMode';
 import { useToast } from '@/components/ui/Toast';
 
 export default function EditRecordPage({ params }: { params: Promise<{ id: string }> }) {
@@ -40,8 +41,10 @@ export default function EditRecordPage({ params }: { params: Promise<{ id: strin
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState<string>('');
 
+  const { isInPatientMode, isClinicalUser } = useActiveMode();
+
   // Derived state
-  const isPatient = user?.role === UserRole.PATIENT;
+  const isPatient = user?.role === UserRole.PATIENT || (isClinicalUser && isInPatientMode);
   const selectedCategory = categories.find(c => c.id === parseInt(categoryId));
   const showDiagnosis = selectedCategory?.has_diagnosis ?? false;
 
