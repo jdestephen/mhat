@@ -23,6 +23,7 @@ import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
 import { UserRole } from '@/types';
 import { ProfileSwitcher } from '@/components/patient/ProfileSwitcher';
 import { RoleSwitcher } from '@/components/layout/RoleSwitcher';
+import { useActiveMode } from '@/hooks/useActiveMode';
 
 
 interface MenuItem {
@@ -50,17 +51,10 @@ export function Sidebar({ onClose }: SidebarProps = {}) {
   const isOverlay = !!onClose;
   const effectiveCollapsed = isOverlay ? false : collapsed;
 
-  const isDoctor = user?.role === UserRole.DOCTOR;
-  const isAssistant = user?.role === UserRole.ASSISTANT;
-  const isClinicalUser = isDoctor || isAssistant;
   const isPatient = user?.role === UserRole.PATIENT;
 
-  // Determine active mode: clinical vs patient (for dual-mode users)
-  const activeMode =
-    typeof window !== 'undefined'
-      ? (localStorage.getItem('numa_active_mode') as 'clinical' | 'patient') || 'clinical'
-      : 'clinical';
-  const isInPatientMode = isClinicalUser && activeMode === 'patient';
+  // Use shared context for active mode — re-renders when RoleSwitcher changes it
+  const { isInPatientMode, isClinicalUser } = useActiveMode();
 
   const toggleMenu = (label: string) => {
     if (collapsed) return;
@@ -308,7 +302,7 @@ export function Sidebar({ onClose }: SidebarProps = {}) {
       <div className={`flex h-20 items-center justify-between px-4 border-b border-[0.5px] border-emerald-900/10`}>
         {!effectiveCollapsed ? (
           <>
-            <Link href={isDoctor ? '/doctor' : '/dashboard'} className="flex items-center gap-3 font-bold tracking-tight">
+            <Link href={isClinicalUser && !isInPatientMode ? '/doctor' : '/dashboard'} className="flex items-center gap-3 font-bold tracking-tight">
               <div className="bg-emerald-900 p-2 rounded-lg flex-shrink-0">
                 <Stethoscope className="h-6 w-6 text-white" />
               </div>

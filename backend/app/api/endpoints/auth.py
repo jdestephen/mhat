@@ -154,6 +154,7 @@ async def login_access_token(
         "access_token": access_token,
         "refresh_token": raw_refresh,
         "token_type": "bearer",
+        "role": user.role.value,
     }
 
 

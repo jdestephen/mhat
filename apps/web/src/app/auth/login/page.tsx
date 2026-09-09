@@ -33,7 +33,16 @@ export default function LoginPage() {
       
       localStorage.setItem('token', response.data.access_token);
       localStorage.setItem('refreshToken', response.data.refresh_token);
-      router.push('/dashboard');
+
+      // Redirect based on user role from the login response
+      const role = response.data.role;
+      if (role === 'DOCTOR' || role === 'ASSISTANT') {
+        localStorage.setItem('numa_active_mode', 'clinical');
+        router.push('/doctor');
+      } else {
+        localStorage.setItem('numa_active_mode', 'patient');
+        router.push('/dashboard');
+      }
     } catch (err: unknown) {
       const apiError = err as { response?: { status?: number; data?: { detail?: string } } };
       const status = apiError.response?.status;

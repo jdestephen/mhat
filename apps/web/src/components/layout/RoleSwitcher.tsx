@@ -1,34 +1,14 @@
 'use client';
 
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Stethoscope, HeartPulse, ArrowRightLeft } from 'lucide-react';
 import clsx from 'clsx';
 import api from '@/lib/api';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
+import { useActiveMode } from '@/hooks/useActiveMode';
 import { UserRole } from '@/types';
-
-type ActiveMode = 'clinical' | 'patient';
-
-const MODE_STORAGE_KEY = 'numa_active_mode';
-
-/** Resolve which mode the user is in based on localStorage + pathname fallback. */
-function resolveActiveMode(pathname: string | null): ActiveMode {
-  if (typeof window !== 'undefined') {
-    const stored = localStorage.getItem(MODE_STORAGE_KEY) as ActiveMode | null;
-    if (stored === 'clinical' || stored === 'patient') return stored;
-  }
-  // Fallback: infer from pathname
-  if (pathname?.startsWith('/dashboard') || pathname?.startsWith('/profile')) {
-    return 'patient';
-  }
-  return 'clinical';
-}
-
-function persistMode(mode: ActiveMode) {
-  localStorage.setItem(MODE_STORAGE_KEY, mode);
-}
 
 interface RoleSwitcherProps {
   collapsed?: boolean;
@@ -38,35 +18,18 @@ interface RoleSwitcherProps {
  * Toggle for doctors/assistants to switch between their clinical dashboard
  * and their personal patient dashboard.
  *
- * - Persists active mode in localStorage (survives navigation)
+ * - Uses ActiveModeContext for reactive state (all components update instantly)
  * - Calls `/family/doctor-patient-init` to ensure patient profile exists
- * - Visual cues use distinct colors for each mode
+ * - Navigates to the correct landing page on switch
  */
 export function RoleSwitcher({ collapsed = false }: RoleSwitcherProps) {
   const router = useRouter();
-  const pathname = usePathname();
   const queryClient = useQueryClient();
   const { data: user } = useCurrentUser();
-
-  const isClinicalUser =
-    user?.role === UserRole.DOCTOR || user?.role === UserRole.ASSISTANT;
-
-  const activeMode = resolveActiveMode(pathname);
-  const isPatientMode = activeMode === 'patient';
+  const { isInPatientMode, isClinicalUser, setActiveMode } = useActiveMode();
 
   const roleLabel =
     user?.role === UserRole.DOCTOR ? 'Modo Doctor' : 'Modo Asistente';
-
-  // Sync mode with pathname on mount
-  useEffect(() => {
-    if (!isClinicalUser) return;
-    const storedMode = localStorage.getItem(MODE_STORAGE_KEY);
-    if (!storedMode) {
-      // Auto-set based on current path
-      const inferred = resolveActiveMode(pathname);
-      persistMode(inferred);
-    }
-  }, [isClinicalUser, pathname]);
 
   const initPatientMode = useMutation({
     mutationFn: async () => {
@@ -75,19 +38,21 @@ export function RoleSwitcher({ collapsed = false }: RoleSwitcherProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['patient', 'profiles'] });
-      persistMode('patient');
+      setActiveMode('patient');
       router.push('/dashboard');
     },
   });
 
   const handleToggle = useCallback(() => {
-    if (isPatientMode) {
-      persistMode('clinical');
+    if (isInPatientMode) {
+      // Switch to clinical mode → navigate to doctor panel
+      setActiveMode('clinical');
       router.push('/doctor');
     } else {
+      // Switch to patient mode → init patient profile + navigate
       initPatientMode.mutate();
     }
-  }, [isPatientMode, router, initPatientMode]);
+  }, [isInPatientMode, router, setActiveMode, initPatientMode]);
 
   if (!isClinicalUser) return null;
 
@@ -95,15 +60,15 @@ export function RoleSwitcher({ collapsed = false }: RoleSwitcherProps) {
     return (
       <button
         onClick={handleToggle}
-        title={isPatientMode ? roleLabel : 'Mi Salud'}
+        title={isInPatientMode ? roleLabel : 'Mi Salud'}
         className={clsx(
           'flex w-full items-center justify-center rounded-xl px-0 py-3 text-sm transition-all hover:cursor-pointer',
-          isPatientMode
+          isInPatientMode
             ? 'text-emerald-700 hover:bg-emerald-50'
             : 'text-indigo-700 hover:bg-indigo-50',
         )}
       >
-        {isPatientMode ? (
+        {isInPatientMode ? (
           <Stethoscope className="h-5 w-5" />
         ) : (
           <HeartPulse className="h-5 w-5" />
@@ -119,7 +84,7 @@ export function RoleSwitcher({ collapsed = false }: RoleSwitcherProps) {
         disabled={initPatientMode.isPending}
         className={clsx(
           'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-colors text-left',
-          isPatientMode
+          isInPatientMode
             ? 'bg-emerald-50 border-emerald-200 hover:bg-emerald-100'
             : 'bg-indigo-50 border-indigo-200 hover:bg-indigo-100',
         )}
@@ -127,10 +92,10 @@ export function RoleSwitcher({ collapsed = false }: RoleSwitcherProps) {
         <div
           className={clsx(
             'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
-            isPatientMode ? 'bg-emerald-200' : 'bg-indigo-200',
+            isInPatientMode ? 'bg-emerald-200' : 'bg-indigo-200',
           )}
         >
-          {isPatientMode ? (
+          {isInPatientMode ? (
             <Stethoscope className="w-4.5 h-4.5 text-emerald-700" />
           ) : (
             <HeartPulse className="w-4.5 h-4.5 text-indigo-700" />
@@ -140,18 +105,18 @@ export function RoleSwitcher({ collapsed = false }: RoleSwitcherProps) {
           <p
             className={clsx(
               'text-sm font-medium truncate',
-              isPatientMode ? 'text-emerald-900' : 'text-indigo-900',
+              isInPatientMode ? 'text-emerald-900' : 'text-indigo-900',
             )}
           >
-            {isPatientMode ? roleLabel : 'Mi Salud'}
+            {isInPatientMode ? roleLabel : 'Mi Salud'}
           </p>
           <p
             className={clsx(
               'text-xs',
-              isPatientMode ? 'text-emerald-600' : 'text-indigo-600',
+              isInPatientMode ? 'text-emerald-600' : 'text-indigo-600',
             )}
           >
-            {isPatientMode
+            {isInPatientMode
               ? 'Cambiar a panel clínico'
               : 'Ver mi historial de salud'}
           </p>
@@ -159,7 +124,7 @@ export function RoleSwitcher({ collapsed = false }: RoleSwitcherProps) {
         <ArrowRightLeft
           className={clsx(
             'w-4 h-4 flex-shrink-0',
-            isPatientMode ? 'text-emerald-400' : 'text-indigo-400',
+            isInPatientMode ? 'text-emerald-400' : 'text-indigo-400',
           )}
         />
       </button>
@@ -168,13 +133,13 @@ export function RoleSwitcher({ collapsed = false }: RoleSwitcherProps) {
       <div
         className={clsx(
           'mt-2 rounded-full h-1.5 transition-colors',
-          isPatientMode ? 'bg-indigo-200' : 'bg-emerald-200',
+          isInPatientMode ? 'bg-indigo-200' : 'bg-emerald-200',
         )}
       >
         <div
           className={clsx(
             'h-1.5 rounded-full w-1/2 transition-all',
-            isPatientMode ? 'bg-indigo-500 ml-auto' : 'bg-emerald-500',
+            isInPatientMode ? 'bg-indigo-500 ml-auto' : 'bg-emerald-500',
           )}
         />
       </div>
