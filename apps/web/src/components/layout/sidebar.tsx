@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Share2,
   Users,
+  UsersRound,
   KeyRound,
   PanelLeftClose,
   HeartPulse,
@@ -24,6 +25,7 @@ import { UserRole } from '@/types';
 import { ProfileSwitcher } from '@/components/patient/ProfileSwitcher';
 import { RoleSwitcher } from '@/components/layout/RoleSwitcher';
 import { useActiveMode } from '@/hooks/useActiveMode';
+import { useAssistantInvitations } from '@/hooks/queries/useAssistantInvitations';
 
 
 interface MenuItem {
@@ -34,6 +36,7 @@ interface MenuItem {
   onClick?: () => void;
   roles?: UserRole[];
   id?: string;
+  badge?: number;
 }
 
 interface SidebarProps {
@@ -65,6 +68,14 @@ export function Sidebar({ onClose }: SidebarProps = {}) {
     );
   };
 
+  // Pending invitations count — only fetch for doctors
+  const { data: invitations = [] } = useAssistantInvitations();
+  const pendingInvitationsCount = user?.role === UserRole.DOCTOR
+    ? invitations.filter(
+        (inv) => !inv.claimed_at && !inv.is_revoked && new Date(inv.expires_at) > new Date(),
+      ).length
+    : 0;
+
   // Build menu items based on role
   const sidebarItems: MenuItem[] = [];
 
@@ -76,6 +87,17 @@ export function Sidebar({ onClose }: SidebarProps = {}) {
         icon: <Stethoscope className="w-5 h-5" />,
       },
     );
+
+    // Assistants management — only for doctors (not assistants)
+    if (user?.role === UserRole.DOCTOR) {
+      sidebarItems.push({
+        id: 'nav-assistants',
+        label: 'Asistentes',
+        href: '/doctor/assistants',
+        icon: <UsersRound className="w-5 h-5" />,
+        badge: pendingInvitationsCount > 0 ? pendingInvitationsCount : undefined,
+      });
+    }
   } else {
     sidebarItems.push(
       {
@@ -252,7 +274,12 @@ export function Sidebar({ onClose }: SidebarProps = {}) {
         )}
       >
         <span className="flex-shrink-0">{item.icon}</span>
-        {!collapsed && <span className="truncate">{item.label}</span>}
+        {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
+        {!collapsed && item.badge != null && item.badge > 0 && (
+          <span className="ml-auto flex-shrink-0 bg-red-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1">
+            {item.badge}
+          </span>
+        )}
       </Link>
     );
   };

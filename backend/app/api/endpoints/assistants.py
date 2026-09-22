@@ -119,7 +119,23 @@ async def invite_assistant(
     await db.commit()
     await db.refresh(invitation)
 
-    # TODO: Send invitation email with activation link
+    # Send invitation email with activation link
+    doctor_name = f"{current_user.first_name or ''} {current_user.last_name or ''}".strip()
+    from app.services.email import send_assistant_invitation_email
+    try:
+        await send_assistant_invitation_email(
+            assistant_email=body.email,
+            assistant_name=f"{body.first_name} {body.last_name}".strip(),
+            doctor_name=doctor_name or "Un médico",
+            health_center_name=hc.name if hc else "",
+            activation_token=token,
+        )
+    except Exception:
+        # Email failure shouldn't block the invitation creation
+        import logging
+        logging.getLogger(__name__).error(
+            f"Failed to send assistant invitation email to {body.email}"
+        )
 
     return AssistantInvitationResponse(
         id=invitation.id,
