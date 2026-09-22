@@ -86,7 +86,7 @@ async def list_my_patients(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_doctor_role),
     skip: int = 0,
-    limit: int = 50,
+    limit: int = 90,
 ):
     """List all patients the doctor has access to."""
     result = await db.execute(
