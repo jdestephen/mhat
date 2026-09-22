@@ -12,7 +12,7 @@ import enum
 from sqlalchemy import (
     String, Boolean, Integer, Text, DateTime, ForeignKey, func, Enum
 )
-from sqlalchemy.dialects.postgresql import UUID as PGUUID
+from sqlalchemy.dialects.postgresql import UUID as PGUUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base_class import Base
@@ -99,48 +99,66 @@ class Prescription(Base):
 class ClinicalOrder(Base):
     """
     Represents a clinical order (lab, imaging, referral, procedure) by a doctor.
-    
-    Attached to a medical record. Visible to patients by default.
+
+    Can be attached to a medical record OR created as a standalone order
+    (linked directly to a patient via patient_id + category_id).
+    Visible to patients by default.
     """
     __tablename__ = "clinical_orders"
-    
+
     id: Mapped[UUID] = mapped_column(
-        PGUUID(as_uuid=True), 
-        primary_key=True, 
+        PGUUID(as_uuid=True),
+        primary_key=True,
         default=uuid.uuid4
     )
-    medical_record_id: Mapped[UUID] = mapped_column(
+    medical_record_id: Mapped[Optional[UUID]] = mapped_column(
         PGUUID(as_uuid=True),
         ForeignKey("medical_records.id", ondelete="CASCADE"),
-        nullable=False,
+        nullable=True,
         index=True
     )
-    
+
+    # Standalone order fields (used when medical_record_id is null)
+    patient_id: Mapped[Optional[UUID]] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("patient_profiles.id"),
+        nullable=True,
+        index=True
+    )
+    category_id: Mapped[Optional[int]] = mapped_column(
+        Integer, ForeignKey("categories.id"), nullable=True
+    )
+
     # Order details
     order_type: Mapped[OrderType] = mapped_column(
         Enum(OrderType),
         nullable=False
     )
-    description: Mapped[str] = mapped_column(String(500), nullable=False)  # What is being ordered
+    description: Mapped[Optional[str]] = mapped_column(
+        String(500), nullable=True
+    )  # Motive/context (required for standalone, optional for record-attached)
+    items: Mapped[Optional[list]] = mapped_column(
+        JSONB, nullable=True
+    )  # [{display, code, code_system}, ...] — the actual ordered items
     urgency: Mapped[OrderUrgency] = mapped_column(
         Enum(OrderUrgency),
         default=OrderUrgency.ROUTINE,
         nullable=False
     )
-    
+
     # Optional details
     reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # Clinical justification
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # Internal notes
-    
+
     # For referrals
     referral_to: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)  # Specialist/clinic name
-    
+
     # Visibility - patients can see orders
     is_doctor_only: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    
+
     # Audit
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), 
+        DateTime(timezone=True),
         server_default=func.now(),
         nullable=False
     )
@@ -149,10 +167,13 @@ class ClinicalOrder(Base):
         ForeignKey("users.id"),
         nullable=False
     )
-    
+
     # Relationships
-    medical_record: Mapped["MedicalRecord"] = relationship(
+    medical_record: Mapped[Optional["MedicalRecord"]] = relationship(
         "MedicalRecord",
         back_populates="clinical_orders"
     )
+    patient: Mapped[Optional["PatientProfile"]] = relationship("PatientProfile")
+    category: Mapped[Optional["Category"]] = relationship("Category")
     creator: Mapped["User"] = relationship("User")
+

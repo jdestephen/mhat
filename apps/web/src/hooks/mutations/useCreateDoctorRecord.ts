@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
-import { DoctorMedicalRecord, OrderType, OrderUrgency, DiagnosisStatus } from '@/types';
+import { DoctorMedicalRecord, OrderType, OrderUrgency, DiagnosisStatus, OrderItem } from '@/types';
 import { VitalSignsFormData } from '@/components/clinical/VitalSignsForm';
 
 interface PrescriptionInput {
@@ -15,7 +15,8 @@ interface PrescriptionInput {
 
 interface OrderInput {
   order_type: OrderType;
-  description: string;
+  description?: string;
+  items?: OrderItem[];
   urgency?: OrderUrgency;
   reason?: string;
   referral_to?: string;
@@ -65,6 +66,7 @@ export function useCreateDoctorRecord() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['doctor', 'patients', variables.patientId, 'records'] });
+      queryClient.invalidateQueries({ queryKey: ['patient-orders', variables.patientId] });
     },
   });
 }

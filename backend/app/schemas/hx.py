@@ -145,7 +145,8 @@ class ClinicalOrderInline(BaseModel):
     """Inline clinical order for MedicalRecord response."""
     id: UUID
     order_type: str
-    description: str
+    description: Optional[str] = None
+    items: Optional[List[dict]] = None
     urgency: str
     reason: Optional[str] = None
     notes: Optional[str] = None

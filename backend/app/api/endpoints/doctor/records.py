@@ -122,11 +122,13 @@ async def create_patient_record(
         db.add(prescription)
 
     for order_in in record_in.orders or []:
+        items_data = [item.model_dump() for item in (order_in.items or [])]
         order = ClinicalOrder(
             medical_record_id=record.id,
             created_by=current_user.id,
             order_type=order_in.order_type,
             description=order_in.description,
+            items=items_data if items_data else None,
             urgency=order_in.urgency,
             reason=order_in.reason,
             notes=order_in.notes,
@@ -354,11 +356,13 @@ async def update_medical_record(
         for order in list(record.clinical_orders):
             await db.delete(order)
         for order_in in record_in.orders:
+            items_data = [item.model_dump() for item in (order_in.items or [])]
             clinical_order = ClinicalOrder(
                 medical_record_id=record.id,
                 created_by=current_user.id,
                 order_type=order_in.order_type,
                 description=order_in.description,
+                items=items_data if items_data else None,
                 urgency=order_in.urgency,
                 reason=order_in.reason,
                 notes=order_in.notes,

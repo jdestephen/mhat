@@ -15,6 +15,7 @@ import {
 import { DoctorMedicalRecord, RecordStatus } from '@/types';
 import { getDocumentUrl } from '@/lib/api';
 import { useEffect, useState } from 'react';
+import { ClinicalOrdersDisplay } from '@/components/clinical/ClinicalOrdersDisplay';
 
 interface RecordSlideModalProps {
   open: boolean;
@@ -285,37 +286,7 @@ export function RecordSlideModal({ open, onOpenChange, record, onViewPage }: Rec
 
           {/* Órdenes */}
           {record.clinical_orders && record.clinical_orders.length > 0 && (
-            <div>
-              <label className="text-sm font-semibold text-slate-500 flex items-center gap-1.5 mb-2">
-                <ClipboardList className="w-4 h-4" /> Órdenes Clínicas ({record.clinical_orders.length})
-              </label>
-              <div className="space-y-3">
-                {record.clinical_orders.map((order) => (
-                  <div key={order.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${
-                        order.order_type === 'LAB' ? 'bg-purple-100 text-purple-700' :
-                        order.order_type === 'IMAGING' ? 'bg-blue-100 text-blue-700' :
-                        order.order_type === 'REFERRAL' ? 'bg-amber-100 text-amber-700' :
-                        'bg-gray-100 text-gray-700'
-                      }`}>
-                        {order.order_type}
-                      </span>
-                      <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${
-                        order.urgency === 'STAT' ? 'bg-red-100 text-red-700' :
-                        order.urgency === 'URGENT' ? 'bg-amber-100 text-amber-700' :
-                        'bg-gray-100 text-gray-600'
-                      }`}>
-                        {order.urgency}
-                      </span>
-                    </div>
-                    <p className="font-semibold text-slate-900">{order.description}</p>
-                    {order.reason && <p className="text-sm text-slate-600 mt-1">{order.reason}</p>}
-                    {order.referral_to && <p className="text-xs font-medium text-slate-500 mt-2 bg-slate-50 p-2 rounded">Referir a: {order.referral_to}</p>}
-                  </div>
-                ))}
-              </div>
-            </div>
+            <ClinicalOrdersDisplay orders={record.clinical_orders} />
           )}
 
           {/* Documentos */}

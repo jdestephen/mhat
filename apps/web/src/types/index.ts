@@ -489,11 +489,20 @@ export interface Prescription {
   created_by: string;
 }
 
+export interface OrderItem {
+  display: string;
+  code?: string;
+  code_system?: string;
+}
+
 export interface ClinicalOrder {
   id: string;
-  medical_record_id: string;
+  medical_record_id?: string;
+  patient_id?: string;
+  category_id?: number;
   order_type: OrderType;
-  description: string;
+  description?: string;
+  items?: OrderItem[];
   urgency: OrderUrgency;
   reason?: string;
   notes?: string;

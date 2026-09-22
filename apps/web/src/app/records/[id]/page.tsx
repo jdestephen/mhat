@@ -17,6 +17,7 @@ import {
   Tag,
 } from 'lucide-react';
 import { useActiveProfile } from '@/hooks/useActiveProfile';
+import { ClinicalOrdersDisplay } from '@/components/clinical/ClinicalOrdersDisplay';
 
 export default function ViewRecordPage() {
   const params = useParams();
@@ -280,37 +281,7 @@ export default function ViewRecordPage() {
 
           {/* Clinical Orders */}
           {record.clinical_orders && record.clinical_orders.length > 0 && (
-            <div>
-              <label className="text-sm font-semibold text-slate-500 flex items-center gap-1">
-                <ClipboardList className="w-3.5 h-3.5" /> Órdenes ({record.clinical_orders.length})
-              </label>
-              <div className="mt-2 space-y-2">
-                {record.clinical_orders.map((order) => (
-                  <div key={order.id} className="border border-slate-200 rounded-lg p-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-xs px-2 py-0.5 rounded font-medium ${
-                        order.order_type === 'LAB' ? 'bg-purple-100 text-purple-700' :
-                        order.order_type === 'IMAGING' ? 'bg-blue-100 text-blue-700' :
-                        order.order_type === 'REFERRAL' ? 'bg-amber-100 text-amber-700' :
-                        'bg-gray-100 text-gray-700'
-                      }`}>
-                        {order.order_type}
-                      </span>
-                      <span className={`text-xs px-2 py-0.5 rounded ${
-                        order.urgency === 'STAT' ? 'bg-red-100 text-red-700' :
-                        order.urgency === 'URGENT' ? 'bg-amber-100 text-amber-700' :
-                        'bg-gray-100 text-gray-600'
-                      }`}>
-                        {order.urgency}
-                      </span>
-                    </div>
-                    <p className="font-medium text-slate-900 text-sm">{order.description}</p>
-                    {order.reason && <p className="text-xs text-slate-600 mt-1">{order.reason}</p>}
-                    {order.referral_to && <p className="text-xs text-slate-600 mt-1">Referir a: {order.referral_to}</p>}
-                  </div>
-                ))}
-              </div>
-            </div>
+            <ClinicalOrdersDisplay orders={record.clinical_orders} />
           )}
 
           {/* Documents */}

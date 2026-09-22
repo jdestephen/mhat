@@ -20,6 +20,7 @@ import {
   XIcon
 } from 'lucide-react';
 import { RecordStatus, AccessLevel } from '@/types';
+import { ClinicalOrdersDisplay } from '@/components/clinical/ClinicalOrdersDisplay';
 
 export default function DedicatedRecordPage({ params }: { params: Promise<{ id: string; recordId: string }> }) {
   const { id: patientId, recordId } = use(params);
@@ -269,7 +270,7 @@ export default function DedicatedRecordPage({ params }: { params: Promise<{ id: 
         {/* Annexes (Prescriptions, Orders, Docs) */}
         {(record.prescriptions?.length || record.clinical_orders?.length || record.documents?.length || record.tags?.length) ? (
           <div className="border-t border-slate-100 bg-slate-50/30 px-6 py-8">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-8">
               
               {/* Prescriptions */}
               {record.prescriptions && record.prescriptions.length > 0 && (
@@ -295,36 +296,7 @@ export default function DedicatedRecordPage({ params }: { params: Promise<{ id: 
 
               {/* Orders */}
               {record.clinical_orders && record.clinical_orders.length > 0 && (
-                <div>
-                  <h3 className="text-[11px] font-bold tracking-widest text-slate-400 uppercase flex items-center gap-1.5 mb-4">
-                    <ClipboardList className="w-3.5 h-3.5" /> Órdenes Clínicas ({record.clinical_orders.length})
-                  </h3>
-                  <div className="space-y-3">
-                    {record.clinical_orders.map((order) => (
-                      <div key={order.id} className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-sm">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className={`text-[10px] uppercase font-bold tracking-wide px-1.5 py-0.5 rounded ${
-                            order.order_type === 'LAB' ? 'bg-purple-50 text-purple-700 border border-purple-100' :
-                            order.order_type === 'IMAGING' ? 'bg-blue-50 text-blue-700 border border-blue-100' :
-                            order.order_type === 'REFERRAL' ? 'bg-amber-50 text-amber-700 border border-amber-100' :
-                            'bg-gray-50 text-gray-700 border border-gray-100'
-                          }`}>
-                            {order.order_type}
-                          </span>
-                          <span className={`text-[10px] uppercase font-bold tracking-wide px-1.5 py-0.5 rounded ${
-                            order.urgency === 'STAT' ? 'bg-red-50 text-red-700 border border-red-100' :
-                            order.urgency === 'URGENT' ? 'bg-amber-50 text-amber-700 border border-amber-100' :
-                            'bg-slate-50 text-slate-600 border border-slate-100'
-                          }`}>
-                            {order.urgency}
-                          </span>
-                        </div>
-                        <p className="font-semibold text-slate-800 text-sm leading-snug">{order.description}</p>
-                        {order.reason && <p className="text-[12px] text-slate-500 mt-1.5">{order.reason}</p>}
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <ClinicalOrdersDisplay orders={record.clinical_orders} />
               )}
 
               {/* Documents & Tags */}
