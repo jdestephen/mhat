@@ -33,6 +33,7 @@ apps/web/src/
 │   ├── records/                  → Crear/ver registros médicos
 │   ├── profile/                  → Perfil, historial de salud, acceso médico, links compartidos
 │   ├── doctor/                   → Dashboard y pacientes del médico
+│   │   └── assistants/           → Gestión de asistentes (invitar, permisos, activar/desactivar)
 │   ├── family/                   → Crear miembros familiares
 │   ├── admin/                    → Gestión de solicitudes de médicos
 │   └── shared/                   → Vista pública de registros compartidos
@@ -42,7 +43,7 @@ apps/web/src/
 │   ├── clinical/                 → Formularios clínicos (órdenes, prescripciones, vitales)
 │   ├── records/                  → RecordCard, RecordDetailModal, RecordsTable
 │   ├── patient/                  → ProfileSwitcher, HealthSidebar, LocationManager
-│   ├── doctor/                   → CreatePatientModal, PatientInfoBanner, ClaimRequests
+│   ├── doctor/                   → CreatePatientModal, PatientInfoBanner, ClaimRequests, PermissionSelector, InviteAssistantModal, EditPermissionsModal, AssistantCard
 │   ├── share/                    → ShareRecordDialog
 │   ├── search/                   → RecordSearchBar
 │   ├── landing/                  → Hero, Features, HowItWorks, Footer, Navbar
@@ -52,6 +53,7 @@ apps/web/src/
 │   ├── queries/                  → React Query hooks de lectura
 │   ├── mutations/                → React Query hooks de escritura
 │   ├── useActiveProfile.tsx      → Context + hook para perfil activo (multi-perfil)
+│   ├── useActiveMode.tsx         → Context + hook para modo activo (clínico/paciente, dual-mode)
 │   ├── useMedicalRecordForm.ts   → Hook para formulario de registro médico
 │   ├── useOnboardingStatus.ts    → Estado del onboarding
 │   ├── useProductTour.ts         → Tour guiado con Driver.js
@@ -121,6 +123,7 @@ El onboarding detecta si el perfil está completo vía `useOnboardingStatus` y r
 | Ruta | Descripción | Componentes clave |
 |------|-------------|-------------------|
 | `/doctor` | Dashboard médico: lista de pacientes, reclamar invitaciones, claims pendientes | `ClaimRequestsPanel`, `CreatePatientModal`, búsqueda/filtros de pacientes |
+| `/doctor/assistants` | Gestión de asistentes: tabs (Asistentes activos/inactivos + Invitaciones pendientes/historial) | `AssistantCard`, `InviteAssistantModal`, `EditPermissionsModal`, `PermissionSelector` |
 | `/doctor/patients/[id]` | Ficha detallada de paciente | `PatientInfoBanner` (HUD demográfico), registros, órdenes, vitales |
 | `/doctor/patients/[id]/records/new` | Crear registro médico para paciente | Formulario clínico completo: diagnósticos, prescripciones, órdenes, vitales |
 | `/doctor/patients/[id]/records/new-tabbed` | Versión con tabs del formulario | Variante UI alternativa |
@@ -184,6 +187,9 @@ Todos los queries de datos de paciente envían `?profile_id=` cuando se está ge
 - `useMyDoctors` — médicos con acceso
 - `useMyInvitations` — invitaciones activas
 - `useMyPatients` — pacientes del doctor
+- `useMyAssistants` — asistentes asignados al doctor
+- `useAssistantInvitations` — invitaciones de asistentes
+- `useMyHealthCenters` — centros de salud del doctor
 - `usePatientOrders` — órdenes clínicas
 - `useClaimRequests` — solicitudes de vinculación
 - `useCategories` — categorías de registros
@@ -209,16 +215,35 @@ El sidebar se adapta al rol del usuario:
 - Nuevo Registro
 - Perfil (submenú: Mi Perfil, Historial de Salud, Acceso Médico, Links Compartidos, Miembros Familiares)
 
-**Doctor**:
+**Doctor (modo clínico)**:
 - Panel Médico
+- Asistentes (con badge rojo de invitaciones pendientes; solo visible para doctores, no asistentes)
 - Perfil (submenú: Mi Perfil)
+
+**Doctor/Asistente (modo paciente)**:
+- Panel (dashboard)
+- Nuevo Registro
+- Perfil (submenú completo como paciente)
 
 Características:
 - Colapsable en desktop, overlay en mobile
-- `ProfileSwitcher` integrado (solo pacientes)
+- `ProfileSwitcher` integrado (solo en modo paciente)
+- `RoleSwitcher` para alternar entre modo clínico y paciente (solo doctores/asistentes)
+- Badge con conteo de invitaciones pendientes en "Asistentes"
 - Logout con limpieza de tokens
 
-### 5. Dictado por Voz (Web Speech API)
+### 5. Dual-Mode (Clínico / Paciente)
+
+`useActiveMode` es un Context + hook que gestiona el modo activo para doctores y asistentes:
+
+- Almacena el `activeMode` en `localStorage` (key: `numa_active_mode`)
+- Provee: `activeMode` (`'clinical'` | `'patient'`), `isInPatientMode`, `isClinicalUser`, `setActiveMode`
+- Default: `clinical` para doctores/asistentes, `patient` para pacientes
+- `RoleSwitcher` en el sidebar permite cambiar entre modos
+- Al cambiar modo, la UI redirige a la página principal del modo correspondiente
+- Guards de página usan `isInPatientMode` / `isClinicalUser` para restringir acceso
+
+### 6. Dictado por Voz (Web Speech API)
 
 Hook `use-voice-input.ts` que usa `webkitSpeechRecognition`:
 - Idioma: `es-419` (español latinoamérica)
@@ -226,14 +251,14 @@ Hook `use-voice-input.ts` que usa `webkitSpeechRecognition`:
 - Integrado en: `InputWithVoice`, `TextareaWithVoice` (componentes UI)
 - Usado en: notas de registros, instrucciones de medicamentos, reacciones de alergias
 
-### 6. Product Tour (Driver.js)
+### 7. Product Tour (Driver.js)
 
 Hook `useProductTour.ts` que gestiona un tour guiado del dashboard:
 - Se activa automáticamente la primera vez (flag en localStorage)
 - Steps configurables por elemento del DOM (via IDs)
 - Estilizado con tema personalizado
 
-### 7. Layout y Navegación
+### 8. Layout y Navegación
 
 - `AppShell`: layout principal con sidebar + contenido
 - `MobileHeader`: header responsive con botón hamburguesa para abrir sidebar

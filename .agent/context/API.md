@@ -39,6 +39,8 @@ backend/
 │   │       ├── catalog.py       → Catálogos médicos
 │   │       ├── patient_api.py   → Endpoints específicos de paciente
 │   │       ├── admin.py         → Administración
+│   │       ├── assistants.py    → Gestión de asistentes (invitar, listar, permisos)
+│   │       ├── health_centers.py→ Centros de salud (CRUD, membresía, admin)
 │   │       └── doctor/          → Paquete modular de endpoints para médicos
 │   │             ├── __init__.py    → Re-exporta router unificado
 │   │             ├── _helpers.py    → require_doctor_role, get_doctor_patient_access
@@ -386,6 +388,70 @@ Rutas: `/patients/{patient_id}/{recurso}` con los mismos patrones que los endpoi
 
 ---
 
+### Centros de Salud (`/api/v1/health-centers`)
+
+| Método | Ruta | Descripción | Auth | Respuesta |
+|--------|------|-------------|------|-----------|
+| `GET` | `/` | Listar centros de salud (filtro: `q?`, `type?`) | ✅ | `HealthCenterResponse[]` |
+| `GET` | `/mine` | Listar HC del usuario actual (membresías) | ✅ | `HealthCenterMembershipResponse[]` |
+| `POST` | `/` | Crear nuevo HC (doctor, estado `PENDING`) | ✅ | `HealthCenterResponse` |
+| `POST` | `/{hc_id}/join` | Afiliarse a un HC verificado | ✅ | `{message, health_center_name}` |
+| `POST` | `/{hc_id}/leave` | Desafiliarse de un HC | ✅ | `{message}` |
+| `PUT` | `/{hc_id}/primary` | Marcar HC como primario | ✅ | `{message}` |
+
+#### Admin de Centros de Salud
+
+| Método | Ruta | Descripción | Auth | Respuesta |
+|--------|------|-------------|------|-----------|
+| `GET` | `/admin/list` | Listar todos los HC (filtros: `verification_status?`, `type?`, `q?`) | ✅ Admin | `AdminHealthCenterResponse[]` |
+| `POST` | `/admin/create` | Crear HC ya verificado | ✅ Admin | `HealthCenterResponse` |
+| `PUT` | `/admin/{hc_id}` | Actualizar HC | ✅ Admin | `HealthCenterResponse` |
+| `POST` | `/admin/{hc_id}/verify` | Verificar HC pendiente | ✅ Admin | `{message}` |
+| `POST` | `/admin/{hc_id}/reject` | Rechazar HC (con `suggested_health_center_id?`) | ✅ Admin | `{message}` |
+
+---
+
+### Asistentes (`/api/v1/doctor/assistants`)
+
+Todos requieren role=DOCTOR.
+
+#### Invitaciones
+
+| Método | Ruta | Descripción | Respuesta |
+|--------|------|-------------|-----------|
+| `POST` | `/invite` | Crear invitación (envía email con link de activación) | `AssistantInvitationResponse` |
+| `GET` | `/invitations` | Listar invitaciones del doctor | `AssistantInvitationResponse[]` |
+| `DELETE` | `/invitations/{id}` | Revocar invitación pendiente | `{message}` |
+
+Body de `/invite`:
+```json
+{
+  "email": "asistente@email.com",
+  "first_name": "María",
+  "last_name": "García",
+  "health_center_id": "uuid",
+  "permissions": ["PATIENT_INFO_READ", "RECORDS_READ", ...]
+}
+```
+
+#### Asignaciones
+
+| Método | Ruta | Descripción | Respuesta |
+|--------|------|-------------|-----------|
+| `GET` | `/` | Listar asistentes asignados | `AssistantAssignmentResponse[]` |
+| `PATCH` | `/{id}/permissions` | Actualizar permisos | `AssistantAssignmentResponse` |
+| `POST` | `/{id}/deactivate` | Desactivar asistente | `{message}` |
+| `POST` | `/{id}/reactivate` | Reactivar asistente | `{message}` |
+
+#### Activación (Auth)
+
+En `POST /api/v1/auth/activate-assistant`:
+- Body: `{token, password}`
+- Crea usuario con role=`ASSISTANT`, crea `DoctorAssistantAssignment` con permisos de la invitación
+- Marca `claimed_at` en la invitación
+
+---
+
 ### Admin (`/api/v1/admin`)
 
 Todos requieren `is_admin=True` en el usuario.
@@ -405,7 +471,7 @@ Todos requieren `is_admin=True` en el usuario.
 |----------|---------|-------------|
 | **CatalogService** | `catalog_service.py` | Carga catálogos JSON al inicio, búsqueda in-memory por nombre/sinónimos con límite de 20 resultados |
 | **DocumentVerification** | `document_verification.py` | Sube documentos a R2, ejecuta OCR, extrae DNI/colegiación automáticamente |
-| **Email** | `email.py` | Templates HTML en español para: verificación, reset de contraseña, aprobación/rechazo de doctor, notificación de registro, activación de paciente |
+| **Email** | `email.py` | Templates HTML en español para: verificación, reset de contraseña, aprobación/rechazo de doctor, notificación de registro, activación de paciente, **invitación de asistente** |
 | **OCR** | `ocr.py` | Procesamiento de imágenes con Tesseract (español), extracción de texto de PDFs |
 | **Storage** | `storage.py` | Upload a S3/R2, generación de presigned URLs (1h expiración), modo local para dev |
 | **Summary** | `summary.py` | Construye resumen médico completo para sharing (demographics, medications, conditions, allergies, records recientes) |
