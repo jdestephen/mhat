@@ -37,7 +37,7 @@ Todas las rutas siguientes llevan `/api/v1`. Esta tabla agrupa operaciones; conf
 
 | Prefijo | Funcionalidad y rutas clave | Fuente |
 | --- | --- | --- |
-| `/auth` | `config`, `login`, `refresh`, `logout`, `register`, `verify-email`, `resend-verification`, `forgot-password`, `reset-password`, `change-password`, `me`, carga de documentos de médico, `activate-assistant` | `endpoints/auth.py` |
+| `/auth` | `config`, `login`, `refresh`, `logout`, `register`, `verify-email`, `resend-verification`, `forgot-password`, `reset-password`, `change-password`, `me`, carga de documentos de médico, preview y activación de asistentes | `endpoints/auth.py` |
 | `/hx` | CRUD de registros del paciente, `categories`, documentos de registro, URL de documento, bitácora de visualización, signos vitales | `endpoints/hx.py` |
 | `/profiles` | `patient` y `doctor`; datos de salud bajo `/patient/*`; accesos e invitaciones del paciente bajo `/me/*` | `endpoints/profiles.py`, `health_data.py`, `doctor_access.py` |
 | `/catalog` | `allergies`, `conditions`, `vaccines`, `options`, `clinical-orders` | `endpoints/catalog.py` |
@@ -52,7 +52,7 @@ Todas las rutas siguientes llevan `/api/v1`. Esta tabla agrupa operaciones; conf
 
 - `POST /auth/login` recibe formulario `username` (correo) y `password`; `POST /auth/refresh` recibe `refresh_token`. `POST /auth/logout` revoca el refresh token. `GET/PUT /auth/me` consulta o edita la cuenta.
 - El registro de médico crea `DoctorProfile` pendiente. Las rutas de subida de documentos de verificación son `/auth/doctor/upload-documents-registration` (credenciales de registro) y `/auth/doctor/upload-documents` (autenticado). El admin aprueba o rechaza por `/admin/doctors/{profile_id}/approve|reject`.
-- `POST /auth/activate-assistant` acepta token de invitación y contraseña; crea cuenta y asignación. La invitación al asistente parte de `/doctor/assistants/invite`.
+- `POST /auth/assistant-invitation/preview` recibe `{token}` y devuelve nombre, correo, médico, centro y `account_status` (`new`, `existing_assistant`, `conflict`); valida vencimiento, revocación y uso previo, con límite de solicitudes por IP. `POST /auth/activate-assistant` recibe `{token, password?}`. La contraseña de al menos ocho caracteres es obligatoria para cuentas nuevas; una cuenta de asistente existente acepta la asignación sin cambiar contraseña. La invitación parte de `/doctor/assistants/invite`.
 - `GET/PUT /profiles/patient` y `GET/PUT /profiles/doctor` atienden los perfiles; la API de paciente puede auto crear el perfil SELF. Los modelos de respuesta se definen en `schemas/patient.py` y `schemas/doctor.py`.
 
 ### Historial y datos de salud del paciente

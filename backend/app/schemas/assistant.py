@@ -2,7 +2,7 @@
 Schemas for Assistant operations.
 """
 from datetime import datetime
-from typing import Optional, List
+from typing import Literal, Optional, List
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr
@@ -26,7 +26,19 @@ class AssistantInviteRequest(BaseModel):
 class AssistantActivateRequest(BaseModel):
     """Schema for activating an assistant account via invitation token."""
     token: str
-    password: str
+    password: Optional[str] = None
+
+
+class AssistantInvitationPreviewRequest(BaseModel):
+    token: str
+
+
+class AssistantInvitationPreviewResponse(BaseModel):
+    assistant_name: str
+    email: EmailStr
+    doctor_name: str
+    health_center_name: str
+    account_status: Literal["new", "existing_assistant", "conflict"]
 
 
 class AssistantPermissionsUpdate(BaseModel):

@@ -11,7 +11,7 @@ Lectura previa: [PROJECT.md](PROJECT.md) y [API.md](API.md). Estado contrastado 
 | Área | Rutas implementadas | Función |
 | --- | --- | --- |
 | Pública | `/`, `/shared/[token]`, `/shared/[token]/summary` | Landing y visualización de contenido compartido. |
-| Cuenta | `/auth/login`, `/auth/register`, `/auth/verify-email`, `/auth/forgot-password`, `/auth/reset-password` | Acceso, registro y recuperación. No existe página `/auth/activate-assistant` aunque la API y los correos usan esa URL. |
+| Cuenta | `/auth/login`, `/auth/register`, `/auth/verify-email`, `/auth/forgot-password`, `/auth/reset-password`, `/auth/activate-assistant` | Acceso, registro, recuperación y activación de invitaciones para asistentes. |
 | Inicio | `/onboarding` | Completar datos iniciales del perfil. |
 | Paciente | `/dashboard`, `/dashboard/vital-signs`, `/records/new`, `/records/[id]`, `/records/[id]/edit` | Lista, búsqueda y detalle de registros; mediciones y creación/edición de historial. |
 | Perfil | `/profile/me`, `/profile/health-history`, `/profile/doctor-access`, `/profile/shared-links` | Datos personales, condiciones, alergias, medicamentos, vacunas, hábitos, antecedentes, referencias, acceso médico y shares. |
@@ -27,6 +27,7 @@ Lectura previa: [PROJECT.md](PROJECT.md) y [API.md](API.md). Estado contrastado 
 - `src/app/` contiene las páginas del App Router. La landing tiene `components/landing/`; las pantallas autenticadas se muestran dentro de `components/layout/app-shell.tsx` con sidebar y cabecera móvil. `AppShell` hace una comprobación de token en `localStorage` y redirige del lado cliente. La autorización real corresponde a la API.
 - `components/providers.tsx` compone QueryClient, `ActiveModeProvider`, `ActiveProfileProvider` y toasts. La mayoría de páginas autenticadas usan `'use client'` y obtienen datos vía Axios/React Query.
 - `src/lib/api.ts` crea el cliente Axios, adjunta `token` desde `localStorage` y en 401 intenta renovar con `refreshToken`, poniendo en cola peticiones simultáneas. Tras fallar la renovación, limpia tokens y redirige a login. Para archivos usa `getDocumentUrl`/`BACKEND_ORIGIN`.
+- `/auth/activate-assistant` lee el token del enlace enviado por correo, consulta `POST /auth/assistant-invitation/preview` y presenta creación de contraseña solo para una cuenta nueva. Una cuenta de asistente existente puede aceptar sin contraseña. `AppShell` permite abrir esta ruta aun cuando haya una sesión activa y `Providers` omite las consultas de perfil habituales en esta página pública; la API decide si el token es válido.
 - `src/hooks/queries/` y `mutations/` contienen hooks de lectura/escritura. Cada cambio de datos debe revisar `queryKey` e invalidaciones relacionadas. Algunas páginas llaman a `api` directamente; sigue el patrón cercano cuando una extracción no aporte claridad.
 - `src/hooks/useActiveProfile.tsx` mantiene el perfil activo (`numa_active_profile_id`) y usa el SELF como fallback. Al operar con un familiar, las llamadas correspondientes agregan `profile_id`.
 - `src/hooks/useActiveMode.tsx` mantiene `clinical|patient` (`numa_active_mode`) para usuarios clínicos. `RoleSwitcher` y `Sidebar` muestran la navegación acorde al rol y al modo. Esto es estado de interfaz, no permiso del servidor.

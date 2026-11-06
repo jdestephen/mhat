@@ -51,7 +51,7 @@ Los usuarios clínicos pueden abrir un perfil de paciente propio y alternar la i
 3. **Acceso médico:** el paciente puede conceder o revocar acceso y emitir invitaciones; el médico reclama el código. Crear un paciente desde el panel médico también establece acceso clínico.
 4. **Vinculación de perfiles:** cuando existe un perfil creado por un médico para un correo que después se registra, `ProfileClaimRequest` permite aprobar o rechazar la vinculación.
 5. **Compartir:** `ShareToken` habilita enlaces públicos de registros específicos o resumen, con expiración, revocación, opción de uso único y registro de accesos. El token concede acceso solo al contenido definido por el enlace.
-6. **Asistentes y centros:** un médico puede afiliarse a centros de salud e invitar asistentes con permisos por asignación. El backend valida permisos de asistentes y acceso del médico a cada paciente.
+6. **Asistentes y centros:** un médico puede afiliarse a centros de salud e invitar asistentes con permisos por asignación. El correo dirige a `/auth/activate-assistant?token=...`; la página consulta la invitación y permite crear una cuenta nueva o aceptar una asignación con una cuenta de asistente existente. El backend valida permisos de asistentes y acceso del médico a cada paciente.
 
 ## Mapa de código
 
@@ -72,7 +72,6 @@ Los usuarios clínicos pueden abrir un perfil de paciente propio y alternar la i
 
 ## Límites conocidos del estado actual
 
-- La web contiene flujo de asistentes y el backend envía un enlace a `/auth/activate-assistant`, pero esa página no existe en `apps/web/src/app/auth/` a esta fecha. El endpoint `POST /auth/activate-assistant` sí existe.
 - El módulo móvil usa `/documents` y `/documents/upload`; esos endpoints no están registrados en `backend/app/api/api.py`. Tampoco persiste el token que recibe del login.
 - Las invitaciones de acceso médico pueden indicar `TEMPORARY` y `expires_in_days`, pero `DoctorPatientAccess` no almacena un vencimiento y `get_doctor_patient_access()` no comprueba uno. El vencimiento del código de invitación sí se valida. Tratar la caducidad del acceso como funcionalidad pendiente hasta resolverla.
 - Los README de web y móvil son textos iniciales de los frameworks; este contexto y el código describen mejor el estado del producto.

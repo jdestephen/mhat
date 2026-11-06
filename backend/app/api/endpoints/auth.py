@@ -3,7 +3,6 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
-from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -15,8 +14,9 @@ from app.db.session import get_db
 from app.models.user import User, UserRole
 from app.models.patient import PatientProfile
 from app.models.doctor import DoctorProfile, DoctorApprovalStatus
+from app.models.assistant import AssistantInvitation, DoctorAssistantAssignment
 from app.models.verification_token import VerificationToken, TokenType
-from app.schemas import user as user_schema, token as token_schema
+from app.schemas import user as user_schema, token as token_schema, assistant as assistant_schema
 from app.services.email import (
     send_verification_email,
     send_password_reset_email,
@@ -588,27 +588,11 @@ async def upload_doctor_documents(
 # Assistant Activation
 # ==========================
 
-class ActivateAssistantRequest(BaseModel):
-    token: str
-    password: str
-
-
-@router.post("/activate-assistant")
-async def activate_assistant(
-    body: ActivateAssistantRequest,
-    db: AsyncSession = Depends(get_db),
-):
-    """
-    Activate an assistant account via an invitation token.
-    Creates the User with role=ASSISTANT, links to the inviting doctor and HC.
-    """
-    from app.models.assistant import AssistantInvitation, DoctorAssistantAssignment
-    from app.models.patient import PatientProfile
-    from app.models.family import FamilyMembership, RelationshipType, AccessLevel
-
-    # Find the invitation
+async def _get_valid_assistant_invitation(
+    db: AsyncSession, token: str
+) -> AssistantInvitation:
     result = await db.execute(
-        select(AssistantInvitation).where(AssistantInvitation.token == body.token)
+        select(AssistantInvitation).where(AssistantInvitation.token == token)
     )
     invitation = result.scalars().first()
 
@@ -620,6 +604,74 @@ async def activate_assistant(
         raise HTTPException(status_code=400, detail="Esta invitación ya fue utilizada.")
     if invitation.expires_at < datetime.now(timezone.utc):
         raise HTTPException(status_code=400, detail="Esta invitación ha expirado.")
+
+    return invitation
+
+
+@router.post(
+    "/assistant-invitation/preview",
+    response_model=assistant_schema.AssistantInvitationPreviewResponse,
+)
+async def preview_assistant_invitation(
+    body: assistant_schema.AssistantInvitationPreviewRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> assistant_schema.AssistantInvitationPreviewResponse:
+    """Show the invitation context and the appropriate activation flow."""
+    from app.models.organization import HealthCenter
+
+    rate_limiter.check(
+        get_client_ip(request),
+        "assistant_invitation_preview",
+        max_requests=10,
+        window_seconds=60,
+    )
+    invitation = await _get_valid_assistant_invitation(db, body.token)
+
+    doctor_result = await db.execute(select(User).where(User.id == invitation.doctor_id))
+    doctor = doctor_result.scalars().first()
+    center_result = await db.execute(
+        select(HealthCenter).where(HealthCenter.id == invitation.health_center_id)
+    )
+    center = center_result.scalars().first()
+    user_result = await db.execute(select(User).where(User.email == invitation.email))
+    existing_user = user_result.scalars().first()
+
+    if existing_user is None:
+        account_status = "new"
+    elif existing_user.role == UserRole.ASSISTANT:
+        account_status = "existing_assistant"
+    else:
+        account_status = "conflict"
+
+    doctor_name = ""
+    if doctor:
+        doctor_name = " ".join(
+            part for part in (doctor.first_name, doctor.last_name) if part
+        )
+
+    return assistant_schema.AssistantInvitationPreviewResponse(
+        assistant_name=f"{invitation.first_name} {invitation.last_name}".strip(),
+        email=invitation.email,
+        doctor_name=doctor_name or "Un médico",
+        health_center_name=center.name if center else "Centro de salud",
+        account_status=account_status,
+    )
+
+
+@router.post("/activate-assistant")
+async def activate_assistant(
+    body: assistant_schema.AssistantActivateRequest,
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, str]:
+    """
+    Activate an assistant account via an invitation token.
+    Creates the User with role=ASSISTANT, links to the inviting doctor and HC.
+    """
+    from app.models.patient import PatientProfile
+    from app.models.family import FamilyMembership, RelationshipType, AccessLevel
+
+    invitation = await _get_valid_assistant_invitation(db, body.token)
 
     # Check if a user with this email already exists
     existing_result = await db.execute(
@@ -647,8 +699,10 @@ async def activate_assistant(
             )
 
     # Validate password
-    if len(body.password) < 8:
+    if not body.password or len(body.password) < 8:
         raise HTTPException(status_code=400, detail="La contraseña debe tener al menos 8 caracteres.")
+    if len(body.password.encode("utf-8")) > 72:
+        raise HTTPException(status_code=400, detail="La contraseña no puede exceder 72 bytes.")
 
     # Create the assistant user
     user = User(

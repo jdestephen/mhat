@@ -10,6 +10,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const isAuthPage = pathname?.startsWith('/auth');
+  const isAssistantActivationPage = pathname === '/auth/activate-assistant';
   const isPublicPage = pathname === '/' || pathname?.startsWith('/shared');
   const isOnboardingPage = pathname?.startsWith('/onboarding');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -23,7 +24,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    if (token && (isAuthPage || isPublicPage)) {
+    if (token && (isAuthPage || isPublicPage) && !isAssistantActivationPage) {
       // Determine the correct landing page based on stored mode
       const activeMode = localStorage.getItem('numa_active_mode');
       if (activeMode === 'patient') {
