@@ -117,8 +117,8 @@ export default function PrintSettingsPage() {
 
   const uploadLogo = async (file: File | undefined) => {
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024 || !['image/png', 'image/jpeg'].includes(file.type)) {
-      toast.error('Usa una imagen PNG o JPEG de hasta 2 MB');
+    if (file.size > 1 * 1024 * 1024 || !['image/png', 'image/jpeg'].includes(file.type)) {
+      toast.error('Usa una imagen PNG o JPEG de hasta 1 MB');
       return;
     }
     setLogoBusy(true);
@@ -188,7 +188,7 @@ export default function PrintSettingsPage() {
               {settings?.logo_present && logoUrl ? <Image src={logoUrl} alt="Logo del doctor" width={80} height={80} unoptimized className="h-20 w-20 rounded-md border border-slate-200 object-contain" /> : <div className="flex h-20 w-20 items-center justify-center rounded-md border border-dashed border-slate-300 text-slate-400"><ImageUp className="h-7 w-7" /></div>}
               <div className="space-y-2">
                 <input type="file" accept="image/png,image/jpeg" disabled={logoBusy} onChange={(event) => { void uploadLogo(event.target.files?.[0]); event.target.value = ''; }} className="block max-w-[220px] text-xs text-slate-600 file:mr-2 file:rounded file:border-0 file:bg-emerald-50 file:px-2 file:py-1.5 file:text-emerald-800" />
-                <p className="text-xs text-slate-500">PNG o JPEG, máximo 2 MB. Aparece arriba y como marca de agua.</p>
+                <p className="text-xs text-slate-500">PNG o JPEG, máximo 1 MB. Aparece arriba y como marca de agua.</p>
                 {settings?.logo_present && <Button type="button" size="sm" variant="danger-ghost" disabled={logoBusy} onClick={removeLogo}><Trash2 className="mr-1 h-4 w-4" /> Quitar logo</Button>}
               </div>
             </div>
@@ -219,7 +219,7 @@ export default function PrintSettingsPage() {
             <div className="max-w-[45%] text-right"><p className="font-semibold">{form.clinic_name || 'Hospital / clínica'}</p><p className="text-xs text-slate-500">{[form.phone_1, form.phone_2].filter(Boolean).join(' / ')}</p><p className="text-xs text-slate-500">{form.address}</p></div>
           </div>
           <div className="relative grid grid-cols-4 gap-2 px-4 py-5 text-xs"><span>Paciente<br /><strong>Nombre completo</strong></span><span>Edad<br /><strong>—</strong></span><span>Sexo<br /><strong>—</strong></span><span>DNI<br /><strong>—</strong></span></div>
-          <div className="relative mx-4 flex items-end justify-between border-b border-emerald-600 pb-1"><span className="text-lg text-emerald-700">RECETA MÉDICA</span><span className="text-[10px] text-slate-500">Fecha de emisión original</span></div>
+          <div className="relative mx-4 flex items-end justify-between border-b border-[#1F7A3D] pb-1"><span className="text-lg text-[#1F7A3D]">RECETA MÉDICA</span><span className="text-[10px] text-slate-500">Fecha de emisión original</span></div>
           <div className="relative flex-1 p-4 text-sm text-slate-400">1. Medicamento y dosis<br />&nbsp;&nbsp;&nbsp;Frecuencia: …{form.show_duration && <><br />&nbsp;&nbsp;&nbsp;Duración: …</>}</div>
           <div className="relative mb-5 ml-auto mr-4 w-40 border-t border-slate-600 pt-1 text-center text-xs text-slate-500">Firma y Sello</div>
           <div className="relative border-t border-slate-500 px-3 py-2 text-center text-[10px] text-slate-500">{[form.name && `Dr. ${form.name}`, form.public_email, form.phone_1].filter(Boolean).join(' | ')}</div>

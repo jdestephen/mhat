@@ -20,7 +20,7 @@ from app.models.patient import PatientProfile
 
 INK = colors.HexColor("#252525")
 MUTED = colors.HexColor("#545454")
-GREEN = colors.HexColor("#289946")
+GREEN = colors.HexColor("#1F7A3D")
 FONT_DIR = Path(reportlab.__file__).resolve().parent / "fonts"
 pdfmetrics.registerFont(TTFont("NumaSans", str(FONT_DIR / "Vera.ttf")))
 pdfmetrics.registerFont(TTFont("NumaSans-Bold", str(FONT_DIR / "VeraBd.ttf")))

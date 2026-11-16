@@ -26,7 +26,7 @@ from ._helpers import get_doctor_patient_access, require_doctor_role
 
 
 router = APIRouter()
-MAX_LOGO_BYTES = 2 * 1024 * 1024
+MAX_LOGO_BYTES = 1 * 1024 * 1024
 MAX_LOGO_PIXELS = 4_000_000
 LOGO_FORMATS = {"PNG": ("image/png", "png"), "JPEG": ("image/jpeg", "jpg")}
 
@@ -99,7 +99,7 @@ async def upload_print_logo(
 ):
     content = await file.read(MAX_LOGO_BYTES + 1)
     if len(content) > MAX_LOGO_BYTES:
-        raise HTTPException(status_code=413, detail="El logo no debe superar 2 MB")
+        raise HTTPException(status_code=413, detail="El logo no debe superar 1 MB")
     try:
         with Image.open(BytesIO(content)) as image:
             image_format = image.format
