@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -34,18 +34,23 @@ export default function AssistantsPage() {
   const router = useRouter();
   const { data: user, isLoading: userLoading } = useCurrentUser();
   const { isClinicalUser, isInPatientMode } = useActiveMode();
+  const canManageAssistants = user?.role === UserRole.DOCTOR && isClinicalUser && !isInPatientMode;
 
-  const { data: assistants = [], isLoading: assistantsLoading } = useMyAssistants();
-  const { data: invitations = [], isLoading: invitationsLoading } = useAssistantInvitations();
+  const { data: assistants = [], isLoading: assistantsLoading } = useMyAssistants(canManageAssistants);
+  const { data: invitations = [], isLoading: invitationsLoading } = useAssistantInvitations(canManageAssistants);
 
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [editAssignment, setEditAssignment] = useState<AssistantAssignment | null>(null);
 
-  // Guard: only doctors (not assistants) in clinical mode
-  if (!userLoading && (!isClinicalUser || isInPatientMode || user?.role !== UserRole.DOCTOR)) {
-    router.replace('/doctor');
-    return null;
-  }
+  // Navigation belongs in an effect: this page also renders on the server.
+  useEffect(() => {
+    if (userLoading) return;
+    if (!user) {
+      router.replace('/auth/login');
+    } else if (!canManageAssistants) {
+      router.replace('/doctor');
+    }
+  }, [userLoading, user, canManageAssistants, router]);
 
   const activeAssistants = assistants.filter((a) => a.is_active);
   const inactiveAssistants = assistants.filter((a) => !a.is_active);
@@ -57,7 +62,7 @@ export default function AssistantsPage() {
     (inv) => inv.claimed_at || inv.is_revoked || new Date(inv.expires_at) <= new Date(),
   );
 
-  if (userLoading || assistantsLoading) {
+  if (userLoading || !canManageAssistants || assistantsLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600" />

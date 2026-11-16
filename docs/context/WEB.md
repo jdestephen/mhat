@@ -1,6 +1,6 @@
 # Numa: web app actual
 
-Lectura previa: [PROJECT.md](PROJECT.md) y [API.md](API.md). Estado contrastado con `apps/web/src` el 6 de noviembre de 2026.
+Lectura previa: [PROJECT.md](PROJECT.md) y [API.md](API.md). Estado contrastado con `apps/web/src` el 13 de noviembre de 2026.
 
 ## Stack y ejecución
 
@@ -22,6 +22,14 @@ Lectura previa: [PROJECT.md](PROJECT.md) y [API.md](API.md). Estado contrastado 
 
 `new-tabbed` es una variante de interfaz presente en el código. La página administrativa para centros de salud no existe aunque la API sí ofrece esas rutas.
 
+### Disponibilidad del panel de asistentes
+
+`NEXT_PUBLIC_ASSISTANT_MANAGEMENT_ENABLED` controla únicamente el panel web `/doctor/assistants`: solo el valor literal `true` muestra el enlace en el sidebar, consulta sus invitaciones y permite abrir la ruta. Si falta o vale `false`, la ruta responde 404. El resto de los flujos clínicos de asistentes permanece disponible. Next.js incorpora las variables `NEXT_PUBLIC_*` al compilar la web, así que cambiar el valor requiere una nueva compilación y despliegue.
+
+### Cambio de modo para médicos
+
+`NEXT_PUBLIC_DOCTOR_PATIENT_MODE_ENABLED` controla el selector entre el panel médico y el perfil personal de paciente para cuentas `DOCTOR`. Solo el valor literal `true` lo muestra; si falta o vale `false`, la web mantiene a esos usuarios en modo clínico, incluso si `numa_active_mode` guardaba `patient`. Los asistentes conservan su selector. En cada login de médico se restaura el modo clínico y se actualiza el estado compartido antes de navegar a `/doctor`. `AppShell` consulta el rol y el modo efectivo antes de redirigir desde una ruta pública o de autenticación. Esta variable también se incorpora al compilar y requiere nueva compilación y despliegue.
+
 ## Composición de la aplicación
 
 - `src/app/` contiene las páginas del App Router. La landing tiene `components/landing/`; las pantallas autenticadas se muestran dentro de `components/layout/app-shell.tsx` con sidebar y cabecera móvil. `AppShell` hace una comprobación de token en `localStorage` y redirige del lado cliente. La autorización real corresponde a la API.
@@ -30,7 +38,7 @@ Lectura previa: [PROJECT.md](PROJECT.md) y [API.md](API.md). Estado contrastado 
 - `/auth/activate-assistant` lee el token del enlace enviado por correo, consulta `POST /auth/assistant-invitation/preview` y presenta creación de contraseña solo para una cuenta nueva. Una cuenta de asistente existente puede aceptar sin contraseña. `AppShell` permite abrir esta ruta aun cuando haya una sesión activa y `Providers` omite las consultas de perfil habituales en esta página pública; la API decide si el token es válido.
 - `src/hooks/queries/` y `mutations/` contienen hooks de lectura/escritura. Cada cambio de datos debe revisar `queryKey` e invalidaciones relacionadas. Algunas páginas llaman a `api` directamente; sigue el patrón cercano cuando una extracción no aporte claridad.
 - `src/hooks/useActiveProfile.tsx` mantiene el perfil activo (`numa_active_profile_id`) y usa el SELF como fallback. Al operar con un familiar, las llamadas correspondientes agregan `profile_id`.
-- `src/hooks/useActiveMode.tsx` mantiene `clinical|patient` (`numa_active_mode`) para usuarios clínicos. `RoleSwitcher` y `Sidebar` muestran la navegación acorde al rol y al modo. Esto es estado de interfaz, no permiso del servidor.
+- `src/hooks/useActiveMode.tsx` mantiene `clinical|patient` (`numa_active_mode`) para usuarios clínicos. `RoleSwitcher` y `Sidebar` muestran la navegación acorde al rol y al modo. Con el cambio de modo médico desactivado, el modo efectivo de `DOCTOR` siempre es `clinical`. Esto es estado de interfaz, no permiso del servidor.
 - `src/types/index.ts` define tipos compartidos del cliente. Los contratos verdaderos están en `backend/app/schemas/`; al cambiar uno, sincroniza ambos lados.
 
 ## Funciones y componentes reutilizables

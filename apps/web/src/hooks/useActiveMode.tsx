@@ -2,6 +2,7 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
+import { DOCTOR_PATIENT_MODE_ENABLED } from '@/lib/featureFlags';
 import { UserRole } from '@/types';
 
 export type ActiveMode = 'clinical' | 'patient';
@@ -32,30 +33,30 @@ export function ActiveModeProvider({ children }: { children: React.ReactNode }) 
   const isClinicalUser =
     user?.role === UserRole.DOCTOR || user?.role === UserRole.ASSISTANT;
 
-  const [activeMode, setActiveModeState] = useState<ActiveMode>(() => {
-    if (typeof window === 'undefined') return 'clinical';
-    const stored = localStorage.getItem(MODE_STORAGE_KEY) as ActiveMode | null;
-    if (stored === 'clinical' || stored === 'patient') return stored;
-    // Default: clinical for doctors/assistants, patient for patients
-    return 'clinical';
+  const [selectedMode, setSelectedMode] = useState<ActiveMode | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const stored = localStorage.getItem(MODE_STORAGE_KEY);
+    return stored === 'clinical' || stored === 'patient' ? stored : null;
   });
 
-  // When user data loads, ensure default mode is correct
+  const doctorModeLocked = user?.role === UserRole.DOCTOR && !DOCTOR_PATIENT_MODE_ENABLED;
+  const activeMode: ActiveMode = user?.role === UserRole.PATIENT
+    ? 'patient'
+    : doctorModeLocked
+      ? 'clinical'
+      : selectedMode ?? 'clinical';
+
+  // Sync the effective mode after the account loads, including old patient preferences.
   useEffect(() => {
     if (!user) return;
-    const stored = localStorage.getItem(MODE_STORAGE_KEY);
-
-    if (!stored) {
-      // First load — set default based on role
-      const defaultMode: ActiveMode = isClinicalUser ? 'clinical' : 'patient';
-      localStorage.setItem(MODE_STORAGE_KEY, defaultMode);
-      setActiveModeState(defaultMode);
+    if (localStorage.getItem(MODE_STORAGE_KEY) !== activeMode) {
+      localStorage.setItem(MODE_STORAGE_KEY, activeMode);
     }
-  }, [user, isClinicalUser]);
+  }, [user, selectedMode, activeMode]);
 
   const setActiveMode = useCallback((mode: ActiveMode) => {
     localStorage.setItem(MODE_STORAGE_KEY, mode);
-    setActiveModeState(mode);
+    setSelectedMode(mode);
   }, []);
 
   const isInPatientMode = isClinicalUser && activeMode === 'patient';
@@ -72,7 +73,8 @@ export function ActiveModeProvider({ children }: { children: React.ReactNode }) 
 /**
  * Hook to access and control the active UI mode (clinical vs patient).
  *
- * - Doctors/assistants can switch between clinical and patient modes.
+ * - Doctors can switch modes only when the web feature flag is enabled.
+ * - Assistants can switch between clinical and patient modes.
  * - Patients are always in patient mode.
  * - Mode is persisted across sessions via localStorage.
  */

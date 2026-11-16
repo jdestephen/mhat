@@ -26,6 +26,7 @@ import { ProfileSwitcher } from '@/components/patient/ProfileSwitcher';
 import { RoleSwitcher } from '@/components/layout/RoleSwitcher';
 import { useActiveMode } from '@/hooks/useActiveMode';
 import { useAssistantInvitations } from '@/hooks/queries/useAssistantInvitations';
+import { ASSISTANT_MANAGEMENT_ENABLED, DOCTOR_PATIENT_MODE_ENABLED } from '@/lib/featureFlags';
 
 
 interface MenuItem {
@@ -68,9 +69,11 @@ export function Sidebar({ onClose }: SidebarProps = {}) {
     );
   };
 
-  // Pending invitations count — only fetch for doctors
-  const { data: invitations = [] } = useAssistantInvitations();
-  const pendingInvitationsCount = user?.role === UserRole.DOCTOR
+  // Pending invitations count — only fetch when doctor management is enabled
+  const { data: invitations = [] } = useAssistantInvitations(
+    ASSISTANT_MANAGEMENT_ENABLED && user?.role === UserRole.DOCTOR,
+  );
+  const pendingInvitationsCount = ASSISTANT_MANAGEMENT_ENABLED && user?.role === UserRole.DOCTOR
     ? invitations.filter(
         (inv) => !inv.claimed_at && !inv.is_revoked && new Date(inv.expires_at) > new Date(),
       ).length
@@ -89,7 +92,7 @@ export function Sidebar({ onClose }: SidebarProps = {}) {
     );
 
     // Assistants management — only for doctors (not assistants)
-    if (user?.role === UserRole.DOCTOR) {
+    if (ASSISTANT_MANAGEMENT_ENABLED && user?.role === UserRole.DOCTOR) {
       sidebarItems.push({
         id: 'nav-assistants',
         label: 'Asistentes',
@@ -350,7 +353,9 @@ export function Sidebar({ onClose }: SidebarProps = {}) {
       {!effectiveCollapsed && (isPatient || isInPatientMode) && <ProfileSwitcher />}
 
       {/* Role Switcher (doctors and assistants) */}
-      {isClinicalUser && <RoleSwitcher collapsed={effectiveCollapsed} />}
+      {isClinicalUser && (user?.role !== UserRole.DOCTOR || DOCTOR_PATIENT_MODE_ENABLED) && (
+        <RoleSwitcher collapsed={effectiveCollapsed} />
+      )}
 
       {/* Nav */}
       <div className="flex-1 overflow-auto py-6 px-2">

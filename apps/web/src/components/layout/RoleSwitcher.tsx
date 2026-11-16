@@ -8,6 +8,7 @@ import clsx from 'clsx';
 import api from '@/lib/api';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
 import { useActiveMode } from '@/hooks/useActiveMode';
+import { DOCTOR_PATIENT_MODE_ENABLED } from '@/lib/featureFlags';
 import { UserRole } from '@/types';
 
 interface RoleSwitcherProps {
@@ -54,7 +55,7 @@ export function RoleSwitcher({ collapsed = false }: RoleSwitcherProps) {
     }
   }, [isInPatientMode, router, setActiveMode, initPatientMode]);
 
-  if (!isClinicalUser) return null;
+  if (!isClinicalUser || (user?.role === UserRole.DOCTOR && !DOCTOR_PATIENT_MODE_ENABLED)) return null;
 
   if (collapsed) {
     return (

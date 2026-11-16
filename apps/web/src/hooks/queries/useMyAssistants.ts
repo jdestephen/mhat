@@ -16,9 +16,10 @@ export interface AssistantAssignment {
   deactivated_at: string | null;
 }
 
-export function useMyAssistants() {
+export function useMyAssistants(enabled = true) {
   return useQuery({
     queryKey: ['doctor', 'assistants'],
+    enabled,
     queryFn: async () => {
       const res = await api.get<AssistantAssignment[]>('/doctor/assistants');
       return res.data;

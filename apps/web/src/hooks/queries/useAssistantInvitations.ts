@@ -16,9 +16,10 @@ export interface AssistantInvitation {
   created_at: string;
 }
 
-export function useAssistantInvitations() {
+export function useAssistantInvitations(enabled = true) {
   return useQuery({
     queryKey: ['doctor', 'assistants', 'invitations'],
+    enabled,
     queryFn: async () => {
       const res = await api.get<AssistantInvitation[]>('/doctor/assistants/invitations');
       return res.data;

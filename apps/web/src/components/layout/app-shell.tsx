@@ -5,6 +5,9 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Sidebar } from './sidebar';
 import { MobileHeader } from './MobileHeader';
 import { ProfileBanner } from '@/components/patient/ProfileBanner';
+import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
+import { useActiveMode } from '@/hooks/useActiveMode';
+import { UserRole } from '@/types';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -13,7 +16,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const isAssistantActivationPage = pathname === '/auth/activate-assistant';
   const isPublicPage = pathname === '/' || pathname?.startsWith('/shared');
   const isOnboardingPage = pathname?.startsWith('/onboarding');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { data: user, isLoading: userLoading } = useCurrentUser(!isAssistantActivationPage);
+  const { activeMode } = useActiveMode();
+  const [sidebarState, setSidebarState] = useState({ pathname, open: false });
+  const sidebarOpen = sidebarState.pathname === pathname && sidebarState.open;
+  const setSidebarOpen = (open: boolean) => setSidebarState({ pathname, open });
 
   useEffect(() => {
     // Basic Client-side Protection
@@ -25,23 +32,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
 
     if (token && (isAuthPage || isPublicPage) && !isAssistantActivationPage) {
-      // Determine the correct landing page based on stored mode
-      const activeMode = localStorage.getItem('numa_active_mode');
-      if (activeMode === 'patient') {
-        router.replace('/dashboard');
-      } else {
-        // Default: clinical mode for doctors/assistants, dashboard for patients
-        // We check if the user has an active clinical mode stored
-        router.replace(activeMode === 'clinical' ? '/doctor' : '/dashboard');
-      }
+      if (userLoading || !user) return;
+      router.replace(
+        user.role !== UserRole.PATIENT && activeMode === 'clinical'
+          ? '/doctor'
+          : '/dashboard',
+      );
       return;
     }
-  }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Close sidebar on route change (mobile)
-  useEffect(() => {
-    setSidebarOpen(false);
-  }, [pathname]);
+  }, [pathname, router, isAuthPage, isPublicPage, isAssistantActivationPage, userLoading, user, activeMode]);
 
   if (isAuthPage || isPublicPage) {
     return <>{children}</>;

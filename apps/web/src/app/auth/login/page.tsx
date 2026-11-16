@@ -2,14 +2,18 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import api from '@/lib/api';
 import { useToast } from '@/components/ui/Toast';
+import { useActiveMode } from '@/hooks/useActiveMode';
 
 export default function LoginPage() {
   const { toast } = useToast();
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const { setActiveMode } = useActiveMode();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -33,14 +37,15 @@ export default function LoginPage() {
       
       localStorage.setItem('token', response.data.access_token);
       localStorage.setItem('refreshToken', response.data.refresh_token);
+      queryClient.removeQueries({ queryKey: ['auth', 'me'] });
 
       // Redirect based on user role from the login response
       const role = response.data.role;
       if (role === 'DOCTOR' || role === 'ASSISTANT') {
-        localStorage.setItem('numa_active_mode', 'clinical');
+        setActiveMode('clinical');
         router.push('/doctor');
       } else {
-        localStorage.setItem('numa_active_mode', 'patient');
+        setActiveMode('patient');
         router.push('/dashboard');
       }
     } catch (err: unknown) {
