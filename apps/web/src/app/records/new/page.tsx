@@ -16,6 +16,7 @@ import { useCreateMedicalRecord } from '@/hooks/mutations/useCreateMedicalRecord
 import { useUploadDocument } from '@/hooks/mutations/useUploadDocument';
 import { PrescriptionForm, PrescriptionFormData } from '@/components/clinical/PrescriptionForm';
 import { useActiveProfile } from '@/hooks/useActiveProfile';
+import { useActiveMode } from '@/hooks/useActiveMode';
 import { useToast } from '@/components/ui/Toast';
 
 
@@ -52,8 +53,10 @@ export default function NewRecordPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState<string>('');
   
+  const { isInPatientMode, isClinicalUser } = useActiveMode();
+
   // Derived state
-  const isPatient = user?.role === UserRole.PATIENT;
+  const isPatient = user?.role === UserRole.PATIENT || (isClinicalUser && isInPatientMode);
   const selectedCategory = categories.find(c => c.id === parseInt(categoryId));
   const showDiagnosis = selectedCategory?.has_diagnosis ?? false;
 

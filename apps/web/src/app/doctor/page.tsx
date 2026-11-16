@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { UserRole, AccessLevel } from '@/types';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useActiveMode } from '@/hooks/useActiveMode';
 import api from '@/lib/api';
 import { 
   Users, 
@@ -86,14 +87,16 @@ export default function DoctorDashboardPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [openMenuId]);
 
-  // Redirect non-doctors
+  const { isInPatientMode, isClinicalUser } = useActiveMode();
+
+  // Redirect if not a clinical user, or if clinical user is in patient mode
   useEffect(() => {
-    if (!userLoading && user?.role !== UserRole.DOCTOR) {
+    if (!userLoading && (!isClinicalUser || isInPatientMode)) {
       router.replace('/dashboard');
     }
-  }, [userLoading, user?.role, router]);
+  }, [userLoading, isClinicalUser, isInPatientMode, router]);
 
-  if (!userLoading && user?.role !== UserRole.DOCTOR) {
+  if (!userLoading && (!isClinicalUser || isInPatientMode)) {
     return null;
   }
 

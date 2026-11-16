@@ -5,14 +5,22 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Sidebar } from './sidebar';
 import { MobileHeader } from './MobileHeader';
 import { ProfileBanner } from '@/components/patient/ProfileBanner';
+import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
+import { useActiveMode } from '@/hooks/useActiveMode';
+import { UserRole } from '@/types';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const isAuthPage = pathname?.startsWith('/auth');
+  const isAssistantActivationPage = pathname === '/auth/activate-assistant';
   const isPublicPage = pathname === '/' || pathname?.startsWith('/shared');
   const isOnboardingPage = pathname?.startsWith('/onboarding');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { data: user, isLoading: userLoading } = useCurrentUser(!isAssistantActivationPage);
+  const { activeMode } = useActiveMode();
+  const [sidebarState, setSidebarState] = useState({ pathname, open: false });
+  const sidebarOpen = sidebarState.pathname === pathname && sidebarState.open;
+  const setSidebarOpen = (open: boolean) => setSidebarState({ pathname, open });
 
   useEffect(() => {
     // Basic Client-side Protection
@@ -23,16 +31,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    if (token && (isAuthPage || isPublicPage)) {
-      router.replace('/dashboard');
+    if (token && (isAuthPage || isPublicPage) && !isAssistantActivationPage) {
+      if (userLoading || !user) return;
+      router.replace(
+        user.role !== UserRole.PATIENT && activeMode === 'clinical'
+          ? '/doctor'
+          : '/dashboard',
+      );
       return;
     }
-  }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Close sidebar on route change (mobile)
-  useEffect(() => {
-    setSidebarOpen(false);
-  }, [pathname]);
+  }, [pathname, router, isAuthPage, isPublicPage, isAssistantActivationPage, userLoading, user, activeMode]);
 
   if (isAuthPage || isPublicPage) {
     return <>{children}</>;

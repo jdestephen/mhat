@@ -239,6 +239,58 @@ async def send_doctor_rejection_email(
     await _send_email(doctor_email, subject, html_content)
 
 
+async def send_assistant_invitation_email(
+    assistant_email: str,
+    assistant_name: str,
+    doctor_name: str,
+    health_center_name: str,
+    activation_token: str,
+) -> None:
+    """Send invitation email to a new assistant with their activation link."""
+    activation_url = (
+        f"{settings.FRONTEND_URL}/auth/activate-assistant?token={activation_token}"
+    )
+
+    subject = f"Invitación de {doctor_name} — Numa"
+    html_content = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+            <div style="background-color: #ecfdf5; padding: 24px; text-align: center; border-bottom: 2px solid #34d399;">
+            <h1 style="color: #064e3b; font-size: 28px; margin: 0;">Numa</h1>
+            <p style="color: #6b7280; font-size: 14px; margin-top: 4px;">Historial Médico</p>
+        </div>
+        <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 32px;">
+            <h2 style="color: #1e293b; font-size: 20px; margin-top: 0;">¡Hola, {assistant_name}!</h2>
+            <p style="color: #4b5563; line-height: 1.6;">
+                <strong>{doctor_name}</strong> te ha invitado a unirte como asistente
+                en <strong>{health_center_name}</strong>.
+            </p>
+            <p style="color: #4b5563; line-height: 1.6;">
+                Para crear tu cuenta y comenzar a trabajar, haz clic en el siguiente botón:
+            </p>
+            <div style="text-align: center; margin: 32px 0;">
+                <a href="{activation_url}"
+                   style="background-color: #064e3b; color: #ffffff; padding: 14px 32px;
+                          text-decoration: none; border-radius: 8px; font-weight: 600;
+                          display: inline-block; font-size: 16px;">
+                    Activar Mi Cuenta
+                </a>
+            </div>
+            <p style="color: #6b7280; font-size: 13px; line-height: 1.5;">
+                Esta invitación expira en 48 horas. Si no reconoces al médico mencionado,
+                puedes ignorar este correo.
+            </p>
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+            <p style="color: #9ca3af; font-size: 12px;">
+                Si el botón no funciona, copia y pega este enlace en tu navegador:<br/>
+                <a href="{activation_url}" style="color: #064e3b; word-break: break-all;">{activation_url}</a>
+            </p>
+        </div>
+    </div>
+    """
+
+    await _send_email(assistant_email, subject, html_content)
+
+
 async def _send_email(to: str, subject: str, html: str) -> None:
     """Send an email via Resend or log to console in dev mode."""
     if not settings.EMAIL_ENABLED:
