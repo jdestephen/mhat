@@ -119,7 +119,7 @@ async def upload_print_logo(
 
     await file.seek(0)
     file.filename = f"logo.{extension}"
-    uploaded = await storage.upload_file(file, folder="doctor-print-logos")
+    uploaded = await storage.upload_file(file, folder=f"logos/doctors/{doctor.id}")
     settings = await _get_settings(db, doctor.id)
     if not settings:
         settings = DoctorPrintSettings(doctor_id=doctor.id)
