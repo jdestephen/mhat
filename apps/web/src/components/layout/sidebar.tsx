@@ -16,6 +16,7 @@ import {
   KeyRound,
   PanelLeftClose,
   HeartPulse,
+  Printer,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
@@ -150,6 +151,11 @@ export function Sidebar({ onClose }: SidebarProps = {}) {
         href: '/profile/me',
         icon: <UserCircle className="w-5 h-5" />,
       },
+      ...(user?.role === UserRole.DOCTOR && !isInPatientMode ? [{
+        label: 'Configuración de impresión',
+        href: '/doctor/print-settings',
+        icon: <Printer className="w-5 h-5" />,
+      }] : []),
       ...(isPatient || isInPatientMode ? [
         {
           id: 'nav-health-history',

@@ -1,6 +1,6 @@
 # Numa: web app actual
 
-Lectura previa: [PROJECT.md](PROJECT.md) y [API.md](API.md). Estado contrastado con `apps/web/src` el 13 de noviembre de 2026.
+Lectura previa: [PROJECT.md](PROJECT.md) y [API.md](API.md). Estado contrastado con `apps/web/src` el 16 de noviembre de 2026.
 
 ## Stack y ejecución
 
@@ -16,7 +16,7 @@ Lectura previa: [PROJECT.md](PROJECT.md) y [API.md](API.md). Estado contrastado 
 | Paciente | `/dashboard`, `/dashboard/vital-signs`, `/records/new`, `/records/[id]`, `/records/[id]/edit` | Lista, búsqueda y detalle de registros; mediciones y creación/edición de historial. |
 | Perfil | `/profile/me`, `/profile/health-history`, `/profile/doctor-access`, `/profile/shared-links` | Datos personales, condiciones, alergias, medicamentos, vacunas, hábitos, antecedentes, referencias, acceso médico y shares. |
 | Familia | `/family/new` | Crear perfil familiar; el selector de perfil está en la navegación. |
-| Médico | `/doctor`, `/doctor/assistants`, `/doctor/patients/[id]`, `/doctor/patients/[id]/health-history` | Pacientes, claims, acceso por invitación, asistentes, ficha e historial de salud. |
+| Médico | `/doctor`, `/doctor/assistants`, `/doctor/print-settings`, `/doctor/patients/[id]`, `/doctor/patients/[id]/health-history` | Pacientes, claims, acceso por invitación, asistentes, configuración de impresión, ficha e historial de salud. |
 | Registros clínicos | `/doctor/patients/[id]/records/new`, `/new-tabbed`, `/[recordId]`, `/[recordId]/edit` | Crear, consultar y editar registros de pacientes. |
 | Admin | `/admin/doctors` | Solicitudes de aprobación médica. |
 
@@ -29,6 +29,10 @@ Lectura previa: [PROJECT.md](PROJECT.md) y [API.md](API.md). Estado contrastado 
 ### Cambio de modo para médicos
 
 `NEXT_PUBLIC_DOCTOR_PATIENT_MODE_ENABLED` controla el selector entre el panel médico y el perfil personal de paciente para cuentas `DOCTOR`. Solo el valor literal `true` lo muestra; si falta o vale `false`, la web mantiene a esos usuarios en modo clínico, incluso si `numa_active_mode` guardaba `patient`. Los asistentes conservan su selector. En cada login de médico se restaura el modo clínico y se actualiza el estado compartido antes de navegar a `/doctor`. `AppShell` consulta el rol y el modo efectivo antes de redirigir desde una ruta pública o de autenticación. Esta variable también se incorpora al compilar y requiere nueva compilación y despliegue.
+
+### Impresión de recetas y órdenes
+
+La página `/doctor/print-settings`, enlazada desde Perfil para médicos, guarda nombre y grado opcionalmente distintos del perfil, hospital/clínica, dos teléfonos, dirección, correo público opcional, logo, tamaño A4/carta y visibilidad de la duración en recetas. Explica que la fecha de emisión se toma automáticamente de la creación original del documento y se conserva en reimpresiones. El correo de acceso no se copia al impreso. En la pestaña Plan de `/doctor/patients/[id]`, cada medicamento creado por el médico muestra **Imprimir**; el PDF agrupa y numera todos sus medicamentos del mismo registro. Cada orden propia de tipo `LAB`, `IMAGING` o `PROCEDURE` muestra el mismo botón, ya sea asociada a un registro o independiente. `REFERRAL` queda sin impresión. `PrintPreviewDialog` carga el PDF autenticado como Blob, permite revisarlo, imprimirlo y descargarlo. El PDF se vuelve a generar con la configuración actual; la API valida acceso y autoría, y no imprime notas internas de órdenes.
 
 ## Composición de la aplicación
 
