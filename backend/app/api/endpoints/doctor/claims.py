@@ -11,6 +11,10 @@ from app.api.deps import get_db
 from app.models.user import User
 from app.models.patient import PatientProfile
 from app.schemas import clinical as clinical_schema
+from app.services.profile_claims import (
+    move_operational_references,
+    profile_has_preservable_data,
+)
 
 from ._helpers import require_doctor_role
 
@@ -80,6 +84,7 @@ async def approve_claim_request(
             PatientProfile.created_by_doctor_id == current_user.id,
             ProfileClaimRequest.status == ClaimStatus.PENDING,
         )
+        .with_for_update()
     )
     row = result.first()
     if not row:
@@ -94,32 +99,32 @@ async def approve_claim_request(
             FamilyMembership.relationship_type == RelationshipType.SELF,
             FamilyMembership.is_active == True,
         )
+        .with_for_update()
     )
     self_membership = self_profile_result.scalars().first()
 
     if self_membership:
-        from app.models.hx import MedicalRecord, VitalSigns
-        records_count = await db.execute(
-            select(MedicalRecord.id).where(
-                MedicalRecord.patient_id == self_membership.patient_profile_id
-            ).limit(1)
-        )
-        vitals_count = await db.execute(
-            select(VitalSigns.id).where(
-                VitalSigns.patient_id == self_membership.patient_profile_id
-            ).limit(1)
+        old_profile_id = self_membership.patient_profile_id
+        old_profile = await db.get(
+            PatientProfile,
+            old_profile_id,
+            with_for_update=True,
         )
         self_profile_empty = (
-            records_count.first() is None and vitals_count.first() is None
+            old_profile is not None
+            and not await profile_has_preservable_data(
+                db,
+                old_profile,
+                self_membership.id,
+            )
         )
 
         if self_profile_empty:
-            old_profile_id = self_membership.patient_profile_id
             claimed_profile.user_id = claim.user_id
+            await move_operational_references(db, old_profile_id, claimed_profile.id)
             self_membership.patient_profile_id = claimed_profile.id
-            old_profile = await db.get(PatientProfile, old_profile_id)
-            if old_profile:
-                await db.delete(old_profile)
+            await db.flush()
+            await db.delete(old_profile)
         else:
             claimed_profile.user_id = claim.user_id
             new_membership = FamilyMembership(
