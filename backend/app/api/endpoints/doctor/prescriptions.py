@@ -1,12 +1,19 @@
 """Prescription management on medical records."""
 import uuid
+from typing import Annotated, List
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import and_
 
 from app.api.deps import get_db
+from app.api.pagination import (
+    PaginationParams,
+    count_rows,
+    pagination_dependency,
+    set_pagination_headers,
+)
 from app.models.user import User
 from app.models.hx import MedicalRecord
 from app.models.clinical import Prescription
@@ -15,6 +22,42 @@ from app.schemas import clinical as clinical_schema
 from ._helpers import require_doctor_role, get_doctor_patient_access
 
 router = APIRouter()
+patient_prescriptions_pagination = pagination_dependency(default_limit=20, max_limit=100)
+
+
+@router.get(
+    "/patients/{patient_profile_id}/prescriptions",
+    response_model=List[clinical_schema.PrescriptionResponse],
+)
+async def list_patient_prescriptions(
+    patient_profile_id: uuid.UUID,
+    response: Response,
+    pagination: Annotated[PaginationParams, Depends(patient_prescriptions_pagination)],
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+):
+    """List prescriptions across all of a patient's medical records."""
+    await get_doctor_patient_access(patient_profile_id, db, current_user)
+
+    stmt = (
+        select(Prescription)
+        .join(MedicalRecord, Prescription.medical_record_id == MedicalRecord.id)
+        .where(MedicalRecord.patient_id == patient_profile_id)
+    )
+    total = await count_rows(db, stmt)
+    set_pagination_headers(
+        response,
+        total=total,
+        skip=pagination.skip,
+        limit=pagination.limit,
+    )
+
+    result = await db.execute(
+        stmt.order_by(Prescription.created_at.desc(), Prescription.id.desc())
+        .offset(pagination.skip)
+        .limit(pagination.limit)
+    )
+    return result.scalars().all()
 
 
 @router.post("/records/{record_id}/prescriptions", response_model=clinical_schema.PrescriptionResponse)

@@ -12,12 +12,16 @@ export function useUpdateDoctorRecord() {
 
   return useMutation({
     mutationFn: async ({ recordId, patientId, ...payload }: UpdateDoctorRecordPayload) => {
+      void patientId;
       const res = await api.put(`/doctor/records/${recordId}`, payload);
       return res.data;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['doctor', 'patients', variables.patientId, 'records'] });
       queryClient.invalidateQueries({ queryKey: ['patient-orders', variables.patientId] });
+      queryClient.invalidateQueries({ queryKey: ['patient-prescriptions', variables.patientId] });
+      queryClient.invalidateQueries({ queryKey: ['patient-vital-signs', variables.patientId] });
+      queryClient.invalidateQueries({ queryKey: ['doctor', 'records', variables.recordId] });
     },
   });
 }

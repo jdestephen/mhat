@@ -27,6 +27,7 @@ from datetime import datetime
 
 router = APIRouter()
 medical_records_pagination = pagination_dependency(default_limit=100, max_limit=100)
+vital_signs_pagination = pagination_dependency(default_limit=100, max_limit=100)
 
 
 async def resolve_patient_profile(
@@ -435,19 +436,32 @@ async def create_vital_signs(
 
 @router.get("/vital-signs", response_model=List[hx_schema.VitalSignsResponse])
 async def list_vital_signs(
+    response: Response,
+    pagination: Annotated[PaginationParams, Depends(vital_signs_pagination)],
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(deps.get_current_user),
     profile_id: Optional[str] = Query(None, description="Profile ID"),
 ) -> Any:
-    """List all vital signs (descending by measured_at)."""
+    """List vital signs with stable server-side pagination."""
     patient_profile = await resolve_patient_profile(db, current_user, profile_id)
 
     stmt = (
         select(VitalSigns)
         .filter(VitalSigns.patient_id == patient_profile.id)
-        .order_by(VitalSigns.measured_at.desc())
     )
-    result = await db.execute(stmt)
+    total = await count_rows(db, stmt)
+    set_pagination_headers(
+        response,
+        total=total,
+        skip=pagination.skip,
+        limit=pagination.limit,
+    )
+
+    result = await db.execute(
+        stmt.order_by(VitalSigns.measured_at.desc(), VitalSigns.id.desc())
+        .offset(pagination.skip)
+        .limit(pagination.limit)
+    )
     return result.scalars().all()
 
 

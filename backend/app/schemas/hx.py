@@ -55,6 +55,20 @@ class Document(DocumentBase):
         self.url = get_presigned_url(self.s3_key)
         return self
 
+
+class PatientDocumentSummary(BaseModel):
+    """Lightweight document representation for a patient's document list."""
+    id: UUID
+    medical_record_id: UUID
+    filename: str
+    url: str
+    media_type: str
+    tags: Optional[List[str]] = Field(default_factory=list)
+    created_at: datetime
+    record_motive: str
+    record_category: Optional[str] = None
+    record_date: date
+
 # Medical Diagnoses
 class MedicalDiagnosisBase(BaseModel):
     diagnosis: str
@@ -214,6 +228,7 @@ class MedicalRecord(MedicalRecordBase):
     created_at: datetime
     diagnoses: List[MedicalDiagnosis] = []
     documents: List[Document] = []
+    document_count: int = 0
     category: Optional[Category] = None
     brief_history: Optional[str] = None
     has_red_flags: Optional[bool] = None

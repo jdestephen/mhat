@@ -67,6 +67,8 @@ export function useCreateDoctorRecord() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['doctor', 'patients', variables.patientId, 'records'] });
       queryClient.invalidateQueries({ queryKey: ['patient-orders', variables.patientId] });
+      queryClient.invalidateQueries({ queryKey: ['patient-prescriptions', variables.patientId] });
+      queryClient.invalidateQueries({ queryKey: ['patient-vital-signs', variables.patientId] });
     },
   });
 }
