@@ -1,15 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import api, { getDocumentUrl } from '@/lib/api';
+import { getDocumentUrl } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { RecordSearchBar } from '@/components/search/RecordSearchBar';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Plus, Calendar, Stethoscope, Paperclip, Pill, ClipboardList } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { MedicalRecord, RecordStatus, UserRole } from '@/types';
+import { MedicalRecord, UserRole } from '@/types';
 import { ShareRecordDialog } from '@/components/share/ShareRecordDialog';
 import { RecordViewLogModal } from '@/components/records/RecordViewLogModal';
 import { Pagination } from '@/components/ui/Pagination';
@@ -23,6 +22,10 @@ import { WelcomeCard } from '@/components/onboarding/WelcomeCard';
 import { ProfileCompletionBanner } from '@/components/onboarding/ProfileCompletionBanner';
 import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
 import { useActiveMode } from '@/hooks/useActiveMode';
+import { useMedicalRecords } from '@/hooks/queries/useMedicalRecords';
+import { usePaginationState } from '@/hooks/usePaginationState';
+
+type DashboardTab = 'historial' | 'recetas' | 'ordenes';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -57,10 +60,7 @@ export default function DashboardPage() {
     dateFrom: undefined as string | undefined,
     dateTo: undefined as string | undefined,
   });
-
-  // Pagination
-  const PAGE_SIZE = 10;
-  const [currentPage, setCurrentPage] = useState(1);
+  const [activeTab, setActiveTab] = useState<DashboardTab>('historial');
 
   // Debounce text search
   const [debouncedQuery, setDebouncedQuery] = useState('');
@@ -73,65 +73,72 @@ export default function DashboardPage() {
   }, [searchFilters.query]);
 
   const { activeProfileId } = useActiveProfile();
-
-  const { data: records, isLoading } = useQuery<MedicalRecord[]>({
-    queryKey: ['medical-records', debouncedQuery, searchFilters.dateFrom, searchFilters.dateTo, activeProfileId],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (debouncedQuery) params.append('q', debouncedQuery);
-      if (searchFilters.dateFrom) params.append('date_from', searchFilters.dateFrom);
-      if (searchFilters.dateTo) params.append('date_to', searchFilters.dateTo);
-      if (activeProfileId) params.append('profile_id', activeProfileId);
-      
-      const res = await api.get(`/hx/${params.toString() ? '?' + params.toString() : ''}`);
-      return res.data;
-    },
+  const paginationResetKey = JSON.stringify([
+    activeProfileId,
+    debouncedQuery,
+    searchFilters.dateFrom,
+    searchFilters.dateTo,
+  ]);
+  const recordsPagination = usePaginationState({
+    initialPageSize: 10,
+    resetKey: paginationResetKey,
+  });
+  const prescriptionsPagination = usePaginationState({
+    initialPageSize: 10,
+    resetKey: paginationResetKey,
+  });
+  const ordersPagination = usePaginationState({
+    initialPageSize: 10,
+    resetKey: paginationResetKey,
   });
 
-  // Prescriptions-only query
-  const { data: prescriptionRecords, isLoading: prescriptionsLoading } = useQuery<MedicalRecord[]>({
-    queryKey: ['prescription-records', debouncedQuery, searchFilters.dateFrom, searchFilters.dateTo, activeProfileId],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      params.append('has_prescriptions', 'true');
-      if (debouncedQuery) params.append('q', debouncedQuery);
-      if (searchFilters.dateFrom) params.append('date_from', searchFilters.dateFrom);
-      if (searchFilters.dateTo) params.append('date_to', searchFilters.dateTo);
-      if (activeProfileId) params.append('profile_id', activeProfileId);
-      
-      const res = await api.get(`/hx/?${params.toString()}`);
-      return res.data;
-    },
+  const {
+    data: recordsResult,
+    isLoading,
+    isFetching: recordsFetching,
+  } = useMedicalRecords({
+    page: recordsPagination.page,
+    pageSize: recordsPagination.pageSize,
+    profileId: activeProfileId,
+    query: debouncedQuery,
+    dateFrom: searchFilters.dateFrom,
+    dateTo: searchFilters.dateTo,
+    enabled: activeTab === 'historial',
   });
 
-  // Orders-only query
-  const { data: orderRecords, isLoading: ordersLoading } = useQuery<MedicalRecord[]>({
-    queryKey: ['order-records', debouncedQuery, searchFilters.dateFrom, searchFilters.dateTo, activeProfileId],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      params.append('has_orders', 'true');
-      if (debouncedQuery) params.append('q', debouncedQuery);
-      if (searchFilters.dateFrom) params.append('date_from', searchFilters.dateFrom);
-      if (searchFilters.dateTo) params.append('date_to', searchFilters.dateTo);
-      if (activeProfileId) params.append('profile_id', activeProfileId);
-
-      const res = await api.get(`/hx/?${params.toString()}`);
-      return res.data;
-    },
+  const {
+    data: prescriptionsResult,
+    isLoading: prescriptionsLoading,
+    isFetching: prescriptionsFetching,
+  } = useMedicalRecords({
+    page: prescriptionsPagination.page,
+    pageSize: prescriptionsPagination.pageSize,
+    profileId: activeProfileId,
+    query: debouncedQuery,
+    dateFrom: searchFilters.dateFrom,
+    dateTo: searchFilters.dateTo,
+    hasPrescriptions: true,
+    enabled: activeTab === 'recetas',
   });
 
-  // Paginated records
-  const totalItems = records?.length ?? 0;
-  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
-  const paginatedRecords = records?.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE
-  );
+  const {
+    data: ordersResult,
+    isLoading: ordersLoading,
+    isFetching: ordersFetching,
+  } = useMedicalRecords({
+    page: ordersPagination.page,
+    pageSize: ordersPagination.pageSize,
+    profileId: activeProfileId,
+    query: debouncedQuery,
+    dateFrom: searchFilters.dateFrom,
+    dateTo: searchFilters.dateTo,
+    hasOrders: true,
+    enabled: activeTab === 'ordenes',
+  });
 
-  // Reset page when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [debouncedQuery, searchFilters.dateFrom, searchFilters.dateTo]);
+  const records = recordsResult?.items ?? [];
+  const prescriptionRecords = prescriptionsResult?.items ?? [];
+  const orderRecords = ordersResult?.items ?? [];
 
   const getRecordMenuItems = (record: MedicalRecord) => [
     {
@@ -191,7 +198,10 @@ export default function DashboardPage() {
       <ProfileCompletionBanner />
       
       <div className="mb-6">
-        <Tabs defaultValue="historial">
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => setActiveTab(value as DashboardTab)}
+        >
           <TabsList className="mb-4">
             <TabsTrigger value="historial">
               <Stethoscope className="w-4 h-4 mr-2" />
@@ -231,7 +241,7 @@ export default function DashboardPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {paginatedRecords?.map((record) => {
+                    {records.map((record) => {
                       const diagnosis = getPrimaryDiagnosis(record);
                       return (
                         <tr key={record.id} id={`row-${record.id}`} className="hover:bg-slate-50 transition-colors">
@@ -320,7 +330,7 @@ export default function DashboardPage() {
             {/* Mobile Card View (below md) */}
             {records && records.length > 0 && (
               <div className="lg:hidden space-y-4">
-                {paginatedRecords?.map((record) => {
+                {records.map((record) => {
                   const diagnosis = getPrimaryDiagnosis(record);
                   return (
                     <div key={record.id} className="bg-white p-6 rounded-lg border border-[var(--border-light)] shadow-sm">
@@ -391,11 +401,13 @@ export default function DashboardPage() {
             )}
             {records && records.length > 0 && (
               <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                totalItems={totalItems}
-                pageSize={PAGE_SIZE}
-                onPageChange={setCurrentPage}
+                currentPage={recordsPagination.page}
+                totalPages={recordsResult?.pagination.totalPages ?? 0}
+                totalItems={recordsResult?.pagination.total ?? 0}
+                pageSize={recordsPagination.pageSize}
+                onPageChange={recordsPagination.setPage}
+                onPageSizeChange={recordsPagination.setPageSize}
+                isLoading={recordsFetching}
                 itemLabel="registros"
               />
             )}
@@ -476,6 +488,18 @@ export default function DashboardPage() {
                       </div>
                     ))}
                   </div>
+                )}
+                {prescriptionRecords.length > 0 && (
+                  <Pagination
+                    currentPage={prescriptionsPagination.page}
+                    totalPages={prescriptionsResult?.pagination.totalPages ?? 0}
+                    totalItems={prescriptionsResult?.pagination.total ?? 0}
+                    pageSize={prescriptionsPagination.pageSize}
+                    onPageChange={prescriptionsPagination.setPage}
+                    onPageSizeChange={prescriptionsPagination.setPageSize}
+                    isLoading={prescriptionsFetching}
+                    itemLabel="registros con recetas"
+                  />
                 )}
               </>
             )}
@@ -593,6 +617,18 @@ export default function DashboardPage() {
                       </div>
                     ))}
                   </div>
+                )}
+                {orderRecords.length > 0 && (
+                  <Pagination
+                    currentPage={ordersPagination.page}
+                    totalPages={ordersResult?.pagination.totalPages ?? 0}
+                    totalItems={ordersResult?.pagination.total ?? 0}
+                    pageSize={ordersPagination.pageSize}
+                    onPageChange={ordersPagination.setPage}
+                    onPageSizeChange={ordersPagination.setPageSize}
+                    isLoading={ordersFetching}
+                    itemLabel="registros con órdenes"
+                  />
                 )}
               </>
             )}

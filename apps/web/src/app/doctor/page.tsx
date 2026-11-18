@@ -1,15 +1,18 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { Suspense, useState, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useMyPatients } from '@/hooks/queries/useMyPatients';
+import {
+  usePaginatedPatients,
+  type PatientSort,
+} from '@/hooks/queries/useMyPatients';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
 import { useClaimInvitation } from '@/hooks/mutations/useClaimInvitation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { UserRole, AccessLevel } from '@/types';
+import { AccessLevel, type PatientAccess } from '@/types';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useActiveMode } from '@/hooks/useActiveMode';
 import api from '@/lib/api';
 import { 
@@ -38,13 +41,63 @@ import { ClaimRequestsPanel } from '@/components/doctor/ClaimRequestsPanel';
 import { Avatar } from '@/components/ui/Avatar';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PatientPersonalInfoModal } from '@/components/doctor/PatientPersonalInfoModal';
+import { Pagination } from '@/components/ui/Pagination';
+import { usePaginationState } from '@/hooks/usePaginationState';
+
+function parsePositiveInteger(value: string | null, fallback: number): number {
+  if (!value) return fallback;
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function parsePatientSort(value: string | null): PatientSort {
+  return value === 'name_desc' || value === 'recent' ? value : 'name_asc';
+}
 
 export default function DoctorDashboardPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600" />
+        </div>
+      }
+    >
+      <DoctorDashboardContent />
+    </Suspense>
+  );
+}
+
+function DoctorDashboardContent() {
   const router = useRouter();
-  const { data: user, isLoading: userLoading } = useCurrentUser();
-  const { data: patients = [], isLoading: patientsLoading } = useMyPatients();
+  const searchParams = useSearchParams();
+  const initialQuery = searchParams.get('q') ?? '';
+  const { isLoading: userLoading } = useCurrentUser();
+  const [searchTerm, setSearchTerm] = useState(initialQuery);
+  const [debouncedSearch, setDebouncedSearch] = useState(initialQuery);
+  const [patientSort, setPatientSort] = useState<PatientSort>(() =>
+    parsePatientSort(searchParams.get('sort'))
+  );
+  const patientsPagination = usePaginationState({
+    initialPage: parsePositiveInteger(searchParams.get('page'), 1),
+    initialPageSize: Math.min(
+      parsePositiveInteger(searchParams.get('page_size'), 20),
+      100
+    ),
+    resetKey: JSON.stringify([debouncedSearch, patientSort]),
+  });
+  const {
+    data: patientsResult,
+    isLoading: patientsLoading,
+    isFetching: patientsFetching,
+  } = usePaginatedPatients({
+    page: patientsPagination.page,
+    pageSize: patientsPagination.pageSize,
+    query: debouncedSearch,
+    sort: patientSort,
+  });
+  const patients = patientsResult?.items ?? [];
   const claimInvitation = useClaimInvitation();
-  const [searchTerm, setSearchTerm] = useState('');
   const [showClaimForm, setShowClaimForm] = useState(false);
   const [claimCode, setClaimCode] = useState('');
   const [claimResult, setClaimResult] = useState<{ success: boolean; message: string; patientName?: string } | null>(null);
@@ -54,7 +107,7 @@ export default function DoctorDashboardPage() {
   const [vitalModalPatientName, setVitalModalPatientName] = useState<string>('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [personalInfoModalOpen, setPersonalInfoModalOpen] = useState(false);
-  const [selectedPatientForInfo, setSelectedPatientForInfo] = useState<typeof patients[number] | null>(null);
+  const [selectedPatientForInfo, setSelectedPatientForInfo] = useState<PatientAccess | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Fetch locations for whichever patient's menu is currently open
@@ -74,6 +127,48 @@ export default function DoctorDashboardPage() {
     },
     enabled: !!openMenuId && patients.find(p => p.patient_id === openMenuId)?.access_level === AccessLevel.WRITE,
   });
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedSearch(searchTerm), 350);
+    return () => window.clearTimeout(timer);
+  }, [searchTerm]);
+
+  const currentQueryString = searchParams.toString();
+  useEffect(() => {
+    const params = new URLSearchParams(currentQueryString);
+
+    if (debouncedSearch) params.set('q', debouncedSearch);
+    else params.delete('q');
+
+    if (patientSort !== 'name_asc') params.set('sort', patientSort);
+    else params.delete('sort');
+
+    if (patientsPagination.page > 1) {
+      params.set('page', String(patientsPagination.page));
+    } else {
+      params.delete('page');
+    }
+
+    if (patientsPagination.pageSize !== 20) {
+      params.set('page_size', String(patientsPagination.pageSize));
+    } else {
+      params.delete('page_size');
+    }
+
+    const nextQueryString = params.toString();
+    if (nextQueryString !== currentQueryString) {
+      router.replace(nextQueryString ? `/doctor?${nextQueryString}` : '/doctor', {
+        scroll: false,
+      });
+    }
+  }, [
+    currentQueryString,
+    debouncedSearch,
+    patientSort,
+    patientsPagination.page,
+    patientsPagination.pageSize,
+    router,
+  ]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -99,11 +194,6 @@ export default function DoctorDashboardPage() {
   if (!userLoading && (!isClinicalUser || isInPatientMode)) {
     return null;
   }
-
-  // Filter patients by search
-  const filteredPatients = patients.filter((p) =>
-    `${p.first_name} ${p.last_name}`.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('es-ES', {
@@ -208,7 +298,14 @@ export default function DoctorDashboardPage() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100">
         <div className="p-4 sm:p-6 border-b border-gray-100">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-            <h2 className="text-lg font-semibold text-gray-900">Mis Pacientes</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Mis Pacientes
+              {patientsResult && (
+                <span className="ml-2 text-sm font-normal text-gray-500">
+                  ({patientsResult.pagination.total})
+                </span>
+              )}
+            </h2>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -220,6 +317,16 @@ export default function DoctorDashboardPage() {
                   className="pl-10 w-full sm:w-64"
                 />
               </div>
+              <select
+                value={patientSort}
+                onChange={(event) => setPatientSort(event.target.value as PatientSort)}
+                className="h-10 rounded-md border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                aria-label="Ordenar pacientes"
+              >
+                <option value="name_asc">Nombre A–Z</option>
+                <option value="name_desc">Nombre Z–A</option>
+                <option value="recent">Acceso reciente</option>
+              </select>
               <div className="flex gap-2">
                 <Button
                   variant="outline"
@@ -243,21 +350,22 @@ export default function DoctorDashboardPage() {
           </div>
         </div>
 
-        {filteredPatients.length === 0 ? (
+        {patients.length === 0 ? (
           <EmptyState
             icon={<Users className="h-12 w-12" />}
-            title={searchTerm ? 'No se encontraron pacientes' : 'Sin pacientes aún'}
-            description={searchTerm 
+            title={debouncedSearch ? 'No se encontraron pacientes' : 'Sin pacientes aún'}
+            description={debouncedSearch
               ? 'Intenta con otro término de búsqueda'
               : 'Los pacientes aparecerán aquí cuando les otorgues acceso'}
           />
         ) : (
-          <div className="divide-y divide-gray-100">
-            {filteredPatients.map((patient) => (
-              <div
-                key={patient.patient_id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 hover:bg-gray-50/50 transition-colors gap-3"
-              >
+          <>
+            <div className="divide-y divide-gray-100">
+              {patients.map((patient) => (
+                <div
+                  key={patient.patient_id}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 hover:bg-gray-50/50 transition-colors gap-3"
+                >
                 {/* Left: Avatar + Info */}
                 <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                   <Avatar firstName={patient.first_name} lastName={patient.last_name} />
@@ -410,9 +518,25 @@ export default function DoctorDashboardPage() {
                     )}
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+                </div>
+              ))}
+            </div>
+            <div className="px-4 pb-4 sm:px-6 sm:pb-6">
+              <Pagination
+                currentPage={patientsPagination.page}
+                totalPages={patientsResult?.pagination.totalPages ?? 0}
+                totalItems={patientsResult?.pagination.total ?? 0}
+                pageSize={patientsPagination.pageSize}
+                onPageChange={(page) => {
+                  setOpenMenuId(null);
+                  patientsPagination.setPage(page);
+                }}
+                onPageSizeChange={patientsPagination.setPageSize}
+                isLoading={patientsFetching}
+                itemLabel="pacientes"
+              />
+            </div>
+          </>
         )}
       </div>
     </div>

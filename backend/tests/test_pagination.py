@@ -4,13 +4,14 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
-from fastapi import FastAPI, Response
+from fastapi import Depends, FastAPI, Response
 from sqlalchemy import column, select, table
 
 from app.api.pagination import (
+    PaginationDep,
     build_pagination_metadata,
     count_rows,
-    PaginationDep,
+    pagination_dependency,
     set_pagination_headers,
 )
 
@@ -33,6 +34,22 @@ class PaginationMetadataTests(unittest.TestCase):
         self.assertEqual(parameters["limit"]["schema"]["minimum"], 1)
         self.assertEqual(parameters["limit"]["schema"]["maximum"], 100)
         self.assertEqual(parameters["limit"]["schema"]["default"], 20)
+
+    def test_dependency_factory_preserves_legacy_limit(self):
+        app = FastAPI()
+        legacy_dependency = pagination_dependency(default_limit=140, max_limit=140)
+
+        def endpoint(pagination=Depends(legacy_dependency)):
+            return {"skip": pagination.skip, "limit": pagination.limit}
+
+        app.add_api_route("/legacy-items", endpoint)
+        parameters = {
+            parameter["name"]: parameter
+            for parameter in app.openapi()["paths"]["/legacy-items"]["get"]["parameters"]
+        }
+
+        self.assertEqual(parameters["limit"]["schema"]["default"], 140)
+        self.assertEqual(parameters["limit"]["schema"]["maximum"], 140)
 
     def test_middle_page_metadata(self):
         metadata = build_pagination_metadata(total=43, skip=20, limit=10)

@@ -1,5 +1,6 @@
 """Shared offset-pagination primitives for API v1 list endpoints."""
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from math import ceil
 from typing import Annotated
@@ -51,6 +52,35 @@ class PaginationParams:
 
 
 PaginationDep = Annotated[PaginationParams, Depends()]
+
+
+def pagination_dependency(
+    *,
+    default_limit: int = DEFAULT_PAGE_SIZE,
+    max_limit: int = MAX_PAGE_SIZE,
+) -> Callable[..., PaginationParams]:
+    """Create a pagination dependency while preserving a legacy page size."""
+    if default_limit < 1:
+        raise ValueError("default_limit must be greater than zero")
+    if max_limit < default_limit:
+        raise ValueError("max_limit must be greater than or equal to default_limit")
+
+    def dependency(
+        skip: int = Query(
+            default=0,
+            ge=0,
+            description="Cantidad de elementos que se omitirán.",
+        ),
+        limit: int = Query(
+            default=default_limit,
+            ge=1,
+            le=max_limit,
+            description="Cantidad máxima de elementos que se devolverán.",
+        ),
+    ) -> PaginationParams:
+        return PaginationParams(skip=skip, limit=limit)
+
+    return dependency
 
 
 @dataclass(frozen=True)

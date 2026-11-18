@@ -1,12 +1,20 @@
 """Patient management: create, list, health profile, personal info."""
 import uuid
-from typing import Any, List
+from enum import Enum
+from typing import Annotated, Any, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from sqlalchemy import func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from app.api.deps import get_db
+from app.api.pagination import (
+    PaginationParams,
+    count_rows,
+    pagination_dependency,
+    set_pagination_headers,
+)
 from app.models.user import User, DoctorPatientAccess, DoctorAccessLevel
 from app.models.patient import PatientProfile
 from app.models.patient_location import PatientLocation
@@ -17,6 +25,13 @@ from app.schemas import patient_location as loc_schema
 from ._helpers import require_doctor_role, get_doctor_patient_access
 
 router = APIRouter()
+patient_list_pagination = pagination_dependency(default_limit=140, max_limit=140)
+
+
+class PatientSort(str, Enum):
+    NAME_ASC = "name_asc"
+    NAME_DESC = "name_desc"
+    RECENT = "recent"
 
 
 @router.post("/patients/create", response_model=clinical_schema.CreatePatientResponse)
@@ -83,19 +98,72 @@ async def create_patient(
 
 @router.get("/patients", response_model=List[clinical_schema.PatientAccessSummary])
 async def list_my_patients(
+    response: Response,
+    pagination: Annotated[PaginationParams, Depends(patient_list_pagination)],
+    q: Optional[str] = Query(None, max_length=200, description="Buscar paciente"),
+    sort: PatientSort = Query(PatientSort.NAME_ASC, description="Orden del listado"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_doctor_role),
-    skip: int = 0,
-    limit: int = 140,
 ):
-    """List all patients the doctor has access to."""
-    result = await db.execute(
+    """List patients with server-side search, ordering, and pagination."""
+    first_name = func.coalesce(PatientProfile.first_name, User.first_name, "")
+    last_name = func.coalesce(PatientProfile.last_name, User.last_name, "")
+    email = func.coalesce(PatientProfile.email, User.email, "")
+
+    stmt = (
         select(DoctorPatientAccess, PatientProfile, User)
         .join(PatientProfile, DoctorPatientAccess.patient_profile_id == PatientProfile.id)
         .join(User, PatientProfile.user_id == User.id, isouter=True)
         .where(DoctorPatientAccess.doctor_id == current_user.id)
-        .offset(skip)
-        .limit(limit)
+    )
+
+    normalized_query = q.strip().lower() if q else ""
+    if normalized_query:
+        pattern = f"%{normalized_query}%"
+        full_name = func.lower(func.concat(first_name, " ", last_name))
+        stmt = stmt.where(
+            or_(
+                full_name.like(pattern),
+                func.lower(first_name).like(pattern),
+                func.lower(last_name).like(pattern),
+                func.lower(email).like(pattern),
+                func.lower(func.coalesce(PatientProfile.dni, "")).like(pattern),
+                func.lower(func.coalesce(PatientProfile.phone, "")).like(pattern),
+            )
+        )
+
+    total = await count_rows(db, stmt)
+    set_pagination_headers(
+        response,
+        total=total,
+        skip=pagination.skip,
+        limit=pagination.limit,
+    )
+
+    normalized_first_name = func.lower(first_name)
+    normalized_last_name = func.lower(last_name)
+    if sort == PatientSort.RECENT:
+        order_by = (
+            DoctorPatientAccess.created_at.desc(),
+            PatientProfile.id.desc(),
+        )
+    elif sort == PatientSort.NAME_DESC:
+        order_by = (
+            normalized_first_name.desc(),
+            normalized_last_name.desc(),
+            PatientProfile.id.desc(),
+        )
+    else:
+        order_by = (
+            normalized_first_name.asc(),
+            normalized_last_name.asc(),
+            PatientProfile.id.asc(),
+        )
+
+    result = await db.execute(
+        stmt.order_by(*order_by)
+        .offset(pagination.skip)
+        .limit(pagination.limit)
     )
 
     patients = []
