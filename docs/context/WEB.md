@@ -39,6 +39,7 @@ La página `/doctor/print-settings`, enlazada desde Perfil para médicos, guarda
 - `src/app/` contiene las páginas del App Router. La landing tiene `components/landing/`; las pantallas autenticadas se muestran dentro de `components/layout/app-shell.tsx` con sidebar y cabecera móvil. `AppShell` hace una comprobación de token en `localStorage` y redirige del lado cliente. La autorización real corresponde a la API.
 - `components/providers.tsx` compone QueryClient, `ActiveModeProvider`, `ActiveProfileProvider` y toasts. La mayoría de páginas autenticadas usan `'use client'` y obtienen datos vía Axios/React Query.
 - `src/lib/api.ts` crea el cliente Axios, adjunta `token` desde `localStorage` y en 401 intenta renovar con `refreshToken`, poniendo en cola peticiones simultáneas. Tras fallar la renovación, limpia tokens y redirige a login. Para archivos usa `getDocumentUrl`/`BACKEND_ORIGIN`.
+- `src/lib/api.ts` también convierte los headers estándar de paginación de `/api/v1` mediante `getPaginationMeta` y `toPaginatedResult`; los contratos compartidos están en `src/types/pagination.ts`. `usePaginationState` centraliza `page`, `pageSize`, `skip`, reinicio por cambio de recurso o filtros y ajuste al disminuir el total. Los listados existentes todavía deben migrarse individualmente para dejar de paginar arreglos en memoria.
 - `/auth/activate-assistant` lee el token del enlace enviado por correo, consulta `POST /auth/assistant-invitation/preview` y presenta creación de contraseña solo para una cuenta nueva. Una cuenta de asistente existente puede aceptar sin contraseña. `AppShell` permite abrir esta ruta aun cuando haya una sesión activa y `Providers` omite las consultas de perfil habituales en esta página pública; la API decide si el token es válido.
 - `src/hooks/queries/` y `mutations/` contienen hooks de lectura/escritura. Cada cambio de datos debe revisar `queryKey` e invalidaciones relacionadas. Algunas páginas llaman a `api` directamente; sigue el patrón cercano cuando una extracción no aporte claridad.
 - `src/hooks/useActiveProfile.tsx` mantiene el perfil activo (`numa_active_profile_id`) y usa el SELF como fallback. Al operar con un familiar, las llamadas correspondientes agregan `profile_id`.
@@ -57,6 +58,7 @@ La página `/doctor/print-settings`, enlazada desde Perfil para médicos, guarda
 | `hooks/useMedicalRecordForm.ts` | Estado del formulario de registro. |
 | `hooks/use-voice-input.ts`, `lib/speech-recognition.ts` | Dictado Web Speech API en formularios compatibles. |
 | `hooks/useProductTour.ts` | Recorrido guiado con Driver.js. |
+| `hooks/usePaginationState.ts`, `types/pagination.ts` | Estado y contrato compartidos para paginación de listas respaldada por la API. |
 | `lib/dateUtils.ts`, `prescriptionOptions.ts`, `vitalSignsRanges.ts` | Fechas y opciones/rangos clínicos usados por la UI. |
 
 ## Integración y cautelas

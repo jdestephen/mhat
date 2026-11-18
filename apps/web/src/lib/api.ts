@@ -1,4 +1,5 @@
-import axios from 'axios';
+import axios, { type AxiosResponse } from 'axios';
+import type { PaginatedResult, PaginationMeta } from '@/types/pagination';
 /**
  * Ensures the API URL has a protocol. Without it, axios treats the value as a
  * relative path and prepends the current page origin (e.g. vercel.app/…).
@@ -15,6 +16,81 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+const PAGINATION_HEADERS = {
+  total: 'x-total-count',
+  page: 'x-page',
+  pageSize: 'x-page-size',
+  totalPages: 'x-total-pages',
+  hasNext: 'x-has-next',
+  hasPrevious: 'x-has-previous',
+} as const;
+
+function readResponseHeader(
+  response: Pick<AxiosResponse<unknown>, 'headers'>,
+  name: string
+): unknown {
+  const headers = response.headers;
+  return typeof headers.get === 'function' ? headers.get(name) : headers[name];
+}
+
+function parseIntegerHeader(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null;
+  const parsed = Number(value);
+  return Number.isInteger(parsed) ? parsed : null;
+}
+
+function parseBooleanHeader(value: unknown): boolean | null {
+  if (typeof value === 'boolean') return value;
+  if (typeof value !== 'string') return null;
+  if (value.toLowerCase() === 'true') return true;
+  if (value.toLowerCase() === 'false') return false;
+  return null;
+}
+
+/** Reads the standard API v1 pagination headers, or null when they are absent. */
+export function getPaginationMeta(
+  response: Pick<AxiosResponse<unknown>, 'headers'>
+): PaginationMeta | null {
+  const total = parseIntegerHeader(readResponseHeader(response, PAGINATION_HEADERS.total));
+  const page = parseIntegerHeader(readResponseHeader(response, PAGINATION_HEADERS.page));
+  const pageSize = parseIntegerHeader(readResponseHeader(response, PAGINATION_HEADERS.pageSize));
+  const totalPages = parseIntegerHeader(
+    readResponseHeader(response, PAGINATION_HEADERS.totalPages)
+  );
+  const hasNext = parseBooleanHeader(
+    readResponseHeader(response, PAGINATION_HEADERS.hasNext)
+  );
+  const hasPrevious = parseBooleanHeader(
+    readResponseHeader(response, PAGINATION_HEADERS.hasPrevious)
+  );
+
+  if (
+    total === null ||
+    total < 0 ||
+    page === null ||
+    page < 1 ||
+    pageSize === null ||
+    pageSize < 1 ||
+    totalPages === null ||
+    totalPages < 0 ||
+    hasNext === null ||
+    hasPrevious === null
+  ) {
+    return null;
+  }
+
+  return { total, page, pageSize, totalPages, hasNext, hasPrevious };
+}
+
+/** Converts an Axios list response into the shared paginated result shape. */
+export function toPaginatedResult<T>(response: AxiosResponse<T[]>): PaginatedResult<T> {
+  const pagination = getPaginationMeta(response);
+  if (!pagination) {
+    throw new Error('La respuesta de la API no incluye metadata de paginación válida.');
+  }
+  return { items: response.data, pagination };
+}
 
 // Request interceptor — attach access token
 api.interceptors.request.use((config) => {

@@ -30,6 +30,7 @@ router → dependencia de usuario/rol/perfil/acceso → AsyncSession → modelos
 - Muchos recursos de paciente aceptan `?profile_id=`. La presencia del parámetro no concede permisos por sí sola. Cuando una ruta no usa `resolve_patient_profile`, revisa su autorización específica.
 - El almacenamiento usa R2/S3 o archivos locales. Los documentos se entregan mediante URL firmada o ruta local según configuración; el acceso compartido valida además el token de share.
 - Los catálogos de alergias, condiciones, vacunas y órdenes clínicas se cargan de `backend/app/data/*.json`.
+- `backend/app/api/pagination.py` define los parámetros validados `skip`/`limit`, el conteo de una consulta base y los headers compatibles con `/api/v1`: `X-Total-Count`, `X-Page`, `X-Page-Size`, `X-Total-Pages`, `X-Has-Next` y `X-Has-Previous`. CORS expone estos headers a la web. Esta infraestructura no pagina una ruta automáticamente: cada listado debe reutilizar la misma consulta filtrada para el conteo, aplicar un orden estable antes de `offset`/`limit` y llamar `set_pagination_headers`.
 
 ## Mapa de rutas registradas
 
