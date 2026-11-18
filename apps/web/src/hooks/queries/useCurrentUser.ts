@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { User } from '@/types';
 
-export function useCurrentUser() {
+export function useCurrentUser(enabled = true) {
   const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('token');
 
   return useQuery({
@@ -12,6 +12,6 @@ export function useCurrentUser() {
       return res.data;
     },
     staleTime: 1000 * 60 * 10, // 10 minutes - user info changes infrequently
-    enabled: hasToken,
+    enabled: hasToken && enabled,
   });
 }

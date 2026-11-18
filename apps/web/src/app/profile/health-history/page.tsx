@@ -11,6 +11,7 @@ import { VaccinesTab } from '../components/VaccinesTab';
 import { HabitsTab } from '../components/HabitsTab';
 import { FamilyHistoryTab } from '../components/FamilyHistoryTab';
 import { useActiveProfile } from '@/hooks/useActiveProfile';
+import { useActiveMode } from '@/hooks/useActiveMode';
 import { ArrowLeft, Activity, Pill, Scissors, Coffee, Users, Syringe } from 'lucide-react';
 
 type Section = 'menu' | 'history' | 'medications' | 'surgeries' | 'vaccines' | 'habits' | 'family-history';
@@ -21,6 +22,10 @@ export default function HealthHistoryPage() {
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState<Section>('menu');
   const { activeProfileId } = useActiveProfile();
+  const { isInPatientMode, isClinicalUser } = useActiveMode();
+
+  // A user can access this page if they are a patient OR a clinical user in patient mode
+  const canAccessPatientPages = user?.role === UserRole.PATIENT || (isClinicalUser && isInPatientMode);
 
   useEffect(() => {
     fetchData();
@@ -32,7 +37,8 @@ export default function HealthHistoryPage() {
       const userRes = await api.get<User>('/auth/me');
       setUser(userRes.data);
 
-      if (userRes.data.role === UserRole.PATIENT) {
+      // Fetch patient profile for patients and for clinical users in patient mode
+      if (userRes.data.role === UserRole.PATIENT || isInPatientMode) {
         const params = new URLSearchParams();
         if (activeProfileId) params.append('profile_id', activeProfileId);
         const profileRes = await api.get<PatientProfile>(
@@ -59,7 +65,7 @@ export default function HealthHistoryPage() {
     return <div className="p-8">Error al cargar usuario</div>;
   }
 
-  if (user.role !== UserRole.PATIENT) {
+  if (!canAccessPatientPages) {
     return (
       <div className="max-w-7xl mx-auto pb-20">
         <h1 className="text-3xl font-bold mb-8 text-emerald-950">Historial de Salud</h1>

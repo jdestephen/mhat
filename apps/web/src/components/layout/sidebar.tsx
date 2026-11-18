@@ -12,9 +12,11 @@ import {
   ChevronRight,
   Share2,
   Users,
+  UsersRound,
   KeyRound,
   PanelLeftClose,
   HeartPulse,
+  Printer,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
@@ -22,7 +24,10 @@ import { useState } from 'react';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
 import { UserRole } from '@/types';
 import { ProfileSwitcher } from '@/components/patient/ProfileSwitcher';
-// import { DoctorModeToggle } from '@/components/layout/DoctorModeToggle';
+import { RoleSwitcher } from '@/components/layout/RoleSwitcher';
+import { useActiveMode } from '@/hooks/useActiveMode';
+import { useAssistantInvitations } from '@/hooks/queries/useAssistantInvitations';
+import { ASSISTANT_MANAGEMENT_ENABLED, DOCTOR_PATIENT_MODE_ENABLED } from '@/lib/featureFlags';
 
 
 interface MenuItem {
@@ -33,6 +38,7 @@ interface MenuItem {
   onClick?: () => void;
   roles?: UserRole[];
   id?: string;
+  badge?: number;
 }
 
 interface SidebarProps {
@@ -50,8 +56,10 @@ export function Sidebar({ onClose }: SidebarProps = {}) {
   const isOverlay = !!onClose;
   const effectiveCollapsed = isOverlay ? false : collapsed;
 
-  const isDoctor = user?.role === UserRole.DOCTOR;
   const isPatient = user?.role === UserRole.PATIENT;
+
+  // Use shared context for active mode — re-renders when RoleSwitcher changes it
+  const { isInPatientMode, isClinicalUser } = useActiveMode();
 
   const toggleMenu = (label: string) => {
     if (collapsed) return;
@@ -62,10 +70,20 @@ export function Sidebar({ onClose }: SidebarProps = {}) {
     );
   };
 
+  // Pending invitations count — only fetch when doctor management is enabled
+  const { data: invitations = [] } = useAssistantInvitations(
+    ASSISTANT_MANAGEMENT_ENABLED && user?.role === UserRole.DOCTOR,
+  );
+  const pendingInvitationsCount = ASSISTANT_MANAGEMENT_ENABLED && user?.role === UserRole.DOCTOR
+    ? invitations.filter(
+        (inv) => !inv.claimed_at && !inv.is_revoked && new Date(inv.expires_at) > new Date(),
+      ).length
+    : 0;
+
   // Build menu items based on role
   const sidebarItems: MenuItem[] = [];
 
-  if (isDoctor) {
+  if (isClinicalUser && !isInPatientMode) {
     sidebarItems.push(
       {
         label: 'Panel Médico',
@@ -73,6 +91,17 @@ export function Sidebar({ onClose }: SidebarProps = {}) {
         icon: <Stethoscope className="w-5 h-5" />,
       },
     );
+
+    // Assistants management — only for doctors (not assistants)
+    if (ASSISTANT_MANAGEMENT_ENABLED && user?.role === UserRole.DOCTOR) {
+      sidebarItems.push({
+        id: 'nav-assistants',
+        label: 'Asistentes',
+        href: '/doctor/assistants',
+        icon: <UsersRound className="w-5 h-5" />,
+        badge: pendingInvitationsCount > 0 ? pendingInvitationsCount : undefined,
+      });
+    }
   } else {
     sidebarItems.push(
       {
@@ -122,7 +151,12 @@ export function Sidebar({ onClose }: SidebarProps = {}) {
         href: '/profile/me',
         icon: <UserCircle className="w-5 h-5" />,
       },
-      ...(isPatient ? [
+      ...(user?.role === UserRole.DOCTOR && !isInPatientMode ? [{
+        label: 'Configuración de impresión',
+        href: '/doctor/print-settings',
+        icon: <Printer className="w-5 h-5" />,
+      }] : []),
+      ...(isPatient || isInPatientMode ? [
         {
           id: 'nav-health-history',
           label: 'Historial de Salud',
@@ -249,7 +283,12 @@ export function Sidebar({ onClose }: SidebarProps = {}) {
         )}
       >
         <span className="flex-shrink-0">{item.icon}</span>
-        {!collapsed && <span className="truncate">{item.label}</span>}
+        {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
+        {!collapsed && item.badge != null && item.badge > 0 && (
+          <span className="ml-auto flex-shrink-0 bg-red-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1">
+            {item.badge}
+          </span>
+        )}
       </Link>
     );
   };
@@ -299,7 +338,7 @@ export function Sidebar({ onClose }: SidebarProps = {}) {
       <div className={`flex h-20 items-center justify-between px-4 border-b border-[0.5px] border-emerald-900/10`}>
         {!effectiveCollapsed ? (
           <>
-            <Link href={isDoctor ? '/doctor' : '/dashboard'} className="flex items-center gap-3 font-bold tracking-tight">
+            <Link href={isClinicalUser && !isInPatientMode ? '/doctor' : '/dashboard'} className="flex items-center gap-3 font-bold tracking-tight">
               <div className="bg-emerald-900 p-2 rounded-lg flex-shrink-0">
                 <Stethoscope className="h-6 w-6 text-white" />
               </div>
@@ -316,11 +355,13 @@ export function Sidebar({ onClose }: SidebarProps = {}) {
         )}
       </div>
 
-      {/* Profile Switcher (patients only, multi-profile) */}
-      {!effectiveCollapsed && isPatient && <ProfileSwitcher />}
+      {/* Profile Switcher (shown in patient mode) */}
+      {!effectiveCollapsed && (isPatient || isInPatientMode) && <ProfileSwitcher />}
 
-      {/* Doctor Mode Toggle */}
-      {/* !effectiveCollapsed && isDoctor && <DoctorModeToggle /> */}
+      {/* Role Switcher (doctors and assistants) */}
+      {isClinicalUser && (user?.role !== UserRole.DOCTOR || DOCTOR_PATIENT_MODE_ENABLED) && (
+        <RoleSwitcher collapsed={effectiveCollapsed} />
+      )}
 
       {/* Nav */}
       <div className="flex-1 overflow-auto py-6 px-2">

@@ -1,18 +1,18 @@
 'use client';
 
-import React, { useState, useMemo, use, useRef, useEffect } from 'react';
+import React, { useState, use, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { usePatientRecords } from '@/hooks/queries/usePatientRecords';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
 import { useMyPatients } from '@/hooks/queries/useMyPatients';
 import { usePatientHealth } from '@/hooks/queries/usePatientHealth';
-import { useVerifyRecord } from '@/hooks/mutations/useVerifyRecord';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { UserRole, AccessLevel, VitalSigns } from '@/types';
+import { UserRole, AccessLevel, VitalSigns, DoctorMedicalRecord } from '@/types';
 import { PatientInfoBanner } from '@/components/doctor/PatientInfoBanner';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useActiveMode } from '@/hooks/useActiveMode';
 import {
   FileText,
   Pill,
@@ -27,13 +27,11 @@ import {
   ArrowLeft,
   Activity,
   UserCircle,
-  MapPin,
   Navigation,
+  Printer,
 } from 'lucide-react';
-import { RecordDetailData } from '@/components/records/RecordDetailModal';
 import { RecordSlideModal } from './components/RecordSlideModal';
 import { RecordCard, RecordCardData } from '@/components/records/RecordCard';
-import { RecordsTable } from '@/components/records/RecordsTable';
 import { HealthSidebar } from '@/components/patient/HealthSidebar';
 import { MobileHealthChips } from '@/components/patient/MobileHealthChips';
 import { DocumentUploadModal } from './components/DocumentUploadModal';
@@ -44,6 +42,7 @@ import { usePatientOrders } from '@/hooks/queries/usePatientOrders';
 import { getVitalColor, getBpColor } from '@/lib/vitalSignsRanges';
 import api, { getDocumentUrl } from '@/lib/api';
 import { PatientPersonalInfoModal } from '@/components/doctor/PatientPersonalInfoModal';
+import { PrintPreviewDialog } from '@/components/clinical/PrintPreviewDialog';
 
 
 export default function PatientDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -53,14 +52,14 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
   const { data: patients = [], refetch: refetchPatients } = useMyPatients();
   const { data: records = [], isLoading: recordsLoading, refetch } = usePatientRecords(patientId);
   const { data: health } = usePatientHealth(patientId);
-  const verifyRecord = useVerifyRecord();
-  const [selectedRecord, setSelectedRecord] = useState<RecordDetailData | null>(null);
+  const [selectedRecord, setSelectedRecord] = useState<DoctorMedicalRecord | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [actionMenuOpen, setActionMenuOpen] = useState(false);
   const [vitalModalOpen, setVitalModalOpen] = useState(false);
   const [orderModalOpen, setOrderModalOpen] = useState(false);
   const [personalInfoModalOpen, setPersonalInfoModalOpen] = useState(false);
+  const [printTarget, setPrintTarget] = useState<{ title: string; path: string; filename: string } | null>(null);
   const actionMenuRef = useRef<HTMLDivElement>(null);
   const fabMenuRef = useRef<HTMLDivElement>(null);
   const [recordsPage, setRecordsPage] = useState(1);
@@ -99,8 +98,14 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
   const searchParams = useSearchParams();
   useEffect(() => {
     if (searchParams.get('action') === 'upload') {
-      setUploadModalOpen(true);
-      router.replace(`/doctor/patients/${patientId}`, { scroll: false });
+      let cancelled = false;
+      queueMicrotask(() => {
+        if (!cancelled) {
+          setUploadModalOpen(true);
+          router.replace(`/doctor/patients/${patientId}`, { scroll: false });
+        }
+      });
+      return () => { cancelled = true; };
     }
   }, [searchParams, patientId, router]);
 
@@ -131,25 +136,14 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
     enabled: !isReadOnly,
   });
 
-  // Redirect non-doctors
+  const { isClinicalUser } = useActiveMode();
+
+  // Redirect non-clinical users
   useEffect(() => {
-    if (!userLoading && user?.role !== UserRole.DOCTOR) {
+    if (!userLoading && !isClinicalUser) {
       router.replace('/dashboard');
     }
-  }, [userLoading, user?.role, router]);
-
-  if (!userLoading && user?.role !== UserRole.DOCTOR) {
-    return null;
-  }
-
-  const handleVerify = async (recordId: string) => {
-    try {
-      await verifyRecord.mutateAsync({ recordId });
-      refetch();
-    } catch (error) {
-      console.error('Error verifying record:', error);
-    }
-  };
+  }, [userLoading, isClinicalUser, router]);
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('es-ES', {
@@ -164,31 +158,29 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
   // Use the unified patient orders hook (both record-attached and standalone)
   const { data: allOrders = [] } = usePatientOrders(patientId);
 
-  const allDocuments = useMemo(
-    () =>
-      records
-        .flatMap((r) =>
-          (r.documents || []).map((doc) => ({
-            ...doc,
-            recordId: r.id,
-            recordMotive: r.motive,
-            recordCategory: r.category?.name,
-            recordDate: r.record_date || r.created_at,
-          })),
-        )
-        .sort((a, b) => new Date(b.recordDate).getTime() - new Date(a.recordDate).getTime()),
-    [records],
-  );
+  const allDocuments = records
+    .flatMap((r) =>
+      (r.documents || []).map((doc) => ({
+        ...doc,
+        recordId: r.id,
+        recordMotive: r.motive,
+        recordCategory: r.category?.name,
+        recordDate: r.record_date || r.created_at,
+      })),
+    )
+    .sort((a, b) => new Date(b.recordDate).getTime() - new Date(a.recordDate).getTime());
 
   const handleViewDetail = (cardData: RecordCardData) => {
     const fullRecord = records.find((r) => r.id === cardData.id);
     if (fullRecord) {
-      setSelectedRecord(fullRecord as RecordDetailData);
+      setSelectedRecord(fullRecord);
       setModalOpen(true);
       // Fire background request to trigger view logging on the server
       api.get(`/doctor/records/${fullRecord.id}`).catch(() => {});
     }
   };
+
+  if (!userLoading && !isClinicalUser) return null;
 
   if (userLoading || recordsLoading) {
     return (
@@ -630,9 +622,18 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                                       )}
                                     </div>
                                   </div>
-                                  <span className="text-sm text-blue-700">
-                                    {formatDate(rx.created_at)}
-                                  </span>
+                                  <div className="flex shrink-0 flex-col items-end gap-2">
+                                    <span className="text-sm text-blue-700">{formatDate(rx.created_at)}</span>
+                                    {user?.role === UserRole.DOCTOR && rx.created_by === user.id && (
+                                      <Button type="button" size="sm" variant="outline" onClick={() => setPrintTarget({
+                                        title: 'RECETA MÉDICA',
+                                        path: `/doctor/patients/${patientId}/print/prescriptions/${rx.medical_record_id}`,
+                                        filename: 'receta-medica.pdf',
+                                      })}>
+                                        <Printer className="mr-1.5 h-4 w-4" /> Imprimir
+                                      </Button>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             ))}
@@ -728,9 +729,18 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                                       </p>
                                     )}
                                   </div>
-                                  <span className="text-sm text-blue-600 shrink-0">
-                                    {formatDate(order.created_at)}
-                                  </span>
+                                  <div className="flex shrink-0 flex-col items-end gap-2">
+                                    <span className="text-sm text-blue-600">{formatDate(order.created_at)}</span>
+                                    {user?.role === UserRole.DOCTOR && order.created_by === user.id && order.order_type !== 'REFERRAL' && (
+                                      <Button type="button" size="sm" variant="outline" onClick={() => setPrintTarget({
+                                        title: 'ORDEN CLÍNICA',
+                                        path: `/doctor/patients/${patientId}/print/orders/${order.id}`,
+                                        filename: 'orden-clinica.pdf',
+                                      })}>
+                                        <Printer className="mr-1.5 h-4 w-4" /> Imprimir
+                                      </Button>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             ))}
@@ -861,10 +871,20 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
       )}
 
       {/* Record Slide Modal */}
+      {printTarget && (
+        <PrintPreviewDialog
+          key={printTarget.path}
+          title={printTarget.title}
+          path={printTarget.path}
+          filename={printTarget.filename}
+          onClose={() => setPrintTarget(null)}
+        />
+      )}
+
       <RecordSlideModal
         open={modalOpen}
         onOpenChange={setModalOpen}
-        record={selectedRecord as any}
+        record={selectedRecord}
         onViewPage={selectedRecord ? () => {
           setModalOpen(false);
           router.push(`/doctor/patients/${patientId}/records/${selectedRecord.id}`);

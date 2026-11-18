@@ -2,6 +2,7 @@
 
 import React, { useState, use, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useActiveMode } from '@/hooks/useActiveMode';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { InputWithVoice } from '@/components/ui/input-with-voice';
@@ -67,8 +68,10 @@ export default function NewTabbedRecordPage({
   const form = useMedicalRecordForm(patientId, { initialData });
   const [activeTab, setActiveTab] = useState<TabId>('eval');
 
-  // Redirect non-doctors
-  if (!form.userLoading && form.user?.role !== UserRole.DOCTOR) {
+  const { isClinicalUser } = useActiveMode();
+
+  // Redirect non-clinical users
+  if (!form.userLoading && !isClinicalUser) {
     router.push('/dashboard');
     return null;
   }

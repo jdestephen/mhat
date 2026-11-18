@@ -129,6 +129,8 @@ class MedicalRecordUpdate(BaseModel):
 class PrescriptionInline(BaseModel):
     """Inline prescription for MedicalRecord response."""
     id: UUID
+    medical_record_id: UUID
+    created_by: UUID
     medication_name: str
     dosage: Optional[str] = None
     frequency: Optional[str] = None

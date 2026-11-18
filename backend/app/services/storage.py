@@ -136,3 +136,14 @@ async def delete_file(s3_key: str) -> None:
         Bucket=settings.STORAGE_BUCKET,
         Key=s3_key,
     )
+
+
+def read_file_bytes(s3_key: str) -> bytes:
+    """Read a stored private asset for authenticated document generation."""
+    if settings.STORAGE_LOCAL_MODE:
+        file_name = s3_key.split('/')[-1]
+        with open(os.path.join(settings.UPLOAD_DIR, file_name), 'rb') as source:
+            return source.read()
+
+    response = _get_s3_client().get_object(Bucket=settings.STORAGE_BUCKET, Key=s3_key)
+    return response['Body'].read()

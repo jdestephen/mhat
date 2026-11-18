@@ -17,6 +17,7 @@ from .orders import router as orders_router
 from .vital_signs import router as vital_signs_router
 from .health_history import router as health_history_router
 from .claims import router as claims_router
+from .printing import router as printing_router
 
 router = APIRouter()
 
@@ -28,3 +29,4 @@ router.include_router(orders_router)
 router.include_router(vital_signs_router)
 router.include_router(health_history_router)
 router.include_router(claims_router)
+router.include_router(printing_router)
