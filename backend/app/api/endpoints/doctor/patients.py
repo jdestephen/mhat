@@ -145,7 +145,7 @@ async def list_my_patients(
     if sort == PatientSort.RECENT:
         order_by = (
             DoctorPatientAccess.created_at.desc(),
-            PatientProfile.id.desc(),
+            DoctorPatientAccess.id.desc(),
         )
     elif sort == PatientSort.NAME_DESC:
         order_by = (

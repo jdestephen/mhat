@@ -692,7 +692,7 @@ async def get_record_view_log(
         select(RecordViewLog, User)
         .join(User, RecordViewLog.doctor_id == User.id)
         .where(RecordViewLog.medical_record_id == record_id)
-        .order_by(RecordViewLog.viewed_at.desc())
+        .order_by(RecordViewLog.viewed_at.desc(), RecordViewLog.id.desc())
     )
     rows = logs_result.all()
 

@@ -173,6 +173,14 @@ class MedicalRecord(Base):
 class RecordViewLog(Base):
     """Tracks when a doctor views a patient's medical record."""
     __tablename__ = "record_view_logs"
+    __table_args__ = (
+        Index(
+            "ix_record_view_logs_record_viewed_page",
+            "medical_record_id",
+            "viewed_at",
+            "id",
+        ),
+    )
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     medical_record_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("medical_records.id", ondelete="CASCADE"), nullable=False, index=True)

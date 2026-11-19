@@ -132,7 +132,7 @@ class PaginatedDoctorPatientsTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("limit 20", page_sql)
         self.assertIn("offset 20", page_sql)
         self.assertIn("doctor_patient_access.created_at desc", page_sql)
-        self.assertIn("patient_profiles.id desc", page_sql)
+        self.assertIn("doctor_patient_access.id desc", page_sql)
 
 
 if __name__ == "__main__":

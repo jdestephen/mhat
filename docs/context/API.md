@@ -84,7 +84,7 @@ Todas las rutas siguientes llevan `/api/v1`. Esta tabla agrupa operaciones; conf
 
 ## Servicios y decisiones de cambio
 
-La migración `l6f7a8b9c0d1` agrega índices compuestos para los recorridos paginados de records, signos vitales, documentos, recetas, órdenes, shares, solicitudes médicas y asistentes. Los índices usan el ID final como desempate coherente con los `ORDER BY` de la API.
+Las migraciones `l6f7a8b9c0d1` y `m7a8b9c0d1e2` agregan índices compuestos para los recorridos paginados de records, signos vitales, documentos, recetas, órdenes, shares, solicitudes médicas, asistentes, accesos doctor-paciente y bitácoras de visualización. Los índices usan el ID final como desempate coherente con los `ORDER BY` de la API. La búsqueda parcial por nombre conserva `LIKE '%texto%'` sin `pg_trgm`; cualquier índice trigram debe justificarse después con métricas de producción.
 
 | Servicio | Uso |
 | --- | --- |

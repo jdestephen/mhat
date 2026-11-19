@@ -5,7 +5,7 @@ from uuid import UUID
 import uuid
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Boolean, DateTime, Enum, ForeignKey
+from sqlalchemy import String, Boolean, DateTime, Enum, ForeignKey, Index
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.sql import func
 
@@ -38,6 +38,14 @@ class DoctorPatientAccess(Base):
     - Patients without user accounts (via patient_profile_id)
     """
     __tablename__ = "doctor_patient_access"
+    __table_args__ = (
+        Index(
+            "ix_doctor_patient_access_doctor_created_page",
+            "doctor_id",
+            "created_at",
+            "id",
+        ),
+    )
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     doctor_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
