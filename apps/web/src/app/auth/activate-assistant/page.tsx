@@ -5,11 +5,13 @@ import type { FormEvent, ReactNode } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import axios from 'axios';
+import { useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, CircleAlert, Stethoscope } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import api from '@/lib/api';
+import { clearAuthenticatedSession } from '@/lib/authSession';
 
 type AccountStatus = 'new' | 'existing_assistant' | 'conflict';
 
@@ -68,6 +70,7 @@ function LoadingState() {
 }
 
 function ActivateAssistantContent() {
+  const queryClient = useQueryClient();
   const token = useSearchParams().get('token')?.trim() ?? '';
   const [state, setState] = useState<PageState>('loading');
   const [invitation, setInvitation] = useState<InvitationPreview | null>(null);
@@ -133,11 +136,8 @@ function ActivateAssistantContent() {
     }
   };
 
-  const handleContinue = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('numa_active_mode');
-    localStorage.removeItem('numa_active_profile_id');
+  const handleContinue = async () => {
+    await clearAuthenticatedSession(queryClient);
     window.location.assign('/auth/login');
   };
 

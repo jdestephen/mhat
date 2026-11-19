@@ -1,5 +1,7 @@
 import axios, { type AxiosResponse } from 'axios';
 import type { PaginatedResult, PaginationMeta } from '@/types/pagination';
+import { clearAuthenticatedSession } from '@/lib/authSession';
+import { queryClient } from '@/lib/react-query/queryClient';
 /**
  * Ensures the API URL has a protocol. Without it, axios treats the value as a
  * relative path and prepends the current page origin (e.g. vercel.app/…).
@@ -151,8 +153,7 @@ api.interceptors.response.use(
       if (!refreshToken) {
         isRefreshing = false;
         // No refresh token — force logout
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
+        await clearAuthenticatedSession(queryClient);
         if (!isRedirecting) {
           isRedirecting = true;
           window.location.href = '/auth/login';
@@ -175,8 +176,7 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
+        await clearAuthenticatedSession(queryClient);
         if (!isRedirecting) {
           isRedirecting = true;
           window.location.href = '/auth/login';
