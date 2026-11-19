@@ -87,7 +87,7 @@ export function Pagination({
       {/* Item count */}
       <div className="flex flex-col sm:flex-row items-center gap-3 text-sm text-slate-500 order-2 sm:order-1">
         <p aria-live="polite">
-          Mostrando <span className="font-medium text-slate-700">{startItem}</span> a{' '}
+          Mostrando <span className="font-medium text-slate-700">{startItem}</span> -{' '}
           <span className="font-medium text-slate-700">{endItem}</span> de{' '}
           <span className="font-medium text-slate-700">{Math.max(0, totalItems)}</span>{' '}
           {itemLabel}
