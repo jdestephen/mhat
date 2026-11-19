@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
 from app.api.api import api_router
+from app.api.pagination import PAGINATION_HEADER_NAMES
 from app.db.base import Base
 from app.db.session import engine
 
@@ -18,6 +19,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type"],
+    expose_headers=list(PAGINATION_HEADER_NAMES),
 )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)

@@ -10,7 +10,7 @@ import uuid
 import enum
 
 from sqlalchemy import (
-    String, Boolean, Integer, Text, DateTime, ForeignKey, func, Enum
+    String, Boolean, Integer, Text, DateTime, ForeignKey, func, Enum, Index
 )
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -37,6 +37,14 @@ class ShareToken(Base):
     - Complete audit trail
     """
     __tablename__ = "share_tokens"
+    __table_args__ = (
+        Index(
+            "ix_share_tokens_patient_created_page",
+            "patient_id",
+            "created_at",
+            "id",
+        ),
+    )
     
     id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True), 

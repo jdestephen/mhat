@@ -19,6 +19,7 @@ import {
   Printer,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
 import { useState } from 'react';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
@@ -28,6 +29,7 @@ import { RoleSwitcher } from '@/components/layout/RoleSwitcher';
 import { useActiveMode } from '@/hooks/useActiveMode';
 import { useAssistantInvitations } from '@/hooks/queries/useAssistantInvitations';
 import { ASSISTANT_MANAGEMENT_ENABLED, DOCTOR_PATIENT_MODE_ENABLED } from '@/lib/featureFlags';
+import { clearAuthenticatedSession } from '@/lib/authSession';
 
 
 interface MenuItem {
@@ -48,6 +50,7 @@ interface SidebarProps {
 export function Sidebar({ onClose }: SidebarProps = {}) {
   const pathname = usePathname();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: user } = useCurrentUser();
   const [openMenus, setOpenMenus] = useState<string[]>(['Perfil']);
   const [collapsed, setCollapsed] = useState(false);
@@ -188,9 +191,9 @@ export function Sidebar({ onClose }: SidebarProps = {}) {
         // Silent — still proceed with local cleanup
       }
     }
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
-    router.push('/auth/login');
+    await clearAuthenticatedSession(queryClient);
+    router.replace('/auth/login');
+    router.refresh();
   };
 
   const renderMenuItem = (item: MenuItem, level = 0) => {

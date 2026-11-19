@@ -1,15 +1,25 @@
 'use client';
 
 import React from 'react';
+import axios from 'axios';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useDoctorClaimRequests, ClaimRequestSummary } from '@/hooks/queries/useClaimRequests';
 import api from '@/lib/api';
 import { Check, X, UserCircle, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/Toast';
+
+function errorDetail(error: unknown, fallback: string) {
+  if (axios.isAxiosError<{ detail?: string }>(error)) {
+    return error.response?.data?.detail || fallback;
+  }
+  return fallback;
+}
 
 export function ClaimRequestsPanel() {
   const { data: claims, isLoading } = useDoctorClaimRequests();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const approveMutation = useMutation({
     mutationFn: async (claimId: string) => {
@@ -18,7 +28,9 @@ export function ClaimRequestsPanel() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['doctor', 'claim-requests'] });
       queryClient.invalidateQueries({ queryKey: ['doctor', 'patients'] });
+      toast.success('Solicitud de vinculación aprobada');
     },
+    onError: (error) => toast.error(errorDetail(error, 'No se pudo aprobar la vinculación')),
   });
 
   const rejectMutation = useMutation({
@@ -27,7 +39,9 @@ export function ClaimRequestsPanel() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['doctor', 'claim-requests'] });
+      toast.success('Solicitud de vinculación rechazada');
     },
+    onError: (error) => toast.error(errorDetail(error, 'No se pudo rechazar la vinculación')),
   });
 
   if (isLoading || !claims || claims.length === 0) return null;

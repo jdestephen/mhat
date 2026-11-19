@@ -10,7 +10,7 @@ import uuid
 import enum
 
 from sqlalchemy import (
-    String, Boolean, Integer, Text, DateTime, ForeignKey, func, Enum
+    String, Boolean, Integer, Text, DateTime, ForeignKey, func, Enum, Index
 )
 from sqlalchemy.dialects.postgresql import UUID as PGUUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -41,6 +41,14 @@ class Prescription(Base):
     When processed, it may create/update a Medication entry in the patient's list.
     """
     __tablename__ = "prescriptions"
+    __table_args__ = (
+        Index(
+            "ix_prescriptions_record_created_page",
+            "medical_record_id",
+            "created_at",
+            "id",
+        ),
+    )
     
     id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True), 
@@ -105,6 +113,20 @@ class ClinicalOrder(Base):
     Visible to patients by default.
     """
     __tablename__ = "clinical_orders"
+    __table_args__ = (
+        Index(
+            "ix_clinical_orders_patient_created_page",
+            "patient_id",
+            "created_at",
+            "id",
+        ),
+        Index(
+            "ix_clinical_orders_record_created_page",
+            "medical_record_id",
+            "created_at",
+            "id",
+        ),
+    )
 
     id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True),

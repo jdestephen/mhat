@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '@/lib/api';
+import { keepPreviousData, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import api, { toPaginatedResult } from '@/lib/api';
 import { Button } from '@/components/ui/button';
+import { Pagination } from '@/components/ui/Pagination';
 import { VitalSignsForm, VitalSignsFormData } from '@/components/clinical/VitalSignsForm';
 import { VitalSigns } from '@/types';
 import { getVitalColor, getBpColor } from '@/lib/vitalSignsRanges';
@@ -18,22 +19,37 @@ import {
   Activity,
 } from 'lucide-react';
 import { useActiveProfile } from '@/hooks/useActiveProfile';
+import { usePaginationState } from '@/hooks/usePaginationState';
 
 export default function VitalSignsPage() {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState<VitalSignsFormData>({});
   const { activeProfileId } = useActiveProfile();
-
-  const { data: vitalSigns, isLoading } = useQuery<VitalSigns[]>({
-    queryKey: ['vital-signs', activeProfileId],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (activeProfileId) params.append('profile_id', activeProfileId);
-      const res = await api.get(`/hx/vital-signs${params.toString() ? '?' + params.toString() : ''}`);
-      return res.data;
-    },
+  const pagination = usePaginationState({
+    initialPageSize: 10,
+    resetKey: activeProfileId,
   });
+
+  const { data: vitalSignsResult, isLoading, isFetching } = useQuery({
+    queryKey: [
+      'vital-signs',
+      activeProfileId,
+      { page: pagination.page, pageSize: pagination.pageSize },
+    ],
+    queryFn: async () => {
+      const response = await api.get<VitalSigns[]>('/hx/vital-signs', {
+        params: {
+          profile_id: activeProfileId || undefined,
+          skip: pagination.skip,
+          limit: pagination.limit,
+        },
+      });
+      return toPaginatedResult(response);
+    },
+    placeholderData: keepPreviousData,
+  });
+  const vitalSigns = vitalSignsResult?.items ?? [];
 
   const createMutation = useMutation({
     mutationFn: async (data: VitalSignsFormData) => {
@@ -121,7 +137,7 @@ export default function VitalSignsPage() {
       {/* List */}
       {isLoading ? (
         <div className="text-center py-10 text-slate-500">Cargando registros...</div>
-      ) : !vitalSigns || vitalSigns.length === 0 ? (
+      ) : vitalSigns.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-lg border border-dashed border-slate-300">
           <HeartPulse className="mx-auto h-12 w-12 text-slate-300 mb-3" />
           <p className="text-slate-500 mb-2">No tienes registros de signos vitales.</p>
@@ -221,6 +237,17 @@ export default function VitalSignsPage() {
               )}
             </div>
           ))}
+          <Pagination
+            currentPage={pagination.page}
+            totalPages={vitalSignsResult?.pagination.totalPages ?? 0}
+            totalItems={vitalSignsResult?.pagination.total ?? 0}
+            pageSize={pagination.pageSize}
+            onPageChange={pagination.setPage}
+            onPageSizeChange={pagination.setPageSize}
+            pageSizeOptions={[10, 20, 50, 100]}
+            isLoading={isFetching}
+            itemLabel="registros"
+          />
         </div>
       )}
     </div>

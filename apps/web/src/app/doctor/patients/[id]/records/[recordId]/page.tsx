@@ -2,7 +2,7 @@
 
 import React, { use } from 'react';
 import { useRouter } from 'next/navigation';
-import { usePatientRecords } from '@/hooks/queries/usePatientRecords';
+import { usePatientRecord } from '@/hooks/queries/usePatientRecords';
 import { useMyPatients } from '@/hooks/queries/useMyPatients';
 import { Button } from '@/components/ui/button';
 import { PatientInfoBanner } from '@/components/doctor/PatientInfoBanner';
@@ -29,8 +29,7 @@ export default function DedicatedRecordPage({ params }: { params: Promise<{ id: 
   const { data: patients = [] } = useMyPatients();
   const patient = patients.find((p) => p.patient_id === patientId);
 
-  const { data: records = [], isLoading } = usePatientRecords(patientId);
-  const record = records.find((r) => r.id === recordId);
+  const { data: record, isLoading } = usePatientRecord(recordId);
 
   if (isLoading) {
     return (

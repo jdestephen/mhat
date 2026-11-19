@@ -40,7 +40,6 @@ export function useCreateMedicalRecord(profileId?: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['medical-records'] });
-      queryClient.invalidateQueries({ queryKey: ['prescription-records'] });
     },
   });
 }

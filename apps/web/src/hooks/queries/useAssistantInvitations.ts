@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import api from '@/lib/api';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import api, { toPaginatedResult } from '@/lib/api';
 
 export interface AssistantInvitation {
   id: string;
@@ -24,5 +24,46 @@ export function useAssistantInvitations(enabled = true) {
       const res = await api.get<AssistantInvitation[]>('/doctor/assistants/invitations');
       return res.data;
     },
+  });
+}
+
+interface UsePaginatedAssistantInvitationsOptions {
+  page: number;
+  pageSize: number;
+  query?: string;
+  enabled?: boolean;
+}
+
+export function usePaginatedAssistantInvitations({
+  page,
+  pageSize,
+  query,
+  enabled = true,
+}: UsePaginatedAssistantInvitationsOptions) {
+  const normalizedQuery = query?.trim() || undefined;
+
+  return useQuery({
+    queryKey: [
+      'doctor',
+      'assistants',
+      'invitations',
+      'paginated',
+      { page, pageSize, query: normalizedQuery },
+    ],
+    enabled,
+    queryFn: async () => {
+      const response = await api.get<AssistantInvitation[]>(
+        '/doctor/assistants/invitations',
+        {
+          params: {
+            skip: (page - 1) * pageSize,
+            limit: pageSize,
+            q: normalizedQuery,
+          },
+        },
+      );
+      return toPaginatedResult(response);
+    },
+    placeholderData: keepPreviousData,
   });
 }

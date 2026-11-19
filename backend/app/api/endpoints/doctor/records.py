@@ -1,61 +1,175 @@
 """Medical record CRUD for doctor workflow."""
 import uuid
 from datetime import datetime, timezone, timedelta, date
-from typing import List, Optional
+from typing import Annotated, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
-from sqlalchemy import and_
+from sqlalchemy.orm.attributes import set_committed_value
+from sqlalchemy import and_, func
 
 from app.api.deps import get_db
+from app.api.pagination import (
+    PaginationParams,
+    count_rows,
+    pagination_dependency,
+    set_pagination_headers,
+)
 from app.models.user import User, UserRole
 from app.models.hx import (
-    MedicalRecord, RecordSource, RecordStatus,
+    Category, Document, MedicalRecord, RecordSource, RecordStatus,
     MedicalDiagnosis, VitalSigns, RecordViewLog, VitalSignsStatus,
 )
 from app.models.clinical import Prescription, ClinicalOrder
 from app.schemas import clinical as clinical_schema
 from app.schemas import hx as hx_schema
+from app.services.storage import get_presigned_url
 
 from ._helpers import require_doctor_role, get_doctor_patient_access
 
 router = APIRouter()
+patient_records_pagination = pagination_dependency(default_limit=50, max_limit=100)
+patient_documents_pagination = pagination_dependency(default_limit=20, max_limit=100)
 
 
 @router.get("/patients/{patient_profile_id}/records", response_model=List[hx_schema.MedicalRecord])
 async def list_patient_records(
     patient_profile_id: uuid.UUID,
+    response: Response,
+    pagination: Annotated[PaginationParams, Depends(patient_records_pagination)],
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_doctor_role),
-    skip: int = 0,
-    limit: int = 50,
     category_id: Optional[int] = Query(None),
+    include_documents: bool = Query(
+        True,
+        description="Include full document payloads for backward compatibility.",
+    ),
 ):
-    """List all medical records for a patient the doctor has access to."""
+    """List a patient's medical records with stable server-side pagination."""
     await get_doctor_patient_access(patient_profile_id, db, current_user)
 
-    query = select(MedicalRecord).where(
+    stmt = select(MedicalRecord).where(
         MedicalRecord.patient_id == patient_profile_id
-    ).options(
+    )
+
+    if category_id is not None:
+        stmt = stmt.where(MedicalRecord.category_id == category_id)
+
+    total = await count_rows(db, stmt)
+    set_pagination_headers(
+        response,
+        total=total,
+        skip=pagination.skip,
+        limit=pagination.limit,
+    )
+
+    load_options = [
         selectinload(MedicalRecord.diagnoses),
-        selectinload(MedicalRecord.documents),
         selectinload(MedicalRecord.prescriptions),
         selectinload(MedicalRecord.clinical_orders),
         selectinload(MedicalRecord.category),
         selectinload(MedicalRecord.vital_signs),
-    ).order_by(MedicalRecord.record_date.desc())
+    ]
+    if include_documents:
+        load_options.append(selectinload(MedicalRecord.documents))
 
-    if category_id:
-        query = query.where(MedicalRecord.category_id == category_id)
+    page_stmt = stmt.options(*load_options).order_by(
+        MedicalRecord.record_date.desc(),
+        MedicalRecord.created_at.desc(),
+        MedicalRecord.id.desc(),
+    ).offset(pagination.skip).limit(pagination.limit)
 
-    query = query.offset(skip).limit(limit)
+    result = await db.execute(page_stmt)
+    records = list(result.scalars().all())
 
-    result = await db.execute(query)
-    records = result.scalars().all()
+    if include_documents:
+        for record in records:
+            record.document_count = len(record.documents)
+    elif records:
+        record_ids = [record.id for record in records]
+        counts_result = await db.execute(
+            select(Document.medical_record_id, func.count(Document.id))
+            .where(Document.medical_record_id.in_(record_ids))
+            .group_by(Document.medical_record_id)
+        )
+        document_counts = dict(counts_result.all())
+        for record in records:
+            record.document_count = int(document_counts.get(record.id, 0))
+            # Keep the legacy response shape without triggering an async lazy load.
+            set_committed_value(record, "documents", [])
 
     return records
+
+
+@router.get(
+    "/patients/{patient_profile_id}/documents",
+    response_model=List[hx_schema.PatientDocumentSummary],
+)
+async def list_patient_documents(
+    patient_profile_id: uuid.UUID,
+    response: Response,
+    pagination: Annotated[PaginationParams, Depends(patient_documents_pagination)],
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_doctor_role),
+    category_id: Optional[int] = Query(None),
+):
+    """List document metadata without loading every containing medical record."""
+    await get_doctor_patient_access(patient_profile_id, db, current_user)
+
+    filters = [MedicalRecord.patient_id == patient_profile_id]
+    if category_id is not None:
+        filters.append(MedicalRecord.category_id == category_id)
+
+    count_stmt = (
+        select(Document.id)
+        .join(MedicalRecord, Document.medical_record_id == MedicalRecord.id)
+        .where(*filters)
+    )
+    total = await count_rows(db, count_stmt)
+    set_pagination_headers(
+        response,
+        total=total,
+        skip=pagination.skip,
+        limit=pagination.limit,
+    )
+
+    stmt = (
+        select(
+            Document,
+            MedicalRecord.motive,
+            MedicalRecord.record_date,
+            Category.name,
+        )
+        .join(MedicalRecord, Document.medical_record_id == MedicalRecord.id)
+        .outerjoin(Category, MedicalRecord.category_id == Category.id)
+        .where(*filters)
+        .order_by(
+            MedicalRecord.record_date.desc(),
+            Document.created_at.desc(),
+            Document.id.desc(),
+        )
+        .offset(pagination.skip)
+        .limit(pagination.limit)
+    )
+    rows = (await db.execute(stmt)).all()
+
+    return [
+        hx_schema.PatientDocumentSummary(
+            id=document.id,
+            medical_record_id=document.medical_record_id,
+            filename=document.filename,
+            url=get_presigned_url(document.s3_key),
+            media_type=document.media_type,
+            tags=document.tags or [],
+            created_at=document.created_at,
+            record_motive=record_motive,
+            record_category=record_category,
+            record_date=record_date,
+        )
+        for document, record_motive, record_date, record_category in rows
+    ]
 
 
 @router.post("/patients/{patient_profile_id}/records", response_model=hx_schema.MedicalRecord)

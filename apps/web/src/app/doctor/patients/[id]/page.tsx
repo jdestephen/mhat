@@ -2,7 +2,7 @@
 
 import React, { useState, use, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { usePatientRecords } from '@/hooks/queries/usePatientRecords';
+import { usePaginatedPatientRecords } from '@/hooks/queries/usePatientRecords';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
 import { useMyPatients } from '@/hooks/queries/useMyPatients';
 import { usePatientHealth } from '@/hooks/queries/usePatientHealth';
@@ -38,19 +38,27 @@ import { DocumentUploadModal } from './components/DocumentUploadModal';
 import { Pagination } from '@/components/ui/Pagination';
 import { VitalSignsModal } from '@/components/clinical/VitalSignsModal';
 import { ClinicalOrderModal } from '@/components/clinical/ClinicalOrderModal';
-import { usePatientOrders } from '@/hooks/queries/usePatientOrders';
+import { usePaginatedPatientOrders } from '@/hooks/queries/usePatientOrders';
+import {
+  usePatientDocuments,
+  usePatientPrescriptions,
+  usePatientVitalSigns,
+} from '@/hooks/queries/usePatientClinicalLists';
 import { getVitalColor, getBpColor } from '@/lib/vitalSignsRanges';
 import api, { getDocumentUrl } from '@/lib/api';
 import { PatientPersonalInfoModal } from '@/components/doctor/PatientPersonalInfoModal';
 import { PrintPreviewDialog } from '@/components/clinical/PrintPreviewDialog';
 
+const RECORDS_PAGE_SIZE = 7;
+const DOCUMENTS_PAGE_SIZE = 10;
+const VITAL_SIGNS_PAGE_SIZE = 10;
+const PLAN_PAGE_SIZE = 3;
 
 export default function PatientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: patientId } = use(params);
   const router = useRouter();
   const { data: user, isLoading: userLoading } = useCurrentUser();
   const { data: patients = [], refetch: refetchPatients } = useMyPatients();
-  const { data: records = [], isLoading: recordsLoading, refetch } = usePatientRecords(patientId);
   const { data: health } = usePatientHealth(patientId);
   const [selectedRecord, setSelectedRecord] = useState<DoctorMedicalRecord | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -63,21 +71,50 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
   const actionMenuRef = useRef<HTMLDivElement>(null);
   const fabMenuRef = useRef<HTMLDivElement>(null);
   const [recordsPage, setRecordsPage] = useState(1);
+  const [documentsPage, setDocumentsPage] = useState(1);
   const [vsPage, setVsPage] = useState(1);
   const [rxPage, setRxPage] = useState(1);
   const [ordersPage, setOrdersPage] = useState(1);
-  const RECORDS_PAGE_SIZE = 7;
-  const VS_PAGE_SIZE = 10;
-  const PLAN_PAGE_SIZE = 3;
-
-  // Fetch vital signs history
-  const { data: vitalSigns = [] } = useQuery<VitalSigns[]>({
-    queryKey: ['patient-vital-signs', patientId],
-    queryFn: async () => {
-      const res = await api.get(`/doctor/patients/${patientId}/vital-signs`);
-      return res.data;
-    },
+  const {
+    data: recordsResult,
+    isLoading: recordsLoading,
+    isFetching: recordsFetching,
+    refetch: refetchRecords,
+  } = usePaginatedPatientRecords({
+    patientId,
+    page: recordsPage,
+    pageSize: RECORDS_PAGE_SIZE,
   });
+  const { data: documentsResult, isFetching: documentsFetching, refetch: refetchDocuments } =
+    usePatientDocuments({
+      patientId,
+      page: documentsPage,
+      pageSize: DOCUMENTS_PAGE_SIZE,
+    });
+  const { data: vitalSignsResult, isFetching: vitalSignsFetching } =
+    usePatientVitalSigns({
+      patientId,
+      page: vsPage,
+      pageSize: VITAL_SIGNS_PAGE_SIZE,
+    });
+  const { data: prescriptionsResult, isFetching: prescriptionsFetching } =
+    usePatientPrescriptions({
+      patientId,
+      page: rxPage,
+      pageSize: PLAN_PAGE_SIZE,
+    });
+  const { data: ordersResult, isFetching: ordersFetching } =
+    usePaginatedPatientOrders({
+      patientId,
+      page: ordersPage,
+      pageSize: PLAN_PAGE_SIZE,
+    });
+
+  const records = recordsResult?.items ?? [];
+  const documents = documentsResult?.items ?? [];
+  const vitalSigns = vitalSignsResult?.items ?? [];
+  const prescriptions = prescriptionsResult?.items ?? [];
+  const orders = ordersResult?.items ?? [];
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -153,30 +190,16 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
     });
   };
 
-  // Collect all prescriptions from records
-  const allPrescriptions = records.flatMap((r) => r.prescriptions || []);
-  // Use the unified patient orders hook (both record-attached and standalone)
-  const { data: allOrders = [] } = usePatientOrders(patientId);
-
-  const allDocuments = records
-    .flatMap((r) =>
-      (r.documents || []).map((doc) => ({
-        ...doc,
-        recordId: r.id,
-        recordMotive: r.motive,
-        recordCategory: r.category?.name,
-        recordDate: r.record_date || r.created_at,
-      })),
-    )
-    .sort((a, b) => new Date(b.recordDate).getTime() - new Date(a.recordDate).getTime());
-
   const handleViewDetail = (cardData: RecordCardData) => {
-    const fullRecord = records.find((r) => r.id === cardData.id);
-    if (fullRecord) {
-      setSelectedRecord(fullRecord);
+    const listRecord = records.find((record) => record.id === cardData.id);
+    if (listRecord) {
+      setSelectedRecord(listRecord);
       setModalOpen(true);
-      // Fire background request to trigger view logging on the server
-      api.get(`/doctor/records/${fullRecord.id}`).catch(() => {});
+      // The list intentionally excludes document payloads; hydrate the modal
+      // from the complete detail endpoint while also recording the view.
+      api.get<DoctorMedicalRecord>(`/doctor/records/${listRecord.id}`)
+        .then((response) => setSelectedRecord(response.data))
+        .catch(() => {});
     }
   };
 
@@ -406,12 +429,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
 
                     {/* Mobile: Card view */}
                     <div className="flex flex-col gap-2">
-                      {records
-                        .slice(
-                          (recordsPage - 1) * RECORDS_PAGE_SIZE,
-                          recordsPage * RECORDS_PAGE_SIZE,
-                        )
-                        .map((record, index) => (
+                      {records.map((record, index) => (
                           <RecordCard
                             key={record.id}
                             record={record}
@@ -423,10 +441,11 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
 
                     <Pagination
                       currentPage={recordsPage}
-                      totalPages={Math.ceil(records.length / RECORDS_PAGE_SIZE)}
-                      totalItems={records.length}
+                      totalPages={recordsResult?.pagination.totalPages ?? 0}
+                      totalItems={recordsResult?.pagination.total ?? 0}
                       pageSize={RECORDS_PAGE_SIZE}
                       onPageChange={setRecordsPage}
+                      isLoading={recordsFetching}
                       itemLabel="registros"
                     />
                   </div>
@@ -435,7 +454,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
 
               {/* Documents Tab */}
               <TabsContent value="documents" className="p-0">
-                {allDocuments.length === 0 ? (
+                {documents.length === 0 ? (
                   <div className="p-12 text-center">
                     <Paperclip className="h-12 w-12 mx-auto text-gray-300 mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">Sin documentos</h3>
@@ -449,7 +468,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                   </div>
                 ) : (
                   <div className="flex flex-col p-2 gap-2">
-                    {allDocuments.map((doc) => (
+                    {documents.map((doc) => (
                       <div
                         key={doc.id}
                         className="flex items-center justify-between p-4 rounded-lg border border-gray-200 hover:bg-slate-50 transition-colors"
@@ -461,13 +480,13 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                               {doc.filename}
                             </p>
                             <div className="flex items-center gap-2 mt-0.5">
-                              {doc.recordCategory && (
+                              {doc.record_category && (
                                 <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
-                                  {doc.recordCategory}
+                                  {doc.record_category}
                                 </span>
                               )}
                               <span className="text-xs text-slate-500">
-                                {formatDate(doc.recordDate)}
+                                {formatDate(doc.record_date)}
                               </span>
                             </div>
                           </div>
@@ -483,6 +502,15 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                         </Button>
                       </div>
                     ))}
+                    <Pagination
+                      currentPage={documentsPage}
+                      totalPages={documentsResult?.pagination.totalPages ?? 0}
+                      totalItems={documentsResult?.pagination.total ?? 0}
+                      pageSize={DOCUMENTS_PAGE_SIZE}
+                      onPageChange={setDocumentsPage}
+                      isLoading={documentsFetching}
+                      itemLabel="documentos"
+                    />
                   </div>
                 )}
               </TabsContent>
@@ -512,9 +540,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                         <div className="flex-1 text-center">Gluc.</div>
                         <div className="flex-1 text-center">C. Abd.</div>
                       </div>
-                      {vitalSigns
-                        .slice((vsPage - 1) * VS_PAGE_SIZE, vsPage * VS_PAGE_SIZE)
-                        .map((vs) => (
+                      {vitalSigns.map((vs) => (
                           <div
                             key={vs.id}
                             className="flex min-w-[900px] items-center px-3 py-2.5 border-x border-b border-slate-200 hover:bg-slate-50 transition-colors text-sm"
@@ -560,27 +586,27 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                         ))}
                       <Pagination
                         currentPage={vsPage}
-                        totalPages={Math.max(1, Math.ceil(vitalSigns.length / VS_PAGE_SIZE))}
-                        totalItems={vitalSigns.length}
-                        pageSize={VS_PAGE_SIZE}
+                        totalPages={vitalSignsResult?.pagination.totalPages ?? 0}
+                        totalItems={vitalSignsResult?.pagination.total ?? 0}
+                        pageSize={VITAL_SIGNS_PAGE_SIZE}
                         onPageChange={setVsPage}
+                        isLoading={vitalSignsFetching}
                         itemLabel="registros"
                       />
                     </div>
 
                     {/* Mobile: Compact card grid */}
                     <div className="md:hidden p-3 space-y-3">
-                      {vitalSigns
-                        .slice((vsPage - 1) * VS_PAGE_SIZE, vsPage * VS_PAGE_SIZE)
-                        .map((vs) => (
+                      {vitalSigns.map((vs) => (
                           <VitalSignsCard key={vs.id} vs={vs} />
                         ))}
                       <Pagination
                         currentPage={vsPage}
-                        totalPages={Math.max(1, Math.ceil(vitalSigns.length / VS_PAGE_SIZE))}
-                        totalItems={vitalSigns.length}
-                        pageSize={VS_PAGE_SIZE}
+                        totalPages={vitalSignsResult?.pagination.totalPages ?? 0}
+                        totalItems={vitalSignsResult?.pagination.total ?? 0}
+                        pageSize={VITAL_SIGNS_PAGE_SIZE}
                         onPageChange={setVsPage}
+                        isLoading={vitalSignsFetching}
                         itemLabel="registros"
                       />
                     </div>
@@ -596,9 +622,11 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                     <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2 mb-3">
                       <Pill className="h-4 w-4 text-blue-500" />
                       Recetas
-                      <span className="text-xs font-normal text-slate-400">({allPrescriptions.length})</span>
+                      <span className="text-xs font-normal text-slate-400">
+                        ({prescriptionsResult?.pagination.total ?? 0})
+                      </span>
                     </h3>
-                    {allPrescriptions.length === 0 ? (
+                    {prescriptions.length === 0 ? (
                       <div className="py-6 text-center border border-dashed border-slate-200 rounded-lg">
                         <Pill className="h-8 w-8 mx-auto text-gray-300 mb-2" />
                         <p className="text-sm text-gray-500">Sin recetas</p>
@@ -606,9 +634,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                     ) : (
                       <>
                         <div className="flex flex-col gap-2">
-                          {allPrescriptions
-                            .slice((rxPage - 1) * PLAN_PAGE_SIZE, rxPage * PLAN_PAGE_SIZE)
-                            .map((rx) => (
+                          {prescriptions.map((rx) => (
                               <div key={rx.id} className="p-4 rounded-lg border border-gray-200">
                                 <div className="flex items-start justify-between">
                                   <div>
@@ -638,16 +664,15 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                               </div>
                             ))}
                         </div>
-                        {allPrescriptions.length > PLAN_PAGE_SIZE && (
-                          <Pagination
-                            currentPage={rxPage}
-                            totalPages={Math.ceil(allPrescriptions.length / PLAN_PAGE_SIZE)}
-                            totalItems={allPrescriptions.length}
-                            pageSize={PLAN_PAGE_SIZE}
-                            onPageChange={setRxPage}
-                            itemLabel="recetas"
-                          />
-                        )}
+                        <Pagination
+                          currentPage={rxPage}
+                          totalPages={prescriptionsResult?.pagination.totalPages ?? 0}
+                          totalItems={prescriptionsResult?.pagination.total ?? 0}
+                          pageSize={PLAN_PAGE_SIZE}
+                          onPageChange={setRxPage}
+                          isLoading={prescriptionsFetching}
+                          itemLabel="recetas"
+                        />
                       </>
                     )}
                   </div>
@@ -660,9 +685,11 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                     <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2 mb-3">
                       <ClipboardList className="h-4 w-4 text-amber-500" />
                       Órdenes
-                      <span className="text-xs font-normal text-slate-400">({allOrders.length})</span>
+                      <span className="text-xs font-normal text-slate-400">
+                        ({ordersResult?.pagination.total ?? 0})
+                      </span>
                     </h3>
-                    {allOrders.length === 0 ? (
+                    {orders.length === 0 ? (
                       <div className="py-6 text-center border border-dashed border-slate-200 rounded-lg">
                         <ClipboardList className="h-8 w-8 mx-auto text-gray-300 mb-2" />
                         <p className="text-sm text-gray-500">Sin órdenes</p>
@@ -670,9 +697,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                     ) : (
                       <>
                         <div className="flex flex-col gap-2">
-                          {allOrders
-                            .slice((ordersPage - 1) * PLAN_PAGE_SIZE, ordersPage * PLAN_PAGE_SIZE)
-                            .map((order) => (
+                          {orders.map((order) => (
                               <div key={order.id} className="p-4 rounded-lg border border-gray-200">
                                 <div className="flex items-start justify-between">
                                   <div className="flex flex-col gap-1 flex-1">
@@ -745,16 +770,15 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                               </div>
                             ))}
                         </div>
-                        {allOrders.length > PLAN_PAGE_SIZE && (
-                          <Pagination
-                            currentPage={ordersPage}
-                            totalPages={Math.ceil(allOrders.length / PLAN_PAGE_SIZE)}
-                            totalItems={allOrders.length}
-                            pageSize={PLAN_PAGE_SIZE}
-                            onPageChange={setOrdersPage}
-                            itemLabel="órdenes"
-                          />
-                        )}
+                        <Pagination
+                          currentPage={ordersPage}
+                          totalPages={ordersResult?.pagination.totalPages ?? 0}
+                          totalItems={ordersResult?.pagination.total ?? 0}
+                          pageSize={PLAN_PAGE_SIZE}
+                          onPageChange={setOrdersPage}
+                          isLoading={ordersFetching}
+                          itemLabel="órdenes"
+                        />
                       </>
                     )}
                   </div>
@@ -896,7 +920,10 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
         open={uploadModalOpen}
         onOpenChange={setUploadModalOpen}
         patientId={patientId}
-        onSuccess={() => refetch()}
+        onSuccess={() => {
+          refetchRecords();
+          refetchDocuments();
+        }}
       />
 
       {/* Vital Signs Modal */}

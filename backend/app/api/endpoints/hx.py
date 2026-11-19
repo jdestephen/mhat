@@ -1,12 +1,18 @@
 import uuid
-from typing import List, Any, Optional
+from typing import Annotated, List, Any, Optional
 from datetime import datetime, timedelta, date, timezone
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Form, Query
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Form, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
 from app.api import deps
+from app.api.pagination import (
+    PaginationParams,
+    count_rows,
+    pagination_dependency,
+    set_pagination_headers,
+)
 from app.core.config import settings
 from app.db.session import get_db
 from app.models.hx import MedicalRecord, Document, RecordStatus, RecordSource, MedicalDiagnosis, DiagnosisStatus, VitalSigns, RecordViewLog, VitalSignsStatus
@@ -20,6 +26,8 @@ from app.services import storage as storage_service
 from datetime import datetime
 
 router = APIRouter()
+medical_records_pagination = pagination_dependency(default_limit=100, max_limit=100)
+vital_signs_pagination = pagination_dependency(default_limit=100, max_limit=100)
 
 
 async def resolve_patient_profile(
@@ -319,10 +327,10 @@ async def get_document_presigned_url(
 
 @router.get("/", response_model=List[hx_schema.MedicalRecord])
 async def read_medical_records(
+    response: Response,
+    pagination: Annotated[PaginationParams, Depends(medical_records_pagination)],
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(deps.get_current_user),
-    skip: int = 0,
-    limit: int = 100,
     # Search parameters
     q: Optional[str] = Query(None, description="Text search query"),
     category_id: Optional[int] = Query(None, description="Filter by category ID"),
@@ -347,6 +355,9 @@ async def read_medical_records(
     # Text search filter (includes motive, diagnosis, notes, tags, category, status)
     if q:
         stmt = stmt.filter(MedicalRecord.search_text.contains(q.lower()))
+
+    if category_id is not None:
+        stmt = stmt.filter(MedicalRecord.category_id == category_id)
     
     # Filter to records with prescriptions
     if has_prescriptions:
@@ -372,7 +383,15 @@ async def read_medical_records(
         except ValueError:
             pass  # Ignore invalid date format
     
-    # Apply eager loading, pagination, and ordering
+    total = await count_rows(db, stmt)
+    set_pagination_headers(
+        response,
+        total=total,
+        skip=pagination.skip,
+        limit=pagination.limit,
+    )
+
+    # Apply eager loading, stable ordering, and pagination.
     stmt = stmt.options(
         selectinload(MedicalRecord.documents),
         selectinload(MedicalRecord.category),
@@ -380,7 +399,11 @@ async def read_medical_records(
         selectinload(MedicalRecord.prescriptions),
         selectinload(MedicalRecord.clinical_orders),
         selectinload(MedicalRecord.vital_signs)
-    ).offset(skip).limit(limit).order_by(MedicalRecord.record_date.desc())
+    ).order_by(
+        MedicalRecord.record_date.desc(),
+        MedicalRecord.created_at.desc(),
+        MedicalRecord.id.desc(),
+    ).offset(pagination.skip).limit(pagination.limit)
     
     result = await db.execute(stmt)
     return result.scalars().all()
@@ -413,19 +436,32 @@ async def create_vital_signs(
 
 @router.get("/vital-signs", response_model=List[hx_schema.VitalSignsResponse])
 async def list_vital_signs(
+    response: Response,
+    pagination: Annotated[PaginationParams, Depends(vital_signs_pagination)],
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(deps.get_current_user),
     profile_id: Optional[str] = Query(None, description="Profile ID"),
 ) -> Any:
-    """List all vital signs (descending by measured_at)."""
+    """List vital signs with stable server-side pagination."""
     patient_profile = await resolve_patient_profile(db, current_user, profile_id)
 
     stmt = (
         select(VitalSigns)
         .filter(VitalSigns.patient_id == patient_profile.id)
-        .order_by(VitalSigns.measured_at.desc())
     )
-    result = await db.execute(stmt)
+    total = await count_rows(db, stmt)
+    set_pagination_headers(
+        response,
+        total=total,
+        skip=pagination.skip,
+        limit=pagination.limit,
+    )
+
+    result = await db.execute(
+        stmt.order_by(VitalSigns.measured_at.desc(), VitalSigns.id.desc())
+        .offset(pagination.skip)
+        .limit(pagination.limit)
+    )
     return result.scalars().all()
 
 
@@ -656,7 +692,7 @@ async def get_record_view_log(
         select(RecordViewLog, User)
         .join(User, RecordViewLog.doctor_id == User.id)
         .where(RecordViewLog.medical_record_id == record_id)
-        .order_by(RecordViewLog.viewed_at.desc())
+        .order_by(RecordViewLog.viewed_at.desc(), RecordViewLog.id.desc())
     )
     rows = logs_result.all()
 

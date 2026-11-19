@@ -1,17 +1,23 @@
 """
 API endpoints for secure medical record sharing.
 """
-from datetime import datetime
-from typing import Any, Optional
+from datetime import datetime, timezone
+from typing import Annotated, Any, Literal, Optional
 from uuid import UUID
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status, Request, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Query, Response
 from sqlalchemy import select, update, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.api import deps
+from app.api.pagination import (
+    PaginationParams,
+    count_rows,
+    pagination_dependency,
+    set_pagination_headers,
+)
 from app.core.config import settings
 from app.db.session import get_db
 from app.models.user import User
@@ -29,6 +35,7 @@ from app.services import storage as storage_service
 
 
 router = APIRouter()
+shares_pagination = pagination_dependency(default_limit=100, max_limit=100)
 
 
 @router.post("/share", response_model=sharing_schema.ShareTokenResponse)
@@ -129,10 +136,17 @@ async def create_share_link(
 @router.get("/shares", response_model=sharing_schema.ShareTokenListResponse)
 async def list_my_shares(
     *,
+    response: Response,
+    pagination: Annotated[PaginationParams, Depends(shares_pagination)],
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(deps.get_current_user),
     include_expired: bool = False,
     include_revoked: bool = False,
+    share_status: Optional[Literal["active", "expired", "all"]] = Query(
+        None,
+        alias="status",
+        description="Exclusive status filter used by paginated clients.",
+    ),
     profile_id: Optional[str] = Query(None, description="Profile ID"),
 ) -> Any:
     """
@@ -146,25 +160,39 @@ async def list_my_shares(
     patient_profile = await deps.resolve_patient_profile(db, current_user, profile_id)
     
     # Build query
-    stmt = select(ShareToken).filter(
-        ShareToken.patient_id == patient_profile.id
-    ).options(
-        selectinload(ShareToken.shared_records)
-    ).order_by(ShareToken.created_at.desc())
-    
-    result = await db.execute(stmt)
+    stmt = select(ShareToken).where(ShareToken.patient_id == patient_profile.id)
+    now = datetime.now(timezone.utc)
+
+    if share_status == "active":
+        stmt = stmt.where(ShareToken.expires_at >= now, ShareToken.is_revoked.is_(False))
+    elif share_status == "expired":
+        stmt = stmt.where(ShareToken.expires_at < now, ShareToken.is_revoked.is_(False))
+    elif share_status != "all":
+        if not include_expired:
+            stmt = stmt.where(ShareToken.expires_at >= now)
+        if not include_revoked:
+            stmt = stmt.where(ShareToken.is_revoked.is_(False))
+
+    total = await count_rows(db, stmt)
+    set_pagination_headers(
+        response,
+        total=total,
+        skip=pagination.skip,
+        limit=pagination.limit,
+    )
+
+    result = await db.execute(
+        stmt.options(selectinload(ShareToken.shared_records))
+        .order_by(ShareToken.created_at.desc(), ShareToken.id.desc())
+        .offset(pagination.skip)
+        .limit(pagination.limit)
+    )
     share_tokens = result.scalars().all()
     
     # Filter and format
     shares = []
     for token in share_tokens:
         is_expired = is_token_expired(token)
-        
-        # Apply filters
-        if not include_expired and is_expired:
-            continue
-        if not include_revoked and token.is_revoked:
-            continue
         
         shares.append(sharing_schema.ShareTokenInfo(
             id=token.id,

@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import api from '@/lib/api';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import api, { toPaginatedResult } from '@/lib/api';
 
 export interface AssistantAssignment {
   id: string;
@@ -24,5 +24,45 @@ export function useMyAssistants(enabled = true) {
       const res = await api.get<AssistantAssignment[]>('/doctor/assistants');
       return res.data;
     },
+  });
+}
+
+interface UsePaginatedAssistantsOptions {
+  page: number;
+  pageSize: number;
+  query?: string;
+  isActive?: boolean;
+  enabled?: boolean;
+}
+
+export function usePaginatedAssistants({
+  page,
+  pageSize,
+  query,
+  isActive,
+  enabled = true,
+}: UsePaginatedAssistantsOptions) {
+  const normalizedQuery = query?.trim() || undefined;
+
+  return useQuery({
+    queryKey: [
+      'doctor',
+      'assistants',
+      'paginated',
+      { page, pageSize, query: normalizedQuery, isActive },
+    ],
+    enabled,
+    queryFn: async () => {
+      const response = await api.get<AssistantAssignment[]>('/doctor/assistants', {
+        params: {
+          skip: (page - 1) * pageSize,
+          limit: pageSize,
+          q: normalizedQuery,
+          is_active: isActive,
+        },
+      });
+      return toPaginatedResult(response);
+    },
+    placeholderData: keepPreviousData,
   });
 }

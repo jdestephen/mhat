@@ -6,6 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import api from '@/lib/api';
+import { establishAuthenticatedSession } from '@/lib/authSession';
 import { useToast } from '@/components/ui/Toast';
 import { useActiveMode } from '@/hooks/useActiveMode';
 
@@ -35,9 +36,10 @@ export default function LoginPage() {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
       });
       
-      localStorage.setItem('token', response.data.access_token);
-      localStorage.setItem('refreshToken', response.data.refresh_token);
-      queryClient.removeQueries({ queryKey: ['auth', 'me'] });
+      await establishAuthenticatedSession(queryClient, {
+        accessToken: response.data.access_token,
+        refreshToken: response.data.refresh_token,
+      });
 
       // Redirect based on user role from the login response
       const role = response.data.role;
