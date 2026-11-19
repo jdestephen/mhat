@@ -1,62 +1,38 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import api from '@/lib/api';
+import { Pagination } from '@/components/ui/Pagination';
 import { ShareLinkCard } from './components/ShareLinkCard';
 import { CreateShareDialog } from './components/CreateShareDialog';
 import { useActiveProfile } from '@/hooks/useActiveProfile';
 import { useToast } from '@/components/ui/Toast';
-
-interface ShareLink {
-  id: string;
-  token: string;
-  created_at: string;
-  expires_at: string;
-  is_expired: boolean;
-  is_revoked: boolean;
-  is_single_use: boolean;
-  record_count: number;
-  access_count: number;
-  recipient_name?: string;
-  recipient_email?: string;
-  purpose?: string;
-  share_type?: string;
-}
+import { useSharedLinks, type ShareStatus } from '@/hooks/queries/useSharedLinks';
+import { usePaginationState } from '@/hooks/usePaginationState';
 
 export default function SharedLinksPage() {
   const { toast } = useToast();
-  const [shares, setShares] = useState<ShareLink[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'active' | 'expired' | 'all'>('active');
+  const [filter, setFilter] = useState<ShareStatus>('active');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const { activeProfileId } = useActiveProfile();
-
-  const fetchShares = async () => {
-    try {
-      const params = new URLSearchParams();
-      if (filter === 'expired') {
-        params.append('include_expired', 'true');
-      } else if (filter === 'all') {
-        params.append('include_expired', 'true');
-        params.append('include_revoked', 'true');
-      }
-
-      if (activeProfileId) params.append('profile_id', activeProfileId);
-
-      const response = await api.get(`/hx/shares?${params.toString()}`);
-      setShares(response.data.shares || []);
-    } catch (error) {
-      console.error('Failed to fetch shares:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchShares();
-  }, [filter, activeProfileId]);
+  const pagination = usePaginationState({
+    initialPageSize: 10,
+    resetKey: JSON.stringify([filter, activeProfileId]),
+  });
+  const {
+    data: sharesResult,
+    isLoading: loading,
+    isFetching,
+    refetch,
+  } = useSharedLinks({
+    page: pagination.page,
+    pageSize: pagination.pageSize,
+    status: filter,
+    profileId: activeProfileId,
+  });
+  const shares = sharesResult?.items ?? [];
 
   const handleRevoke = async (tokenId: string) => {
     if (!confirm('¿Estás seguro de que deseas revocar este enlace?')) {
@@ -68,7 +44,7 @@ export default function SharedLinksPage() {
       if (activeProfileId) params.append('profile_id', activeProfileId);
       const qs = params.toString() ? `?${params.toString()}` : '';
       await api.delete(`/hx/share/${tokenId}${qs}`);
-      fetchShares(); // Refresh list
+      await refetch();
     } catch (error) {
       console.error('Failed to revoke share:', error);
       toast.error('Error al revocar el enlace');
@@ -155,9 +131,19 @@ export default function SharedLinksPage() {
               key={share.id}
               share={share}
               onRevoke={() => handleRevoke(share.id)}
-              onRefresh={fetchShares}
+              onRefresh={() => { void refetch(); }}
             />
           ))}
+          <Pagination
+            currentPage={pagination.page}
+            totalPages={sharesResult?.pagination.totalPages ?? 0}
+            totalItems={sharesResult?.pagination.total ?? 0}
+            pageSize={pagination.pageSize}
+            onPageChange={pagination.setPage}
+            onPageSizeChange={pagination.setPageSize}
+            isLoading={isFetching}
+            itemLabel="enlaces"
+          />
         </div>
       )}
 
@@ -165,7 +151,7 @@ export default function SharedLinksPage() {
       <CreateShareDialog
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
-        onSuccess={fetchShares}
+        onSuccess={() => { void refetch(); }}
       />
     </div>
   );

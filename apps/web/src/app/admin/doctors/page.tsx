@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   CheckCircle,
@@ -15,45 +15,17 @@ import {
   FileText,
   Eye,
   Cpu,
+  Search,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Pagination } from '@/components/ui/Pagination';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
+import { useDoctorApplications } from '@/hooks/queries/useDoctorApplications';
+import { usePaginationState } from '@/hooks/usePaginationState';
 import { DoctorApprovalStatus } from '@/types';
 import api from '@/lib/api';
-
-interface DoctorApplication {
-  profile_id: string;
-  user_id: string;
-  first_name: string | null;
-  last_name: string | null;
-  email: string;
-  college_number: string | null;
-  verification_phone: string | null;
-  approval_status: DoctorApprovalStatus;
-  registered_at: string;
-  approved_at: string | null;
-  rejection_reason: string | null;
-  // Document verification
-  identity_document_url: string | null;
-  college_document_url: string | null;
-  ocr_extracted_data: {
-    identity?: {
-      extracted_dni?: string | null;
-      extracted_name?: string | null;
-      confidence?: number;
-      raw_text?: string;
-    };
-    college?: {
-      extracted_college_number?: string | null;
-      extracted_name?: string | null;
-      confidence?: number;
-      raw_text?: string;
-    };
-  } | null;
-  ocr_processed: boolean;
-  verification_notes: string | null;
-}
 
 const STATUS_CONFIG = {
   [DoctorApprovalStatus.PENDING]: {
@@ -82,10 +54,27 @@ const STATUS_CONFIG = {
 export default function AdminDoctorsPage() {
   const router = useRouter();
   const { data: user, isLoading: userLoading } = useCurrentUser();
-  const [applications, setApplications] = useState<DoctorApplication[]>([]);
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<DoctorApprovalStatus | 'ALL'>('ALL');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const pagination = usePaginationState({
+    initialPageSize: 20,
+    resetKey: JSON.stringify([filter, debouncedSearch]),
+  });
+  const {
+    data: applicationsResult,
+    isLoading: loading,
+    isFetching,
+    refetch: refetchApplications,
+  } = useDoctorApplications({
+    page: pagination.page,
+    pageSize: pagination.pageSize,
+    status: filter === 'ALL' ? undefined : filter,
+    query: debouncedSearch,
+    enabled: !!user?.is_admin,
+  });
+  const applications = applicationsResult?.items ?? [];
 
   // Rejection modal
   const [rejectTarget, setRejectTarget] = useState<string | null>(null);
@@ -100,33 +89,22 @@ export default function AdminDoctorsPage() {
     return url;
   };
 
-  const fetchApplications = useCallback(async () => {
-    try {
-      const params = filter !== 'ALL' ? { status: filter } : {};
-      const res = await api.get('/admin/doctors', { params });
-      setApplications(res.data);
-    } catch {
-      // handled silently
-    } finally {
-      setLoading(false);
-    }
-  }, [filter]);
-
   useEffect(() => {
     if (!userLoading && user && !user.is_admin) {
       router.replace('/dashboard');
-      return;
     }
-    if (user?.is_admin) {
-      fetchApplications();
-    }
-  }, [user, userLoading, router, fetchApplications]);
+  }, [user, userLoading, router]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedSearch(searchTerm), 300);
+    return () => window.clearTimeout(timer);
+  }, [searchTerm]);
 
   const handleApprove = async (profileId: string) => {
     setActionLoading(profileId);
     try {
       await api.post(`/admin/doctors/${profileId}/approve`);
-      await fetchApplications();
+      await refetchApplications();
     } catch {
       // handled silently
     } finally {
@@ -143,7 +121,7 @@ export default function AdminDoctorsPage() {
       });
       setRejectTarget(null);
       setRejectReason('');
-      await fetchApplications();
+      await refetchApplications();
     } catch {
       // handled silently
     } finally {
@@ -159,9 +137,9 @@ export default function AdminDoctorsPage() {
     );
   }
 
-  const pendingCount = applications.filter(
-    (a) => a.approval_status === DoctorApprovalStatus.PENDING
-  ).length;
+  const pendingCount = filter === DoctorApprovalStatus.PENDING
+    ? applicationsResult?.pagination.total ?? 0
+    : 0;
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -200,7 +178,6 @@ export default function AdminDoctorsPage() {
             key={tab.value}
             onClick={() => {
               setFilter(tab.value);
-              setLoading(true);
             }}
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
               filter === tab.value
@@ -211,6 +188,16 @@ export default function AdminDoctorsPage() {
             {tab.label}
           </button>
         ))}
+      </div>
+
+      <div className="relative mb-6 max-w-md">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+        <Input
+          value={searchTerm}
+          onChange={(event) => setSearchTerm(event.target.value)}
+          placeholder="Buscar por nombre, correo o colegiación"
+          className="pl-9"
+        />
       </div>
 
       {/* Applications List */}
@@ -421,6 +408,16 @@ export default function AdminDoctorsPage() {
               </div>
             );
           })}
+          <Pagination
+            currentPage={pagination.page}
+            totalPages={applicationsResult?.pagination.totalPages ?? 0}
+            totalItems={applicationsResult?.pagination.total ?? 0}
+            pageSize={pagination.pageSize}
+            onPageChange={pagination.setPage}
+            onPageSizeChange={pagination.setPageSize}
+            isLoading={isFetching}
+            itemLabel="solicitudes"
+          />
         </div>
       )}
 

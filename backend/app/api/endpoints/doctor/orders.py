@@ -1,13 +1,19 @@
 """Clinical order management — both record-attached and standalone."""
 import uuid
-from typing import List, Optional
+from typing import Annotated, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import and_, or_
 
 from app.api.deps import get_db
+from app.api.pagination import (
+    PaginationParams,
+    count_rows,
+    pagination_dependency,
+    set_pagination_headers,
+)
 from app.models.user import User
 from app.models.hx import MedicalRecord, Category
 from app.models.clinical import ClinicalOrder
@@ -16,6 +22,7 @@ from app.schemas import clinical as clinical_schema
 from ._helpers import require_doctor_role, get_doctor_patient_access
 
 router = APIRouter()
+patient_orders_pagination = pagination_dependency(default_limit=100, max_limit=100)
 
 
 # ─── Record-attached orders ──────────────────────────────────────────────────
@@ -141,6 +148,8 @@ async def create_standalone_order(
 )
 async def list_patient_orders(
     patient_profile_id: uuid.UUID,
+    response: Response,
+    pagination: Annotated[PaginationParams, Depends(patient_orders_pagination)],
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_doctor_role),
     order_type: Optional[str] = Query(None, description="Filter by order type (LAB, IMAGING, REFERRAL, PROCEDURE)"),
@@ -148,7 +157,7 @@ async def list_patient_orders(
     """List all orders for a patient — both standalone and record-attached."""
     await get_doctor_patient_access(patient_profile_id, db, current_user)
 
-    query = select(ClinicalOrder).where(
+    stmt = select(ClinicalOrder).where(
         or_(
             # Standalone orders linked directly to patient
             ClinicalOrder.patient_id == patient_profile_id,
@@ -159,12 +168,24 @@ async def list_patient_orders(
                 )
             ),
         )
-    ).order_by(ClinicalOrder.created_at.desc())
+    )
 
     if order_type:
-        query = query.where(ClinicalOrder.order_type == order_type)
+        stmt = stmt.where(ClinicalOrder.order_type == order_type)
 
-    result = await db.execute(query)
+    total = await count_rows(db, stmt)
+    set_pagination_headers(
+        response,
+        total=total,
+        skip=pagination.skip,
+        limit=pagination.limit,
+    )
+
+    result = await db.execute(
+        stmt.order_by(ClinicalOrder.created_at.desc(), ClinicalOrder.id.desc())
+        .offset(pagination.skip)
+        .limit(pagination.limit)
+    )
     orders = result.scalars().all()
 
     return orders

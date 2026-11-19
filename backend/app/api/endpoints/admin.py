@@ -4,16 +4,22 @@ Admin Endpoints
 Endpoints for admin users to manage doctor approvals.
 """
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import Annotated, List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy.orm import selectinload
+from sqlalchemy import func, or_
 
 from app.api import deps
+from app.api.pagination import (
+    PaginationParams,
+    count_rows,
+    pagination_dependency,
+    set_pagination_headers,
+)
 from app.db.session import get_db
 from app.models.user import User, UserRole
 from app.models.doctor import DoctorProfile, DoctorApprovalStatus
@@ -21,6 +27,7 @@ from app.services.email import send_doctor_approval_email, send_doctor_rejection
 from app.services.storage import get_presigned_url
 
 router = APIRouter()
+doctor_applications_pagination = pagination_dependency(default_limit=100, max_limit=100)
 
 
 # =====================
@@ -63,22 +70,58 @@ class RejectRequest(BaseModel):
 
 @router.get("/doctors", response_model=List[DoctorApplicationSummary])
 async def list_doctor_applications(
+    response: Response,
+    pagination: Annotated[PaginationParams, Depends(doctor_applications_pagination)],
     status: Optional[DoctorApprovalStatus] = Query(None, description="Filter by approval status"),
+    q: Optional[str] = Query(None, max_length=200, description="Search by name, email, or college number"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(deps.require_admin),
 ):
-    """List doctor applications, optionally filtered by status."""
-    query = (
+    """List doctor applications with server-side filtering and pagination."""
+    stmt = (
         select(DoctorProfile, User)
         .join(User, DoctorProfile.user_id == User.id)
         .where(User.role == UserRole.DOCTOR)
-        .order_by(DoctorProfile.approval_status.asc())
     )
 
-    if status:
-        query = query.where(DoctorProfile.approval_status == status)
+    if status is not None:
+        stmt = stmt.where(DoctorProfile.approval_status == status)
 
-    result = await db.execute(query)
+    normalized_query = q.strip().lower() if q else ""
+    if normalized_query:
+        pattern = f"%{normalized_query}%"
+        full_name = func.lower(
+            func.concat(
+                func.coalesce(User.first_name, ""),
+                " ",
+                func.coalesce(User.last_name, ""),
+            )
+        )
+        stmt = stmt.where(
+            or_(
+                full_name.like(pattern),
+                func.lower(User.email).like(pattern),
+                func.lower(func.coalesce(DoctorProfile.college_number, "")).like(pattern),
+            )
+        )
+
+    total = await count_rows(db, stmt)
+    set_pagination_headers(
+        response,
+        total=total,
+        skip=pagination.skip,
+        limit=pagination.limit,
+    )
+
+    result = await db.execute(
+        stmt.order_by(
+            DoctorProfile.approval_status.asc(),
+            User.created_at.desc(),
+            DoctorProfile.id.desc(),
+        )
+        .offset(pagination.skip)
+        .limit(pagination.limit)
+    )
     applications = []
     for profile, user in result.all():
         applications.append(DoctorApplicationSummary(

@@ -265,6 +265,19 @@ export interface Document {
   created_at: string;
 }
 
+export interface PatientDocumentSummary {
+  id: string;
+  medical_record_id: string;
+  filename: string;
+  url: string;
+  media_type: string;
+  tags?: string[];
+  created_at: string;
+  record_motive: string;
+  record_category?: string;
+  record_date: string;
+}
+
 export enum RecordStatus {
   UNVERIFIED = 'UNVERIFIED',
   BACKED_BY_DOCUMENT = 'BACKED_BY_DOCUMENT',
@@ -320,6 +333,7 @@ export interface MedicalRecord {
   created_at: string;
   record_date?: string;
   documents?: Document[];
+  document_count?: number;
   brief_history?: string;
   has_red_flags?: boolean;
   red_flags?: string[];

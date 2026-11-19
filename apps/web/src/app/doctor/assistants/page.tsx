@@ -19,8 +19,8 @@ import {
 import api from '@/lib/api';
 import { useCurrentUser } from '@/hooks/queries/useCurrentUser';
 import { useActiveMode } from '@/hooks/useActiveMode';
-import { useMyAssistants } from '@/hooks/queries/useMyAssistants';
-import { useAssistantInvitations } from '@/hooks/queries/useAssistantInvitations';
+import { usePaginatedAssistants } from '@/hooks/queries/useMyAssistants';
+import { usePaginatedAssistantInvitations } from '@/hooks/queries/useAssistantInvitations';
 import { UserRole } from '@/types';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { AssistantCard } from '@/components/doctor/AssistantCard';
@@ -29,6 +29,8 @@ import { EditPermissionsModal } from '@/components/doctor/EditPermissionsModal';
 import { PermissionBadges } from '@/components/doctor/PermissionSelector';
 import type { AssistantAssignment } from '@/hooks/queries/useMyAssistants';
 import type { AssistantInvitation } from '@/hooks/queries/useAssistantInvitations';
+import { Pagination } from '@/components/ui/Pagination';
+import { usePaginationState } from '@/hooks/usePaginationState';
 
 export default function AssistantsPage() {
   const router = useRouter();
@@ -36,8 +38,28 @@ export default function AssistantsPage() {
   const { isClinicalUser, isInPatientMode } = useActiveMode();
   const canManageAssistants = user?.role === UserRole.DOCTOR && isClinicalUser && !isInPatientMode;
 
-  const { data: assistants = [], isLoading: assistantsLoading } = useMyAssistants(canManageAssistants);
-  const { data: invitations = [], isLoading: invitationsLoading } = useAssistantInvitations(canManageAssistants);
+  const assistantsPagination = usePaginationState({ initialPageSize: 10 });
+  const invitationsPagination = usePaginationState({ initialPageSize: 10 });
+  const {
+    data: assistantsResult,
+    isLoading: assistantsLoading,
+    isFetching: assistantsFetching,
+  } = usePaginatedAssistants({
+    page: assistantsPagination.page,
+    pageSize: assistantsPagination.pageSize,
+    enabled: canManageAssistants,
+  });
+  const {
+    data: invitationsResult,
+    isLoading: invitationsLoading,
+    isFetching: invitationsFetching,
+  } = usePaginatedAssistantInvitations({
+    page: invitationsPagination.page,
+    pageSize: invitationsPagination.pageSize,
+    enabled: canManageAssistants,
+  });
+  const assistants = assistantsResult?.items ?? [];
+  const invitations = invitationsResult?.items ?? [];
 
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [editAssignment, setEditAssignment] = useState<AssistantAssignment | null>(null);
@@ -100,9 +122,9 @@ export default function AssistantsPage() {
             <TabsTrigger value="active">
               <span className="flex items-center gap-2">
                 Asistentes
-                {activeAssistants.length > 0 && (
+                {(assistantsResult?.pagination.total ?? 0) > 0 && (
                   <span className="bg-emerald-100 text-emerald-700 text-xs font-semibold px-2 py-0.5 rounded-full">
-                    {activeAssistants.length}
+                    {assistantsResult?.pagination.total}
                   </span>
                 )}
               </span>
@@ -110,9 +132,9 @@ export default function AssistantsPage() {
             <TabsTrigger value="invitations">
               <span className="flex items-center gap-2">
                 Invitaciones
-                {pendingInvitations.length > 0 && (
+                {(invitationsResult?.pagination.total ?? 0) > 0 && (
                   <span className="bg-amber-100 text-amber-700 text-xs font-semibold px-2 py-0.5 rounded-full">
-                    {pendingInvitations.length}
+                    {invitationsResult?.pagination.total}
                   </span>
                 )}
               </span>
@@ -152,6 +174,16 @@ export default function AssistantsPage() {
                       ))}
                     </>
                   )}
+                  <Pagination
+                    currentPage={assistantsPagination.page}
+                    totalPages={assistantsResult?.pagination.totalPages ?? 0}
+                    totalItems={assistantsResult?.pagination.total ?? 0}
+                    pageSize={assistantsPagination.pageSize}
+                    onPageChange={assistantsPagination.setPage}
+                    onPageSizeChange={assistantsPagination.setPageSize}
+                    isLoading={assistantsFetching}
+                    itemLabel="asistentes"
+                  />
                 </>
               )}
             </div>
@@ -196,6 +228,16 @@ export default function AssistantsPage() {
                       ))}
                     </>
                   )}
+                  <Pagination
+                    currentPage={invitationsPagination.page}
+                    totalPages={invitationsResult?.pagination.totalPages ?? 0}
+                    totalItems={invitationsResult?.pagination.total ?? 0}
+                    pageSize={invitationsPagination.pageSize}
+                    onPageChange={invitationsPagination.setPage}
+                    onPageSizeChange={invitationsPagination.setPageSize}
+                    isLoading={invitationsFetching}
+                    itemLabel="invitaciones"
+                  />
                 </>
               )}
             </div>
