@@ -73,14 +73,18 @@ Todas las rutas siguientes llevan `/api/v1`. Esta tabla agrupa operaciones; conf
 - El historial de salud clínico tiene rutas `/doctor/patients/{patient_id}/{conditions|surgeries|allergies|medications|habits|family-history|vaccines}`. Los claims están en `/doctor/claim-requests` y rutas de aprobación/rechazo.
 - Al aprobar un claim, la API solo reemplaza el perfil SELF creado durante el registro cuando no contiene datos demográficos, clínicos, otras membresías ni otros claims. Antes de eliminar ese perfil vacío, traslada invitaciones médicas y familiares, enlaces compartidos y accesos médicos al perfil creado por el doctor, deduplicando accesos equivalentes y conservando el nivel más amplio. Si el SELF ya contiene datos, ambos perfiles se conservan y el reclamado se agrega como membresía adicional.
 - Asistentes: `/doctor/assistants/invite`, `/invitations`, `/doctor/assistants`, `/{id}/permissions`, `/{id}/deactivate|reactivate`. Las asignaciones se vinculan a centro de salud y permisos específicos. Para una operación clínica, revisa tanto la asignación como el acceso del médico al paciente.
+- Los listados `GET /doctor/assistants` y `/doctor/assistants/invitations` aceptan `skip`, `limit` y búsqueda `q`, devuelven metadata en headers y conservan 100 como límite predeterminado histórico. El primero también acepta `is_active` y ambos usan desempate estable por ID.
 
 ### Familia, centros y sharing
 
 - Familia: `/family/members`, `/family/memberships/{id}`, `/family/patients/{id}/members`, `/family/profiles/{id}/invite`, `/family/invite/claim` y otras rutas de consulta/revocación. Las invitaciones tienen vencimiento; `doctor-patient-init` crea perfil propio para usuario clínico.
 - Centros de salud: `GET /health-centers`, `GET /health-centers/mine`, `POST /health-centers`, `POST /health-centers/{hc_id}/join`, `DELETE /health-centers/{hc_id}/leave`, `PUT /health-centers/{hc_id}/set-primary`. Admin: `GET/POST /admin/health-centers`, `PUT /admin/health-centers/{hc_id}`, `POST .../{hc_id}/verify|reject`. Estas son las rutas reales, distintas de algunas listadas en el contexto antiguo.
-- Sharing autenticado: `POST /hx/share`, `GET /hx/shares`, `DELETE /hx/share/{token_id}`. Público: `GET /shared/{token}`, `/shared/{token}/summary`, `/shared/{token}/record/{record_id}`, `/shared/{token}/document/{document_id}`. Los tipos son `SPECIFIC_RECORDS` y `SUMMARY`.
+- Sharing autenticado: `POST /hx/share`, `GET /hx/shares`, `DELETE /hx/share/{token_id}`. El listado conserva el wrapper `{shares}`, pagina con headers y acepta el filtro exclusivo `status=active|expired|all`; los flags históricos `include_expired` e `include_revoked` siguen disponibles. Público: `GET /shared/{token}`, `/shared/{token}/summary`, `/shared/{token}/record/{record_id}`, `/shared/{token}/document/{document_id}`. Los tipos son `SPECIFIC_RECORDS` y `SUMMARY`.
+- `GET /admin/doctors` pagina y permite filtrar por `status` y buscar con `q` por nombre, correo o colegiación. Solo firma URLs de documentos para la página solicitada.
 
 ## Servicios y decisiones de cambio
+
+La migración `l6f7a8b9c0d1` agrega índices compuestos para los recorridos paginados de records, signos vitales, documentos, recetas, órdenes, shares, solicitudes médicas y asistentes. Los índices usan el ID final como desempate coherente con los `ORDER BY` de la API.
 
 | Servicio | Uso |
 | --- | --- |

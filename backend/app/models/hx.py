@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, String, Integer, Float, ForeignKey, DateTime, Date, Text, ARRAY, Enum
+from sqlalchemy import Boolean, String, Integer, Float, ForeignKey, DateTime, Date, Text, ARRAY, Enum, Index
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -79,6 +79,15 @@ class MedicalDiagnosis(Base):
 
 class MedicalRecord(Base):
     __tablename__ = "medical_records"
+    __table_args__ = (
+        Index(
+            "ix_medical_records_patient_date_page",
+            "patient_id",
+            "record_date",
+            "created_at",
+            "id",
+        ),
+    )
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     patient_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("patient_profiles.id"), nullable=False)
@@ -177,6 +186,14 @@ class RecordViewLog(Base):
 
 class Document(Base):
     __tablename__ = "documents"
+    __table_args__ = (
+        Index(
+            "ix_documents_record_created_page",
+            "medical_record_id",
+            "created_at",
+            "id",
+        ),
+    )
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     medical_record_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("medical_records.id"), nullable=False)
@@ -202,6 +219,14 @@ class VitalSignsStatus(str, enum.Enum):
 class VitalSigns(Base):
     """Vital signs measurement session (FHIR Observation vital-signs profile)."""
     __tablename__ = "vital_signs"
+    __table_args__ = (
+        Index(
+            "ix_vital_signs_patient_measured_page",
+            "patient_id",
+            "measured_at",
+            "id",
+        ),
+    )
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     patient_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("patient_profiles.id"), nullable=False)

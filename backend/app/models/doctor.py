@@ -1,4 +1,4 @@
-from sqlalchemy import String, ForeignKey, Date, Text, ARRAY, DateTime, Enum, Boolean
+from sqlalchemy import String, ForeignKey, Date, Text, ARRAY, DateTime, Enum, Boolean, Index
 from sqlalchemy.dialects.postgresql import UUID as PGUUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import Optional, List
@@ -18,6 +18,13 @@ class DoctorApprovalStatus(str, enum.Enum):
 
 class DoctorProfile(Base):
     __tablename__ = "doctor_profiles"
+    __table_args__ = (
+        Index(
+            "ix_doctor_profiles_status_id_page",
+            "approval_status",
+            "id",
+        ),
+    )
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), unique=True, nullable=False)

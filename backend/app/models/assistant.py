@@ -10,7 +10,7 @@ import uuid
 import enum
 
 from sqlalchemy import (
-    String, Boolean, Text, DateTime, ForeignKey, func, Enum, ARRAY
+    String, Boolean, Text, DateTime, ForeignKey, func, Enum, ARRAY, Index
 )
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -43,6 +43,14 @@ class DoctorAssistantAssignment(Base):
     independent permissions for the same assistant.
     """
     __tablename__ = "doctor_assistant_assignments"
+    __table_args__ = (
+        Index(
+            "ix_assistant_assignments_doctor_active_page",
+            "doctor_id",
+            "is_active",
+            "id",
+        ),
+    )
 
     id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4
@@ -97,6 +105,14 @@ class AssistantInvitation(Base):
     account and sets password → auto-linked to doctor + HC with pre-defined permissions.
     """
     __tablename__ = "assistant_invitations"
+    __table_args__ = (
+        Index(
+            "ix_assistant_invitations_doctor_created_page",
+            "doctor_id",
+            "created_at",
+            "id",
+        ),
+    )
 
     id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4

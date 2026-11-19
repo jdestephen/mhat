@@ -5,15 +5,20 @@ Endpoints for doctors to manage their assistants (invite, list, update permissio
 """
 import secrets
 from datetime import datetime, timezone, timedelta
-from typing import List, Optional
+from typing import Annotated, List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import and_
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from sqlalchemy import func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from app.api.deps import get_current_user
+from app.api.pagination import (
+    PaginationParams,
+    count_rows,
+    pagination_dependency,
+    set_pagination_headers,
+)
 from app.api.endpoints.doctor._helpers import require_doctor_role
 from app.db.session import get_db
 from app.models.assistant import (
@@ -30,6 +35,8 @@ from app.schemas.assistant import (
 )
 
 router = APIRouter()
+assistants_pagination = pagination_dependency(default_limit=100, max_limit=100)
+assistant_invitations_pagination = pagination_dependency(default_limit=100, max_limit=100)
 
 INVITATION_EXPIRY_HOURS = 48
 
@@ -155,15 +162,45 @@ async def invite_assistant(
 
 @router.get("/assistants/invitations", response_model=List[AssistantInvitationResponse])
 async def list_invitations(
+    response: Response,
+    pagination: Annotated[PaginationParams, Depends(assistant_invitations_pagination)],
+    q: Optional[str] = Query(None, max_length=200, description="Search invitations"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_doctor_role),
 ):
-    """List all invitations created by the current doctor."""
-    result = await db.execute(
+    """List invitations created by the current doctor."""
+    stmt = (
         select(AssistantInvitation, HealthCenter)
         .join(HealthCenter, AssistantInvitation.health_center_id == HealthCenter.id)
         .where(AssistantInvitation.doctor_id == current_user.id)
-        .order_by(AssistantInvitation.created_at.desc())
+    )
+
+    normalized_query = q.strip().lower() if q else ""
+    if normalized_query:
+        pattern = f"%{normalized_query}%"
+        stmt = stmt.where(
+            or_(
+                func.lower(AssistantInvitation.email).like(pattern),
+                func.lower(AssistantInvitation.first_name).like(pattern),
+                func.lower(AssistantInvitation.last_name).like(pattern),
+                func.lower(HealthCenter.name).like(pattern),
+            )
+        )
+
+    total = await count_rows(db, stmt)
+    set_pagination_headers(
+        response,
+        total=total,
+        skip=pagination.skip,
+        limit=pagination.limit,
+    )
+    result = await db.execute(
+        stmt.order_by(
+            AssistantInvitation.created_at.desc(),
+            AssistantInvitation.id.desc(),
+        )
+        .offset(pagination.skip)
+        .limit(pagination.limit)
     )
 
     return [
@@ -215,16 +252,52 @@ async def revoke_invitation(
 
 @router.get("/assistants", response_model=List[AssistantAssignmentResponse])
 async def list_assistants(
+    response: Response,
+    pagination: Annotated[PaginationParams, Depends(assistants_pagination)],
+    q: Optional[str] = Query(None, max_length=200, description="Search assistants"),
+    is_active: Optional[bool] = Query(None, description="Filter by assignment status"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_doctor_role),
 ):
-    """List all assistants assigned to the current doctor."""
-    result = await db.execute(
+    """List assistants assigned to the current doctor."""
+    stmt = (
         select(DoctorAssistantAssignment, User, HealthCenter)
         .join(User, DoctorAssistantAssignment.assistant_id == User.id)
         .join(HealthCenter, DoctorAssistantAssignment.health_center_id == HealthCenter.id)
         .where(DoctorAssistantAssignment.doctor_id == current_user.id)
-        .order_by(DoctorAssistantAssignment.is_active.desc(), User.first_name)
+    )
+
+    if is_active is not None:
+        stmt = stmt.where(DoctorAssistantAssignment.is_active == is_active)
+
+    normalized_query = q.strip().lower() if q else ""
+    if normalized_query:
+        pattern = f"%{normalized_query}%"
+        stmt = stmt.where(
+            or_(
+                func.lower(User.email).like(pattern),
+                func.lower(func.coalesce(User.first_name, "")).like(pattern),
+                func.lower(func.coalesce(User.last_name, "")).like(pattern),
+                func.lower(HealthCenter.name).like(pattern),
+            )
+        )
+
+    total = await count_rows(db, stmt)
+    set_pagination_headers(
+        response,
+        total=total,
+        skip=pagination.skip,
+        limit=pagination.limit,
+    )
+    result = await db.execute(
+        stmt.order_by(
+            DoctorAssistantAssignment.is_active.desc(),
+            func.lower(func.coalesce(User.first_name, "")).asc(),
+            func.lower(func.coalesce(User.last_name, "")).asc(),
+            DoctorAssistantAssignment.id.asc(),
+        )
+        .offset(pagination.skip)
+        .limit(pagination.limit)
     )
 
     return [
